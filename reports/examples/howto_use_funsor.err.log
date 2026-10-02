@@ -1,0 +1,57 @@
+Traceback (most recent call last):
+  File "/home/runner/work/blackjax/blackjax/.venv/lib/python3.12/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
+    executenb(
+  File "/home/runner/work/blackjax/blackjax/.venv/lib/python3.12/site-packages/nbclient/client.py", line 1323, in execute
+    return NotebookClient(nb=nb, resources=resources, km=km, **kwargs).execute()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/blackjax/blackjax/.venv/lib/python3.12/site-packages/jupyter_core/utils/__init__.py", line 165, in wrapped
+    return loop.run_until_complete(inner)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/base_events.py", line 687, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/home/runner/work/blackjax/blackjax/.venv/lib/python3.12/site-packages/nbclient/client.py", line 709, in async_execute
+    await self.async_execute_cell(
+  File "/home/runner/work/blackjax/blackjax/.venv/lib/python3.12/site-packages/nbclient/client.py", line 1062, in async_execute_cell
+    await self._check_raise_for_error(cell, cell_index, exec_reply)
+  File "/home/runner/work/blackjax/blackjax/.venv/lib/python3.12/site-packages/nbclient/client.py", line 918, in _check_raise_for_error
+    raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
+nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
+------------------
+import matplotlib.pyplot as plt
+
+mu_samples = states.position["mu"]
+# Reconstruct full K-simplex from K-1 free logits.
+pi_samples = jax.vmap(
+    lambda lp: jax.nn.softmax(jnp.concatenate([jnp.zeros(1), lp]))
+)(states.position["log_pi"])
+
+# Resolve label switching: sort components by ascending mean value so the
+# plotting order matches true_mu = [-4, 0, 4].
+sort_idx   = jnp.argsort(mu_samples, axis=1)
+mu_samples = jnp.take_along_axis(mu_samples, sort_idx, axis=1)
+pi_samples = jnp.take_along_axis(pi_samples, sort_idx, axis=1)
+
+fig, axes = plt.subplots(2, K, figsize=(9, 4), sharey="row")
+for k in range(K):
+    axes[0, k].hist(np.array(mu_samples[:, k]), bins=40, density=True)
+    axes[0, k].axvline(true_mu[k], color="red", linestyle="--", label="true")
+    axes[0, k].set_title(f"μ[{k}]")
+    axes[1, k].hist(np.array(pi_samples[:, k]), bins=40, density=True)
+    axes[1, k].axvline(true_pi[k], color="red", linestyle="--", label="true")
+    axes[1, k].set_title(f"π[{k}]")
+axes[0, 0].legend()
+plt.tight_layout();
+------------------
+
+
+[31m---------------------------------------------------------------------------[39m
+[31mModuleNotFoundError[39m                       Traceback (most recent call last)
+[36mCell[39m[36m [39m[32mIn[9][39m[32m, line 1[39m
+[32m----> [39m[32m1[39m [38;5;28;01mimport[39;00m matplotlib.pyplot [38;5;28;01mas[39;00m plt
+[32m      2[39m 
+[32m      3[39m mu_samples = states.position[[33m"mu"[39m]
+[32m      4[39m [38;5;66;03m# Reconstruct full K-simplex from K-1 free logits.[39;00m
+
+[31mModuleNotFoundError[39m: No module named 'matplotlib'
+

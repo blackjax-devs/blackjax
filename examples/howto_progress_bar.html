@@ -27,21 +27,21 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=4418a689" />
     <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=e37d73aa" />
   
   <!-- So that users can add custom icons -->
-  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
     <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
@@ -50,27 +50,34 @@
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'examples/howto_progress_bar';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Use custom gradients" href="howto_custom_gradients.html" />
     <link rel="prev" title="Sample with multiple chains in parallel" href="howto_sample_multiple_chains.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g0c69b5d2f" />
+  <meta name="docsearch:version" content="0.1.dev1+g421add75e" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
   </head>
-  
-  
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
-
+  <body data-default-mode="">
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -96,7 +103,51 @@
 </div>
 
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
     </header>
   
 
@@ -380,11 +431,18 @@
 
 
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div>
 
 
 <button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
@@ -412,7 +470,7 @@
                 <h2> Contents </h2>
             </div>
             <nav aria-label="Page">
-                <ul class="visible nav section-nav flex-column">
+                <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-it-works">How it works</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-model-bayesian-linear-regression">The model: Bayesian linear regression</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-usage-labeled-bar-around-a-warmup">Basic usage: labeled bar around a warmup</a></li>
@@ -466,7 +524,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_inference_algorithm</span>
 
 <span class="c1"># Headless doc builds have no ipywidgets; the plain-text bar is intended here.</span>
-<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">&quot;IProgress not found&quot;</span><span class="p">)</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">"IProgress not found"</span><span class="p">)</span>
 
 <span class="n">N</span><span class="p">,</span> <span class="n">DIM</span><span class="p">,</span> <span class="n">SIGMA</span> <span class="o">=</span> <span class="mi">300</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mf">0.5</span>
 <span class="n">kx</span><span class="p">,</span> <span class="n">kw</span><span class="p">,</span> <span class="n">kn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="mi">3</span><span class="p">)</span>
@@ -497,7 +555,7 @@
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">warmup</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">)</span>
 <span class="n">k_warm</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 
-<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;NUTS warmup&quot;</span><span class="p">):</span>
+<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">"NUTS warmup"</span><span class="p">):</span>
     <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">),</span> <span class="n">_</span> <span class="o">=</span> <span class="n">warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">k_warm</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">DIM</span><span class="p">),</span> <span class="n">num_steps</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -510,7 +568,7 @@
 <span class="ne">--&gt; </span><span class="mi">302</span>     <span class="kn">import</span><span class="w"> </span><span class="nn">jaxtap</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tap</span>
 <span class="g g-Whitespace">    </span><span class="mi">303</span> <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
 
-<span class="ne">ModuleNotFoundError</span>: No module named &#39;jaxtap&#39;
+<span class="ne">ModuleNotFoundError</span>: No module named 'jaxtap'
 
 <span class="n">The</span> <span class="n">above</span> <span class="n">exception</span> <span class="n">was</span> <span class="n">the</span> <span class="n">direct</span> <span class="n">cause</span> <span class="n">of</span> <span class="n">the</span> <span class="n">following</span> <span class="n">exception</span><span class="p">:</span>
 
@@ -519,7 +577,7 @@
 <span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="n">warmup</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">)</span>
 <span class="g g-Whitespace">      </span><span class="mi">2</span> <span class="n">k_warm</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 <span class="g g-Whitespace">      </span><span class="mi">3</span> 
-<span class="ne">----&gt; </span><span class="mi">4</span> <span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;NUTS warmup&quot;</span><span class="p">):</span>
+<span class="ne">----&gt; </span><span class="mi">4</span> <span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">"NUTS warmup"</span><span class="p">):</span>
 <span class="g g-Whitespace">      </span><span class="mi">5</span>     <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">),</span> <span class="n">_</span> <span class="o">=</span> <span class="n">warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">k_warm</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">DIM</span><span class="p">),</span> <span class="n">num_steps</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
 
 <span class="nn">File /usr/lib/python3.12/contextlib.py:137,</span> in <span class="ni">_GeneratorContextManager.__enter__</span><span class="nt">(self)</span>
@@ -527,19 +585,19 @@
 <span class="g g-Whitespace">    </span><span class="mi">136</span> <span class="k">try</span><span class="p">:</span>
 <span class="ne">--&gt; </span><span class="mi">137</span>     <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gen</span><span class="p">)</span>
 <span class="g g-Whitespace">    </span><span class="mi">138</span> <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
-<span class="g g-Whitespace">    </span><span class="mi">139</span>     <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;generator didn&#39;t yield&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
+<span class="g g-Whitespace">    </span><span class="mi">139</span>     <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"generator didn't yield"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
 
 <span class="nn">File ~/work/blackjax/blackjax/blackjax/progress_bar.py:304,</span> in <span class="ni">progress_bar</span><span class="nt">(label, print_rate, output_file)</span>
 <span class="g g-Whitespace">    </span><span class="mi">302</span>     <span class="kn">import</span><span class="w"> </span><span class="nn">jaxtap</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tap</span>
 <span class="g g-Whitespace">    </span><span class="mi">303</span> <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
 <span class="ne">--&gt; </span><span class="mi">304</span>     <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">305</span>         <span class="s2">&quot;blackjax.progress_bar requires the &#39;progress&#39; optional extra. &quot;</span>
-<span class="g g-Whitespace">    </span><span class="mi">306</span>         <span class="s2">&quot;Install it with:  pip install &#39;blackjax[progress]&#39;&quot;</span>
+<span class="g g-Whitespace">    </span><span class="mi">305</span>         <span class="s2">"blackjax.progress_bar requires the 'progress' optional extra. "</span>
+<span class="g g-Whitespace">    </span><span class="mi">306</span>         <span class="s2">"Install it with:  pip install 'blackjax[progress]'"</span>
 <span class="g g-Whitespace">    </span><span class="mi">307</span>     <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
 <span class="g g-Whitespace">    </span><span class="mi">309</span> <span class="n">state</span> <span class="o">=</span> <span class="n">ProgressState</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">print_rate</span><span class="o">=</span><span class="n">print_rate</span><span class="p">,</span> <span class="n">output_file</span><span class="o">=</span><span class="n">output_file</span><span class="p">)</span>
 <span class="g g-Whitespace">    </span><span class="mi">311</span> <span class="k">def</span><span class="w"> </span><span class="nf">_on_step</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
 
-<span class="ne">ImportError</span>: blackjax.progress_bar requires the &#39;progress&#39; optional extra. Install it with:  pip install &#39;blackjax[progress]&#39;
+<span class="ne">ImportError</span>: blackjax.progress_bar requires the 'progress' optional extra. Install it with:  pip install 'blackjax[progress]'
 </pre></div>
 </div>
 </div>
@@ -552,7 +610,7 @@
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">nuts</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">(</span><span class="n">logdensity</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
 
-<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;NUTS sampling&quot;</span><span class="p">,</span> <span class="n">print_rate</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">"NUTS sampling"</span><span class="p">,</span> <span class="n">print_rate</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
     <span class="n">_</span><span class="p">,</span> <span class="n">samples</span> <span class="o">=</span> <span class="n">run_inference_algorithm</span><span class="p">(</span>
         <span class="n">rng_key</span><span class="o">=</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
         <span class="n">initial_state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span>
@@ -562,7 +620,7 @@
     <span class="p">)</span>
 
 <span class="n">posterior_mean</span> <span class="o">=</span> <span class="n">samples</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;max |posterior_mean - true_w| =&quot;</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">posterior_mean</span> <span class="o">-</span> <span class="n">true_w</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"max |posterior_mean - true_w| ="</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">posterior_mean</span> <span class="o">-</span> <span class="n">true_w</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
@@ -581,7 +639,7 @@
     <span class="n">integrator</span><span class="o">=</span><span class="n">blackjax</span><span class="o">.</span><span class="n">mcmc</span><span class="o">.</span><span class="n">mclmc</span><span class="o">.</span><span class="n">isokinetic_mclachlan</span>
 <span class="p">)</span>
 
-<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;MCLMC adapt+sample&quot;</span><span class="p">):</span>
+<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">"MCLMC adapt+sample"</span><span class="p">):</span>
     <span class="n">tuned_state</span><span class="p">,</span> <span class="n">mclmc_params</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">mclmc_find_L_and_step_size</span><span class="p">(</span>
         <span class="n">mclmc_kernel</span><span class="o">=</span><span class="n">kernel</span><span class="p">,</span>
         <span class="n">logdensity_fn</span><span class="o">=</span><span class="n">logdensity</span><span class="p">,</span>
@@ -604,7 +662,7 @@
         <span class="n">transform</span><span class="o">=</span><span class="k">lambda</span> <span class="n">st</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">st</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
     <span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;MCLMC max |mean - true_w| =&quot;</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">mclmc_samples</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <span class="n">true_w</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"MCLMC max |mean - true_w| ="</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">mclmc_samples</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <span class="n">true_w</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
@@ -628,10 +686,10 @@
     <span class="k">return</span> <span class="n">st</span><span class="p">,</span> <span class="n">chain_params</span>
 
 
-<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;vmap warmup (</span><span class="si">{</span><span class="n">n_chains</span><span class="si">}</span><span class="s2"> chains)&quot;</span><span class="p">):</span>
+<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">"vmap warmup (</span><span class="si">{</span><span class="n">n_chains</span><span class="si">}</span><span class="s2"> chains)"</span><span class="p">):</span>
     <span class="n">warm_states</span><span class="p">,</span> <span class="n">chain_params</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">warmup_one</span><span class="p">)(</span><span class="n">k_wu</span><span class="p">,</span> <span class="n">init_positions</span><span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Per-chain adapted params shape:&quot;</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">chain_params</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Per-chain adapted params shape:"</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">chain_params</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -654,10 +712,10 @@
     <span class="k">return</span> <span class="n">hist</span>
 
 
-<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;vmap sampling (</span><span class="si">{</span><span class="n">n_chains</span><span class="si">}</span><span class="s2"> chains)&quot;</span><span class="p">):</span>
+<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">"vmap sampling (</span><span class="si">{</span><span class="n">n_chains</span><span class="si">}</span><span class="s2"> chains)"</span><span class="p">):</span>
     <span class="n">mc_chains</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">sample_one</span><span class="p">)(</span><span class="n">k_sm</span><span class="p">,</span> <span class="n">warm_states</span><span class="p">,</span> <span class="n">chain_params</span><span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Output shape (chains, steps, dim):&quot;</span><span class="p">,</span> <span class="n">mc_chains</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Output shape (chains, steps, dim):"</span><span class="p">,</span> <span class="n">mc_chains</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -678,9 +736,9 @@
 
 <span class="n">hmc_parameters</span> <span class="o">=</span> <span class="n">extend_params</span><span class="p">(</span>
     <span class="p">{</span>
-        <span class="s2">&quot;step_size&quot;</span><span class="p">:</span> <span class="mf">1e-2</span><span class="p">,</span>
-        <span class="s2">&quot;inverse_mass_matrix&quot;</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">DIM</span><span class="p">),</span>
-        <span class="s2">&quot;num_integration_steps&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="s2">"step_size"</span><span class="p">:</span> <span class="mf">1e-2</span><span class="p">,</span>
+        <span class="s2">"inverse_mass_matrix"</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">DIM</span><span class="p">),</span>
+        <span class="s2">"num_integration_steps"</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
     <span class="p">}</span>
 <span class="p">)</span>
 
@@ -705,11 +763,11 @@
     <span class="k">return</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">st</span><span class="p">),</span> <span class="n">info</span>
 
 
-<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;tempered SMC (</span><span class="si">{</span><span class="n">num_tempering</span><span class="si">}</span><span class="s2"> temps)&quot;</span><span class="p">):</span>
+<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">"tempered SMC (</span><span class="si">{</span><span class="n">num_tempering</span><span class="si">}</span><span class="s2"> temps)"</span><span class="p">):</span>
     <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">smc_final</span><span class="p">),</span> <span class="n">_</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">smc_step</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">smc_state</span><span class="p">),</span> <span class="n">lambda_schedule</span><span class="p">)</span>
 
 <span class="n">smc_mean</span> <span class="o">=</span> <span class="n">smc_final</span><span class="o">.</span><span class="n">particles</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;SMC  max |particle mean - true_w| =&quot;</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">smc_mean</span> <span class="o">-</span> <span class="n">true_w</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"SMC  max |particle mean - true_w| ="</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">smc_mean</span> <span class="o">-</span> <span class="n">true_w</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
@@ -722,7 +780,7 @@
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span>
-    <span class="n">label</span><span class="o">=</span><span class="s2">&quot;file-backed&quot;</span><span class="p">,</span> <span class="n">output_file</span><span class="o">=</span><span class="s2">&quot;/tmp/bjx_progress.txt&quot;</span><span class="p">,</span> <span class="n">print_rate</span><span class="o">=</span><span class="mi">1</span>
+    <span class="n">label</span><span class="o">=</span><span class="s2">"file-backed"</span><span class="p">,</span> <span class="n">output_file</span><span class="o">=</span><span class="s2">"/tmp/bjx_progress.txt"</span><span class="p">,</span> <span class="n">print_rate</span><span class="o">=</span><span class="mi">1</span>
 <span class="p">):</span>
     <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">run_inference_algorithm</span><span class="p">(</span>
         <span class="n">rng_key</span><span class="o">=</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">6</span><span class="p">),</span>
@@ -761,11 +819,11 @@ jaxtap bakes a module-level singleton (<code class="docutils literal notranslate
 <span class="p">)</span>
 
 <span class="c1"># Context 1: traces the function, bakes _dynamic_router</span>
-<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;chain 1 (traces)&quot;</span><span class="p">):</span>
+<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">"chain 1 (traces)"</span><span class="p">):</span>
     <span class="n">_</span> <span class="o">=</span> <span class="n">sample_jitted</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">7</span><span class="p">))</span>
 
-<span class="c1"># Context 2: cache hit → _dynamic_router routes to ctx2&#39;s recorder → bar works</span>
-<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;chain 2 (cache hit → bar works)&quot;</span><span class="p">):</span>
+<span class="c1"># Context 2: cache hit → _dynamic_router routes to ctx2's recorder → bar works</span>
+<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">"chain 2 (cache hit → bar works)"</span><span class="p">):</span>
     <span class="n">_</span> <span class="o">=</span> <span class="n">sample_jitted</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">8</span><span class="p">))</span>
 </pre></div>
 </div>
@@ -792,15 +850,15 @@ If a function was JIT-compiled before any <code class="docutils literal notransl
 
 <span class="c1"># Inside a context: 0 events → warning fires.</span>
 <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">w</span><span class="p">:</span>
-    <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;always&quot;</span><span class="p">)</span>
-    <span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;pre-compiled (no bar)&quot;</span><span class="p">):</span>
+    <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">"always"</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">"pre-compiled (no bar)"</span><span class="p">):</span>
         <span class="n">_</span> <span class="o">=</span> <span class="n">pre_compiled</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">11</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">w</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Warning (expected):&quot;</span><span class="p">,</span> <span class="n">w</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Warning (expected):"</span><span class="p">,</span> <span class="n">w</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
 
 <span class="c1"># Fix: clear caches to force retrace with the callback baked in.</span>
 <span class="n">jax</span><span class="o">.</span><span class="n">clear_caches</span><span class="p">()</span>
-<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;after clear_caches (bar works)&quot;</span><span class="p">):</span>
+<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">"after clear_caches (bar works)"</span><span class="p">):</span>
     <span class="n">_</span> <span class="o">=</span> <span class="n">pre_compiled</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">12</span><span class="p">))</span>  <span class="c1"># retraced, bar now works</span>
 </pre></div>
 </div>
@@ -813,16 +871,16 @@ If a function was JIT-compiled before any <code class="docutils literal notransl
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Show the leak and recovery</span>
-<span class="n">cm</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;leaked&quot;</span><span class="p">)</span>
+<span class="n">cm</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">"leaked"</span><span class="p">)</span>
 <span class="n">cm</span><span class="o">.</span><span class="fm">__enter__</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Scan is patched:&quot;</span><span class="p">,</span> <span class="s2">&quot;progress_bar&quot;</span> <span class="ow">in</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="vm">__module__</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Scan is patched:"</span><span class="p">,</span> <span class="s2">"progress_bar"</span> <span class="ow">in</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="vm">__module__</span><span class="p">)</span>
 
 <span class="c1"># Recovery: always call __exit__. (We suppress the zero-step UserWarning --</span>
 <span class="c1"># nothing was sampled inside this demonstration context, by design.)</span>
 <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
-    <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="ne">UserWarning</span><span class="p">)</span>
+    <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="ne">UserWarning</span><span class="p">)</span>
     <span class="n">cm</span><span class="o">.</span><span class="fm">__exit__</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Scan is restored:&quot;</span><span class="p">,</span> <span class="s2">&quot;progress_bar&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="vm">__module__</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Scan is restored:"</span><span class="p">,</span> <span class="s2">"progress_bar"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="vm">__module__</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -914,7 +972,7 @@ If a function was JIT-compiled before any <code class="docutils literal notransl
     <i class="fa-solid fa-list"></i> Contents
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
-    <ul class="visible nav section-nav flex-column">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-it-works">How it works</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-model-bayesian-linear-regression">The model: Bayesian linear regression</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-usage-labeled-bar-around-a-warmup">Basic usage: labeled bar around a warmup</a></li>
@@ -979,8 +1037,8 @@ By The Blackjax developers
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
 
   <footer class="bd-footer">
   </footer>

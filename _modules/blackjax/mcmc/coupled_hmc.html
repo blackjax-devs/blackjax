@@ -26,21 +26,21 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=4418a689" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e37d73aa" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
     <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
@@ -48,25 +48,32 @@
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/mcmc/coupled_hmc';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g0c69b5d2f" />
+  <meta name="docsearch:version" content="0.1.dev1+g421add75e" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
   </head>
-  
-  
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
-
+  <body data-default-mode="">
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -92,7 +99,47 @@
 </div>
 
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
     </header>
   
 
@@ -378,11 +425,18 @@
 
 
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div>
 
 
 <button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
@@ -416,18 +470,18 @@
   <h1>Source code for blackjax.mcmc.coupled_hmc</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Copyright 2020- The Blackjax Authors.</span>
 <span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
 <span class="c1"># You may obtain a copy of the License at</span>
 <span class="c1">#</span>
 <span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
 <span class="c1">#</span>
 <span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
-<span class="sd">&quot;&quot;&quot;Two HMC marginals coupled only through their random inputs.</span>
+<span class="sd">"""Two HMC marginals coupled only through their random inputs.</span>
 
 <span class="sd">The pair consists of ordinary HMC transitions with one shared normal</span>
 <span class="sd">innovation and one shared uniform variate.  Each marginal keeps its own</span>
@@ -440,7 +494,7 @@
 
 <span class="sd">Given the same ``(state, standard_normal, uniform)`` triple and per-marginal</span>
 <span class="sd">parameters, each marginal performs the same transition as ordinary HMC.  A</span>
-<span class="sd">shared uniform is compared against each marginal&#39;s own acceptance probability;</span>
+<span class="sd">shared uniform is compared against each marginal's own acceptance probability;</span>
 <span class="sd">it is not a shared decision.</span>
 
 <span class="sd">Mathematical semantics</span>
@@ -458,7 +512,7 @@
 
 <span class="sd">    .. math::</span>
 
-<span class="sd">        z&#39; = z - 2 e (e^\\top z)</span>
+<span class="sd">        z' = z - 2 e (e^\\top z)</span>
 
 <span class="sd">    For unit ``e`` independent of ``z``, this orthogonal reflection preserves</span>
 <span class="sd">    the normal law exactly in mathematics (floating-point normalization is</span>
@@ -467,7 +521,7 @@
 <span class="sd">    ``e`` comes from ``direction_fn``, fixed at build time and applied to the</span>
 <span class="sd">    incoming states and first metric only; it receives no innovations and must</span>
 <span class="sd">    be pure in those arguments.  The default direction is the</span>
-<span class="sd">    difference of the two positions whitened by the **first** marginal&#39;s</span>
+<span class="sd">    difference of the two positions whitened by the **first** marginal's</span>
 <span class="sd">    metric, :math:`e \\propto A^{-1}(x_1 - x_2)`.  That particular choice is a</span>
 <span class="sd">    heuristic.  With different metrics it remains only a first-metric-based</span>
 <span class="sd">    direction with no claimed property for the pair, and a zero direction is</span>
@@ -478,7 +532,7 @@
 
 <span class="sd">Each marginal accepts with probability :math:`\\min(1,e^{\\Delta})`, comparing</span>
 <span class="sd">the supplied uniform directly.  This is distributionally equivalent to</span>
-<span class="sd">ordinary HMC&#39;s Bernoulli implementation, but not draw-for-draw equivalent.</span>
+<span class="sd">ordinary HMC's Bernoulli implementation, but not draw-for-draw equivalent.</span>
 
 <span class="sd">Usage</span>
 <span class="sd">-----</span>
@@ -497,12 +551,12 @@
 <span class="sd">        step_size=(0.1, 0.1),</span>
 <span class="sd">        inverse_mass_matrix=(inverse_mass_matrix, inverse_mass_matrix),</span>
 <span class="sd">        num_integration_steps=(10, 10),</span>
-<span class="sd">        coupling=&quot;reflection&quot;,</span>
+<span class="sd">        coupling="reflection",</span>
 <span class="sd">    )</span>
 <span class="sd">    state = algorithm.init((position_one, position_two))</span>
 <span class="sd">    state, info = algorithm.step(rng_key, state)</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Sequence</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
@@ -517,19 +571,19 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;CoupledHMCState&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;CoupledHMCInfo&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;init&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;as_top_level_api&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;validate_marginal_inputs&quot;</span><span class="p">,</span>
+    <span class="s2">"CoupledHMCState"</span><span class="p">,</span>
+    <span class="s2">"CoupledHMCInfo"</span><span class="p">,</span>
+    <span class="s2">"init"</span><span class="p">,</span>
+    <span class="s2">"build_kernel"</span><span class="p">,</span>
+    <span class="s2">"as_top_level_api"</span><span class="p">,</span>
+    <span class="s2">"validate_marginal_inputs"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
 <div class="viewcode-block" id="CoupledHMCState">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.CoupledHMCState">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CoupledHMCState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pair of HMC states, each with its own caches.</span>
+<span class="w">    </span><span class="sd">"""Pair of HMC states, each with its own caches.</span>
 
 <span class="sd">    Each marginal retains its own position and cached</span>
 <span class="sd">    ``logdensity``/``logdensity_grad``.</span>
@@ -539,7 +593,7 @@
 <span class="sd">    second</span>
 <span class="sd">        State of the second marginal chain.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="CoupledHMCState.first">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.CoupledHMCState.first">[docs]</a>
@@ -555,7 +609,7 @@
 <div class="viewcode-block" id="CoupledHMCInfo">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.CoupledHMCInfo">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CoupledHMCInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Per-marginal transition information and the shared random inputs.</span>
+<span class="w">    </span><span class="sd">"""Per-marginal transition information and the shared random inputs.</span>
 
 <span class="sd">    ``first`` and ``second`` retain complete, separate HMC diagnostics.</span>
 
@@ -573,7 +627,7 @@
 <span class="sd">        Uniform shared by both tests; each marginal compares it with its own</span>
 <span class="sd">        acceptance probability.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="CoupledHMCInfo.first">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.CoupledHMCInfo.first">[docs]</a>
@@ -604,83 +658,83 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_as_pair</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Require an explicit two-element pair.</span>
+<span class="w">    </span><span class="sd">"""Require an explicit two-element pair.</span>
 
 <span class="sd">    Nothing is broadcast: shared values must be written ``(value, value)``.</span>
 <span class="sd">    Inferring pairs is ambiguous because positions and metrics can themselves</span>
 <span class="sd">    be tuples, so a bare value raises ``TypeError``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">value</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
     <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must be an explicit (first, second) pair. Pass &quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;`(</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">)` when both marginals share a value.&quot;</span>
+        <span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must be an explicit (first, second) pair. Pass "</span>
+        <span class="sa">f</span><span class="s2">"`(</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">)` when both marginals share a value."</span>
     <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_check_metric_kind</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Accept fixed Euclidean diagonal, dense, or low-rank metrics only.</span>
+<span class="w">    </span><span class="sd">"""Accept fixed Euclidean diagonal, dense, or low-rank metrics only.</span>
 
 <span class="sd">    Callable/Riemannian and pre-built ``Metric`` inputs are rejected because</span>
 <span class="sd">    their momentum scaling cannot be verified.  This static check does no</span>
 <span class="sd">    conversion or tracing; numerical checks are in</span>
 <span class="sd">    :func:`validate_marginal_inputs`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">metrics</span><span class="o">.</span><span class="n">LowRankInverseMassMatrix</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">inverse_mass_matrix</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">metrics</span><span class="o">.</span><span class="n">Metric</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-            <span class="s2">&quot;coupled_hmc does not accept a pre-built Metric; pass a diagonal &quot;</span>
-            <span class="s2">&quot;array, a dense array, or a LowRankInverseMassMatrix.&quot;</span>
+            <span class="s2">"coupled_hmc does not accept a pre-built Metric; pass a diagonal "</span>
+            <span class="s2">"array, a dense array, or a LowRankInverseMassMatrix."</span>
         <span class="p">)</span>
     <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-            <span class="s2">&quot;coupled_hmc does not accept a callable (Riemannian) metric; the &quot;</span>
-            <span class="s2">&quot;coupling is defined for fixed Gaussian Euclidean metrics only.&quot;</span>
+            <span class="s2">"coupled_hmc does not accept a callable (Riemannian) metric; the "</span>
+            <span class="s2">"coupling is defined for fixed Gaussian Euclidean metrics only."</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">inverse_mass_matrix</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_flat_position</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Flatten a position, requiring one nonempty real floating dtype.</span>
+<span class="w">    </span><span class="sd">"""Flatten a position, requiring one nonempty real floating dtype.</span>
 
 <span class="sd">    This uses the effective dtype after ``jnp.asarray`` rather than the</span>
 <span class="sd">    declared dtype (the opposite of :func:`_check_innovations`, which protects</span>
 <span class="sd">    supplied Metropolis innovations from silent narrowing).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">leaves</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">leaves</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">leaves</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;positions must have at least one array leaf&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">"positions must have at least one array leaf"</span><span class="p">)</span>
     <span class="n">dtypes</span> <span class="o">=</span> <span class="p">{</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">leaf</span><span class="p">)</span><span class="o">.</span><span class="n">dtype</span> <span class="k">for</span> <span class="n">leaf</span> <span class="ow">in</span> <span class="n">leaves</span><span class="p">}</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dtypes</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;all position leaves must share one floating dtype, got </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span><span class="w"> </span><span class="n">dtypes</span><span class="p">))</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">"all position leaves must share one floating dtype, got </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span><span class="w"> </span><span class="n">dtypes</span><span class="p">))</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
     <span class="n">flat</span><span class="p">,</span> <span class="n">unravel</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">jnp</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">flat</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">floating</span><span class="p">)</span> <span class="ow">or</span> <span class="n">flat</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;positions must have nonempty real floating coordinates&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">"positions must have nonempty real floating coordinates"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">flat</span><span class="p">,</span> <span class="n">unravel</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_check_paired_positions</span><span class="p">(</span><span class="n">first_position</span><span class="p">,</span> <span class="n">second_position</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Require identical tree structure, leaf shapes and dtype across the pair.</span>
+<span class="w">    </span><span class="sd">"""Require identical tree structure, leaf shapes and dtype across the pair.</span>
 
 <span class="sd">    Dtype means effective dtype after conversion, as in</span>
 <span class="sd">    :func:`_flat_position`; declared dtypes need not match under default JAX</span>
 <span class="sd">    narrowing.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">first_structure</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">structure</span><span class="p">(</span><span class="n">first_position</span><span class="p">)</span>
     <span class="n">second_structure</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">structure</span><span class="p">(</span><span class="n">second_position</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">first_structure</span> <span class="o">!=</span> <span class="n">second_structure</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;paired positions must share one pytree structure, got &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">first_structure</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">second_structure</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="s2">"paired positions must share one pytree structure, got "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">first_structure</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">second_structure</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
     <span class="c1"># Per-leaf shapes, not merely equal flattened size.  Two positions can share</span>
     <span class="c1"># a tree structure and a total size while splitting it differently -- say</span>
-    <span class="c1"># {&quot;a&quot;: (2,), &quot;b&quot;: (3,)} against {&quot;a&quot;: (3,), &quot;b&quot;: (2,)}.  This enforces the</span>
+    <span class="c1"># {"a": (2,), "b": (3,)} against {"a": (3,), "b": (2,)}.  This enforces the</span>
     <span class="c1"># documented contract that the pair has matching leaf shapes.  Each marginal</span>
     <span class="c1"># would still be individually valid in that situation, since each unravels</span>
     <span class="c1"># the flat innovation consistently with its own position; what breaks is the</span>
@@ -695,57 +749,57 @@
     <span class="p">):</span>
         <span class="k">if</span> <span class="n">jnp</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">first_leaf</span><span class="p">)</span> <span class="o">!=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">second_leaf</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;paired positions must have matching leaf shapes, leaf &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2"> has </span><span class="si">{</span><span class="n">jnp</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">first_leaf</span><span class="p">)</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">jnp</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">second_leaf</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="s2">"paired positions must have matching leaf shapes, leaf "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2"> has </span><span class="si">{</span><span class="n">jnp</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">first_leaf</span><span class="p">)</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">jnp</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">second_leaf</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
     <span class="n">first_flat</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_flat_position</span><span class="p">(</span><span class="n">first_position</span><span class="p">)</span>
     <span class="n">second_flat</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_flat_position</span><span class="p">(</span><span class="n">second_position</span><span class="p">)</span>
     <span class="c1"># No separate flat-shape check: equal tree structure with equal per-leaf</span>
     <span class="c1"># shapes already implies equal flattened shape.</span>
     <span class="c1"># Effective dtype, per `_flat_position`: this compares what the positions</span>
-    <span class="c1"># become in the computation, not what the caller&#39;s objects declared.</span>
+    <span class="c1"># become in the computation, not what the caller's objects declared.</span>
     <span class="k">if</span> <span class="n">first_flat</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="n">second_flat</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-            <span class="s2">&quot;paired positions must have matching floating dtypes, got &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">first_flat</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">second_flat</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="s2">"paired positions must have matching floating dtypes, got "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">first_flat</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">second_flat</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_declared_dtype</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The dtype the value itself declares, or ``None`` if it declares none.</span>
+<span class="w">    </span><span class="sd">"""The dtype the value itself declares, or ``None`` if it declares none.</span>
 
 <span class="sd">    A NumPy or JAX array carries a dtype and is therefore making a claim about</span>
 <span class="sd">    its precision.  A bare Python ``float`` or ``int`` carries none and is</span>
 <span class="sd">    weakly typed, exactly as elsewhere in JAX, so it is adopted into the</span>
 <span class="sd">    position dtype rather than refused.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;weak_type&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
-        <span class="c1"># JAX&#39;s own weak-typing flag. A weakly typed array is adopted into the</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">"weak_type"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="c1"># JAX's own weak-typing flag. A weakly typed array is adopted into the</span>
         <span class="c1"># surrounding dtype everywhere else in JAX, so refusing it here would</span>
         <span class="c1"># contradict the convention this function claims to follow.</span>
         <span class="k">return</span> <span class="kc">None</span>
-    <span class="n">dtype</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;dtype&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">dtype</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">"dtype"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">dtype</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_declared_shape</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The shape of the value as given, without converting it.</span>
+<span class="w">    </span><span class="sd">"""The shape of the value as given, without converting it.</span>
 
 <span class="sd">    ``np.shape`` rather than a ``.shape`` attribute lookup: the attribute is</span>
 <span class="sd">    absent on a plain Python list, which would then be reported as a scalar,</span>
 <span class="sd">    slip past the shape check, and fail later inside ``float()`` with a message</span>
 <span class="sd">    that never names the argument.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_metric_dimension</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The dimension the metric is defined on, from static shapes only.</span>
+<span class="w">    </span><span class="sd">"""The dimension the metric is defined on, from static shapes only.</span>
 
 <span class="sd">    Read from shapes rather than values, so it is safe on tracers. Returns</span>
 <span class="sd">    ``None`` when the shape is not one of the supported forms, leaving the</span>
 <span class="sd">    existing kind checks to speak.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">metrics</span><span class="o">.</span><span class="n">LowRankInverseMassMatrix</span><span class="p">):</span>
         <span class="n">shape</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="o">.</span><span class="n">sigma</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">None</span>
@@ -754,35 +808,35 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_check_innovations</span><span class="p">(</span><span class="n">standard_normal</span><span class="p">,</span> <span class="n">uniform</span><span class="p">,</span> <span class="n">flat_position</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Require prescribed innovations to match the position shape and dtype.</span>
+<span class="w">    </span><span class="sd">"""Require prescribed innovations to match the position shape and dtype.</span>
 
 <span class="sd">    Inputs are inspected before conversion: strong array dtypes must match</span>
 <span class="sd">    exactly (no silent narrowing), while weak Python or JAX scalar arrays adopt</span>
 <span class="sd">    the position dtype.  For concrete values, shapes, finiteness, and the</span>
-<span class="sd">    uniform&#39;s ``[0, 1)`` domain are checked; traced values remain the kernel&#39;s</span>
+<span class="sd">    uniform's ``[0, 1)`` domain are checked; traced values remain the kernel's</span>
 <span class="sd">    responsibility.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">_declared_shape</span><span class="p">(</span><span class="n">standard_normal</span><span class="p">)</span> <span class="o">!=</span> <span class="n">flat_position</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;`standard_normal` must be a flat vector matching the position, got &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_declared_shape</span><span class="p">(</span><span class="n">standard_normal</span><span class="p">)</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">flat_position</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="s2">"`standard_normal` must be a flat vector matching the position, got "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_declared_shape</span><span class="p">(</span><span class="n">standard_normal</span><span class="p">)</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">flat_position</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
     <span class="n">declared</span> <span class="o">=</span> <span class="n">_declared_dtype</span><span class="p">(</span><span class="n">standard_normal</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">declared</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">declared</span> <span class="o">!=</span> <span class="n">flat_position</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-            <span class="s2">&quot;`standard_normal` must declare the position&#39;s effective dtype &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;exactly (no narrowing), got </span><span class="si">{</span><span class="n">declared</span><span class="si">}</span><span class="s2">, expected &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">flat_position</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="s2">"`standard_normal` must declare the position's effective dtype "</span>
+            <span class="sa">f</span><span class="s2">"exactly (no narrowing), got </span><span class="si">{</span><span class="n">declared</span><span class="si">}</span><span class="s2">, expected "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">flat_position</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
     <span class="k">if</span> <span class="n">_declared_shape</span><span class="p">(</span><span class="n">uniform</span><span class="p">)</span> <span class="o">!=</span> <span class="p">():</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;`uniform` must be a scalar, got shape </span><span class="si">{</span><span class="n">_declared_shape</span><span class="p">(</span><span class="n">uniform</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">"`uniform` must be a scalar, got shape </span><span class="si">{</span><span class="n">_declared_shape</span><span class="p">(</span><span class="n">uniform</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
     <span class="n">declared</span> <span class="o">=</span> <span class="n">_declared_dtype</span><span class="p">(</span><span class="n">uniform</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">declared</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">declared</span> <span class="o">!=</span> <span class="n">flat_position</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-            <span class="s2">&quot;`uniform` must declare the position&#39;s effective dtype exactly &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;(no narrowing), got </span><span class="si">{</span><span class="n">declared</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">flat_position</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="s2">"`uniform` must declare the position's effective dtype exactly "</span>
+            <span class="sa">f</span><span class="s2">"(no narrowing), got </span><span class="si">{</span><span class="n">declared</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">flat_position</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
 
     <span class="c1"># A uniform outside [0, 1) is refused, never clipped and never allowed to</span>
@@ -795,61 +849,61 @@
         <span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">uniform</span><span class="p">,</span> <span class="n">flat_position</span><span class="o">.</span><span class="n">dtype</span><span class="p">))</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="mf">0.0</span> <span class="o">&lt;=</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;`uniform` must lie in [0, 1) in the position dtype, got </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">. &quot;</span>
-                <span class="s2">&quot;It is not clipped, because a clipped uniform would silently &quot;</span>
-                <span class="s2">&quot;become an ordinary rejection.&quot;</span>
+                <span class="sa">f</span><span class="s2">"`uniform` must lie in [0, 1) in the position dtype, got </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">. "</span>
+                <span class="s2">"It is not clipped, because a clipped uniform would silently "</span>
+                <span class="s2">"become an ordinary rejection."</span>
             <span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">standard_normal</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Tracer</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">bool</span><span class="p">(</span>
         <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">standard_normal</span><span class="p">)))</span>
     <span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`standard_normal` must be finite&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`standard_normal` must be finite"</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_concrete_real_scalar</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read a concrete finite real scalar; reject tracers and non-scalars.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Read a concrete finite real scalar; reject tracers and non-scalars."""</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Tracer</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must be concrete here -- a traced value cannot be checked &quot;</span>
-            <span class="s2">&quot;eagerly. Use `build_kernel`, which performs no eager validation.&quot;</span>
+            <span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must be concrete here -- a traced value cannot be checked "</span>
+            <span class="s2">"eagerly. Use `build_kernel`, which performs no eager validation."</span>
         <span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">bool</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">bool_</span><span class="p">)):</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must be a real number, not a boolean&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must be a real number, not a boolean"</span><span class="p">)</span>
     <span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">array</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must be a scalar, got shape </span><span class="si">{</span><span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must be a scalar, got shape </span><span class="si">{</span><span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">array</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">bool_</span> <span class="ow">or</span> <span class="ow">not</span> <span class="p">(</span>
         <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">)</span>
         <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">)</span>
     <span class="p">):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must have a real floating or integer dtype, got </span><span class="si">{</span><span class="n">array</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must have a real floating or integer dtype, got </span><span class="si">{</span><span class="n">array</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">array</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must be finite, got </span><span class="si">{</span><span class="n">array</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must be finite, got </span><span class="si">{</span><span class="n">array</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_concrete_integer_scalar</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read a concrete integer scalar without truncating floating inputs.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Read a concrete integer scalar without truncating floating inputs."""</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Tracer</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must be concrete here -- a traced value cannot be checked &quot;</span>
-            <span class="s2">&quot;eagerly. Use `build_kernel`, which performs no eager validation.&quot;</span>
+            <span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must be concrete here -- a traced value cannot be checked "</span>
+            <span class="s2">"eagerly. Use `build_kernel`, which performs no eager validation."</span>
         <span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">bool</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">bool_</span><span class="p">)):</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must be an integer, not a boolean&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must be an integer, not a boolean"</span><span class="p">)</span>
     <span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">array</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must be a scalar, got shape </span><span class="si">{</span><span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must be a scalar, got shape </span><span class="si">{</span><span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must have an integer dtype, got </span><span class="si">{</span><span class="n">array</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must have an integer dtype, got </span><span class="si">{</span><span class="n">array</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="validate_marginal_inputs">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.validate_marginal_inputs">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">validate_marginal_inputs</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Eagerly validate one marginal&#39;s concrete metric and settings.</span>
+<span class="w">    </span><span class="sd">"""Eagerly validate one marginal's concrete metric and settings.</span>
 
 <span class="sd">    Checks use NumPy on concrete host values and are absent from the traced</span>
 <span class="sd">    kernel.  Passing them validates only the values supplied now; callers using</span>
@@ -861,29 +915,29 @@
 <span class="sd">        If the metric is not a supported kind, is not finite, is not positive</span>
 <span class="sd">        definite, or the integration settings are not positive and finite.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">inverse_mass_matrix</span> <span class="o">=</span> <span class="n">_check_metric_kind</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">_concrete_real_scalar</span><span class="p">(</span><span class="n">step_size</span><span class="p">,</span> <span class="s2">&quot;step_size&quot;</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`step_size` must be positive&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">_concrete_integer_scalar</span><span class="p">(</span><span class="n">num_integration_steps</span><span class="p">,</span> <span class="s2">&quot;num_integration_steps&quot;</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`num_integration_steps` must be positive&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">_concrete_real_scalar</span><span class="p">(</span><span class="n">step_size</span><span class="p">,</span> <span class="s2">"step_size"</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`step_size` must be positive"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">_concrete_integer_scalar</span><span class="p">(</span><span class="n">num_integration_steps</span><span class="p">,</span> <span class="s2">"num_integration_steps"</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`num_integration_steps` must be positive"</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">metrics</span><span class="o">.</span><span class="n">LowRankInverseMassMatrix</span><span class="p">):</span>
         <span class="n">sigma</span><span class="p">,</span> <span class="n">basis</span><span class="p">,</span> <span class="n">eigenvalues</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">inverse_mass_matrix</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">sigma</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">sigma</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`sigma` must be a nonempty vector&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`sigma` must be a nonempty vector"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">basis</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">basis</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">sigma</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`U` must have shape (dimension, rank)&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`U` must have shape (dimension, rank)"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">eigenvalues</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="n">basis</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`lam` must have shape (rank,)&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`lam` must have shape (rank,)"</span><span class="p">)</span>
         <span class="n">arrays</span> <span class="o">=</span> <span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="n">basis</span><span class="p">,</span> <span class="n">eigenvalues</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">arrays</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;metric arrays must have real floating dtypes&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">"metric arrays must have real floating dtypes"</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">arrays</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;metric arrays must be finite&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"metric arrays must be finite"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">sigma</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">eigenvalues</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`sigma` and `lam` must be positive&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`sigma` and `lam` must be positive"</span><span class="p">)</span>
         <span class="n">tolerance</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">arrays</span><span class="p">)</span>
         <span class="c1"># Columns with an eigenvalue of exactly one are neutral, so only the</span>
         <span class="c1"># active columns need to be orthonormal.</span>
@@ -895,33 +949,33 @@
             <span class="n">rtol</span><span class="o">=</span><span class="n">tolerance</span><span class="p">,</span>
         <span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;active `U` columns must be orthonormal; lam=1 columns are neutral&quot;</span>
+                <span class="s2">"active `U` columns must be orthonormal; lam=1 columns are neutral"</span>
             <span class="p">)</span>
         <span class="k">return</span>
 
     <span class="n">matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;the inverse mass matrix must have a real floating dtype&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">"the inverse mass matrix must have a real floating dtype"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">matrix</span><span class="o">.</span><span class="n">ndim</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">matrix</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;the inverse mass matrix must be a nonempty vector or square matrix&quot;</span>
+            <span class="s2">"the inverse mass matrix must be a nonempty vector or square matrix"</span>
         <span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">matrix</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;the inverse mass matrix must be finite&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"the inverse mass matrix must be finite"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">matrix</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">matrix</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;a diagonal inverse mass matrix must be positive&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"a diagonal inverse mass matrix must be positive"</span><span class="p">)</span>
         <span class="k">return</span>
     <span class="k">if</span> <span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;a dense inverse mass matrix must be square&quot;</span><span class="p">)</span>
-    <span class="c1"># Do not silently symmetrize a caller&#39;s kinetic energy.</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"a dense inverse mass matrix must be square"</span><span class="p">)</span>
+    <span class="c1"># Do not silently symmetrize a caller's kinetic energy.</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">array_equal</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">matrix</span><span class="o">.</span><span class="n">T</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;a dense inverse mass matrix must be exactly symmetric&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"a dense inverse mass matrix must be exactly symmetric"</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">matrix</span><span class="p">)</span>
     <span class="k">except</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">LinAlgError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;a dense inverse mass matrix must be positive definite&quot;</span>
+            <span class="s2">"a dense inverse mass matrix must be positive definite"</span>
         <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">error</span></div>
 
 
@@ -932,7 +986,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_uniform_binomial_sampling</span><span class="p">(</span><span class="n">uniform</span><span class="p">,</span> <span class="n">log_p_accept</span><span class="p">,</span> <span class="n">proposal</span><span class="p">,</span> <span class="n">new_proposal</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Accept or reject using a supplied uniform rather than a key.</span>
+<span class="w">    </span><span class="sd">"""Accept or reject using a supplied uniform rather than a key.</span>
 
 <span class="sd">    This is :func:`~blackjax.mcmc.proposal.static_binomial_sampling` with the</span>
 <span class="sd">    Bernoulli draw replaced by a comparison against a uniform the caller</span>
@@ -946,7 +1000,7 @@
 <span class="sd">    where ``log_p_accept`` is ``-inf``) always rejects, and ``p_accept == 1``</span>
 <span class="sd">    always accepts.  The value is never clipped, so an out-of-domain uniform</span>
 <span class="sd">    is not quietly converted into an ordinary Metropolis rejection.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">p_accept</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_p_accept</span><span class="p">),</span> <span class="nb">max</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">do_accept</span> <span class="o">=</span> <span class="n">uniform</span> <span class="o">&lt;</span> <span class="n">p_accept</span>
     <span class="n">info</span> <span class="o">=</span> <span class="n">do_accept</span><span class="p">,</span> <span class="n">p_accept</span><span class="p">,</span> <span class="n">log_p_accept</span>
@@ -968,7 +1022,7 @@
     <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build one marginal whose randomness is supplied rather than drawn.</span>
+<span class="w">    </span><span class="sd">"""Build one marginal whose randomness is supplied rather than drawn.</span>
 
 <span class="sd">    Returns ``(metric, step)`` where</span>
 <span class="sd">    ``step(state, standard_normal, uniform) -&gt; (HMCState, HMCInfo)`` is a pure</span>
@@ -978,9 +1032,9 @@
 <span class="sd">    trans=False)``, which is precisely the map ``Metric.sample_momentum``</span>
 <span class="sd">    applies to a standard normal for the three supported Euclidean metric</span>
 <span class="sd">    kinds.  Externalising the draw therefore leaves the marginal momentum law</span>
-<span class="sd">    unchanged; the remainder of the transition is BlackJAX&#39;s own trajectory,</span>
+<span class="sd">    unchanged; the remainder of the transition is BlackJAX's own trajectory,</span>
 <span class="sd">    endpoint flip, energy difference and Metropolis test.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">inverse_mass_matrix</span> <span class="o">=</span> <span class="n">_check_metric_kind</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">)</span>
     <span class="n">metric</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">default_metric</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">)</span>
     <span class="n">metric_dimension</span> <span class="o">=</span> <span class="n">_metric_dimension</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">)</span>
@@ -1005,8 +1059,8 @@
         <span class="c1"># later, in a message naming neither the metric nor which marginal.</span>
         <span class="k">if</span> <span class="n">metric_dimension</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">flat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">metric_dimension</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;the inverse mass matrix must have the same dimension as the &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;position, got </span><span class="si">{</span><span class="n">metric_dimension</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">flat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="s2">"the inverse mass matrix must have the same dimension as the "</span>
+                <span class="sa">f</span><span class="s2">"position, got </span><span class="si">{</span><span class="n">metric_dimension</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">flat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
         <span class="n">_check_innovations</span><span class="p">(</span><span class="n">standard_normal</span><span class="p">,</span> <span class="n">uniform</span><span class="p">,</span> <span class="n">flat</span><span class="p">)</span>
         <span class="n">momentum</span> <span class="o">=</span> <span class="n">metric</span><span class="o">.</span><span class="n">scale</span><span class="p">(</span>
@@ -1030,11 +1084,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_reflection_unit</span><span class="p">(</span><span class="n">direction</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize after scaling by the maximum absolute entry.</span>
+<span class="w">    </span><span class="sd">"""Normalize after scaling by the maximum absolute entry.</span>
 
 <span class="sd">    A zero direction remains zero (identity reflection); non-finite entries</span>
 <span class="sd">    propagate rather than becoming a plausible unit vector.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">maximum</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">direction</span><span class="p">))</span>
     <span class="n">scaled</span> <span class="o">=</span> <span class="n">direction</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">maximum</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">maximum</span><span class="p">)</span>
     <span class="n">norm</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">scaled</span><span class="p">)</span>
@@ -1042,7 +1096,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_reflect</span><span class="p">(</span><span class="n">standard_normal</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">unit</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reflect ``standard_normal`` in the hyperplane orthogonal to ``unit``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Reflect ``standard_normal`` in the hyperplane orthogonal to ``unit``."""</span>
     <span class="k">return</span> <span class="n">standard_normal</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">unit</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="n">standard_normal</span><span class="p">)</span>
 
 
@@ -1051,11 +1105,11 @@
     <span class="n">second_state</span><span class="p">:</span> <span class="n">hmc</span><span class="o">.</span><span class="n">HMCState</span><span class="p">,</span>
     <span class="n">first_metric</span><span class="p">:</span> <span class="n">metrics</span><span class="o">.</span><span class="n">Metric</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the first-metric-whitened position difference in flat space.</span>
+<span class="w">    </span><span class="sd">"""Return the first-metric-whitened position difference in flat space.</span>
 
 <span class="sd">    Only the first metric is used; a policy needing the second can close over</span>
 <span class="sd">    it.  No property is claimed for pairs with different metrics.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">delta</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
         <span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">a</span> <span class="o">-</span> <span class="n">b</span><span class="p">,</span> <span class="n">first_state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">second_state</span><span class="o">.</span><span class="n">position</span>
     <span class="p">)</span>
@@ -1073,18 +1127,18 @@
     <span class="n">coupling</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">direction_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the deterministic core with prescribed ``(z, u)`` inputs.</span>
+<span class="w">    </span><span class="sd">"""Build the deterministic core with prescribed ``(z, u)`` inputs.</span>
 
 <span class="sd">    It returns ``step(state, standard_normal, uniform)`` and passes</span>
 <span class="sd">    ``direction_fn`` only incoming states and the first metric.  Purity of that</span>
-<span class="sd">    callable remains the caller&#39;s responsibility.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">logdensity_fns</span> <span class="o">=</span> <span class="n">_as_pair</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="s2">&quot;logdensity_fn&quot;</span><span class="p">)</span>
-    <span class="n">step_sizes</span> <span class="o">=</span> <span class="n">_as_pair</span><span class="p">(</span><span class="n">step_size</span><span class="p">,</span> <span class="s2">&quot;step_size&quot;</span><span class="p">)</span>
-    <span class="n">inverse_mass_matrices</span> <span class="o">=</span> <span class="n">_as_pair</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="s2">&quot;inverse_mass_matrix&quot;</span><span class="p">)</span>
-    <span class="n">integration_steps</span> <span class="o">=</span> <span class="n">_as_pair</span><span class="p">(</span><span class="n">num_integration_steps</span><span class="p">,</span> <span class="s2">&quot;num_integration_steps&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">coupling</span> <span class="o">==</span> <span class="s2">&quot;reflection&quot;</span> <span class="ow">and</span> <span class="n">direction_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;reflection coupling requires a direction function&quot;</span><span class="p">)</span>
+<span class="sd">    callable remains the caller's responsibility.</span>
+<span class="sd">    """</span>
+    <span class="n">logdensity_fns</span> <span class="o">=</span> <span class="n">_as_pair</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="s2">"logdensity_fn"</span><span class="p">)</span>
+    <span class="n">step_sizes</span> <span class="o">=</span> <span class="n">_as_pair</span><span class="p">(</span><span class="n">step_size</span><span class="p">,</span> <span class="s2">"step_size"</span><span class="p">)</span>
+    <span class="n">inverse_mass_matrices</span> <span class="o">=</span> <span class="n">_as_pair</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="s2">"inverse_mass_matrix"</span><span class="p">)</span>
+    <span class="n">integration_steps</span> <span class="o">=</span> <span class="n">_as_pair</span><span class="p">(</span><span class="n">num_integration_steps</span><span class="p">,</span> <span class="s2">"num_integration_steps"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">coupling</span> <span class="o">==</span> <span class="s2">"reflection"</span> <span class="ow">and</span> <span class="n">direction_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"reflection coupling requires a direction function"</span><span class="p">)</span>
     <span class="n">measure_direction</span> <span class="o">=</span> <span class="n">direction_fn</span>
 
     <span class="n">first_metric</span><span class="p">,</span> <span class="n">first_step</span> <span class="o">=</span> <span class="n">_build_prescribed_marginal</span><span class="p">(</span>
@@ -1110,24 +1164,24 @@
         <span class="n">_check_paired_positions</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">first</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">second</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
         <span class="n">flat</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_flat_position</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">first</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">coupling</span> <span class="o">==</span> <span class="s2">&quot;reflection&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">coupling</span> <span class="o">==</span> <span class="s2">"reflection"</span><span class="p">:</span>
             <span class="k">assert</span> <span class="n">measure_direction</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>  <span class="c1"># narrowed above</span>
             <span class="n">direction</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
                 <span class="n">measure_direction</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">first</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">second</span><span class="p">,</span> <span class="n">first_metric</span><span class="p">)</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">direction</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">flat</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s2">&quot;`direction_fn` must return a flat direction matching the &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;position, got </span><span class="si">{</span><span class="n">direction</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">flat</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="s2">"`direction_fn` must return a flat direction matching the "</span>
+                    <span class="sa">f</span><span class="s2">"position, got </span><span class="si">{</span><span class="n">direction</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">flat</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span>
                 <span class="p">)</span>
             <span class="k">if</span> <span class="n">direction</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="n">flat</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
                 <span class="c1"># Name the likely cause rather than only the messenger: with</span>
                 <span class="c1"># the default direction this mismatch comes from a metric whose</span>
-                <span class="c1"># dtype differs from the position&#39;s, not from anything the</span>
+                <span class="c1"># dtype differs from the position's, not from anything the</span>
                 <span class="c1"># caller wrote.</span>
                 <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-                    <span class="s2">&quot;the reflection direction must have the position dtype, got &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">direction</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">flat</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="s2">"the reflection direction must have the position dtype, got "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">direction</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">flat</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">"</span>
                 <span class="p">)</span>
             <span class="n">unit</span> <span class="o">=</span> <span class="n">_reflection_unit</span><span class="p">(</span><span class="n">direction</span><span class="p">)</span>
             <span class="n">second_normal</span> <span class="o">=</span> <span class="n">_reflect</span><span class="p">(</span><span class="n">standard_normal</span><span class="p">,</span> <span class="n">unit</span><span class="p">)</span>
@@ -1154,7 +1208,7 @@
 <div class="viewcode-block" id="init">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.init">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">Position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Callable</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">CoupledHMCState</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialize a coupled pair from explicit position and log-density pairs.</span>
+<span class="w">    </span><span class="sd">"""Initialize a coupled pair from explicit position and log-density pairs.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1166,9 +1220,9 @@
 <span class="sd">        An explicit ``(first_logdensity_fn, second_logdensity_fn)`` pair.  The</span>
 <span class="sd">        two may target different distributions.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">positions</span> <span class="o">=</span> <span class="n">_as_pair</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="s2">&quot;position&quot;</span><span class="p">)</span>
-    <span class="n">logdensity_fns</span> <span class="o">=</span> <span class="n">_as_pair</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="s2">&quot;logdensity_fn&quot;</span><span class="p">)</span>
+<span class="sd">    """</span>
+    <span class="n">positions</span> <span class="o">=</span> <span class="n">_as_pair</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="s2">"position"</span><span class="p">)</span>
+    <span class="n">logdensity_fns</span> <span class="o">=</span> <span class="n">_as_pair</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="s2">"logdensity_fn"</span><span class="p">)</span>
     <span class="n">_check_paired_positions</span><span class="p">(</span><span class="o">*</span><span class="n">positions</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">CoupledHMCState</span><span class="p">(</span>
         <span class="n">hmc</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">positions</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">logdensity_fns</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
@@ -1183,10 +1237,10 @@
     <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">integrators</span><span class="o">.</span><span class="n">velocity_verlet</span><span class="p">,</span>
     <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">coupling</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;synchronous&quot;</span><span class="p">,</span>
+    <span class="n">coupling</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"synchronous"</span><span class="p">,</span>
     <span class="n">direction_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a coupled HMC kernel.</span>
+<span class="w">    </span><span class="sd">"""Build a coupled HMC kernel.</span>
 
 <span class="sd">    ``coupling`` and ``direction_fn`` are fixed here, when the kernel is</span>
 <span class="sd">    built, and not at call time.  ``direction_fn`` is applied to the pair of</span>
@@ -1206,11 +1260,11 @@
 <span class="sd">        Energy difference above which a marginal transition is flagged</span>
 <span class="sd">        divergent.  Applied to each marginal separately.</span>
 <span class="sd">    coupling</span>
-<span class="sd">        ``&quot;synchronous&quot;``, which gives both marginals the same standard</span>
-<span class="sd">        normal, or ``&quot;reflection&quot;``, which gives the second marginal a</span>
+<span class="sd">        ``"synchronous"``, which gives both marginals the same standard</span>
+<span class="sd">        normal, or ``"reflection"``, which gives the second marginal a</span>
 <span class="sd">        reflected copy.</span>
 <span class="sd">    direction_fn</span>
-<span class="sd">        Only for ``&quot;reflection&quot;``.  A callable</span>
+<span class="sd">        Only for ``"reflection"``.  A callable</span>
 <span class="sd">        ``(first_state, second_state, first_metric) -&gt; Array`` returning a</span>
 <span class="sd">        flat direction; defaults to :func:`whitened_difference`.</span>
 <span class="sd">        Passing one under synchronous coupling is an error, since it would</span>
@@ -1223,16 +1277,16 @@
 <span class="sd">    CoupledHMCInfo)`` in which every per-marginal parameter is an explicit</span>
 <span class="sd">    ``(first, second)`` pair.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">coupling</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;synchronous&quot;</span><span class="p">,</span> <span class="s2">&quot;reflection&quot;</span><span class="p">):</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">coupling</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"synchronous"</span><span class="p">,</span> <span class="s2">"reflection"</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s1">&#39;`coupling` must be &quot;synchronous&quot; or &quot;reflection&quot;, got </span><span class="si">{</span><span class="n">coupling</span><span class="si">!r}</span><span class="s1">&#39;</span>
+            <span class="sa">f</span><span class="s1">'`coupling` must be "synchronous" or "reflection", got </span><span class="si">{</span><span class="n">coupling</span><span class="si">!r}</span><span class="s1">'</span>
         <span class="p">)</span>
-    <span class="k">if</span> <span class="n">coupling</span> <span class="o">==</span> <span class="s2">&quot;synchronous&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">coupling</span> <span class="o">==</span> <span class="s2">"synchronous"</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">direction_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;synchronous coupling does not use a direction; pass &quot;</span>
-                <span class="s1">&#39;coupling=&quot;reflection&quot; to reflect.&#39;</span>
+                <span class="s2">"synchronous coupling does not use a direction; pass "</span>
+                <span class="s1">'coupling="reflection" to reflect.'</span>
             <span class="p">)</span>
     <span class="k">elif</span> <span class="n">direction_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">direction_fn</span> <span class="o">=</span> <span class="n">whitened_difference</span>
@@ -1245,7 +1299,7 @@
         <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">metrics</span><span class="o">.</span><span class="n">MetricTypes</span><span class="p">],</span>
         <span class="n">num_integration_steps</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">CoupledHMCState</span><span class="p">,</span> <span class="n">CoupledHMCInfo</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Advance a coupled pair by one transition.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Advance a coupled pair by one transition."""</span>
         <span class="n">step</span> <span class="o">=</span> <span class="n">_build_prescribed_pair</span><span class="p">(</span>
             <span class="n">logdensity_fn</span><span class="p">,</span>
             <span class="n">inverse_mass_matrix</span><span class="p">,</span>
@@ -1279,12 +1333,12 @@
     <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">metrics</span><span class="o">.</span><span class="n">MetricTypes</span><span class="p">],</span>
     <span class="n">num_integration_steps</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">coupling</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;synchronous&quot;</span><span class="p">,</span>
+    <span class="n">coupling</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"synchronous"</span><span class="p">,</span>
     <span class="n">direction_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">integrators</span><span class="o">.</span><span class="n">velocity_verlet</span><span class="p">,</span>
     <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a ``SamplingAlgorithm`` for a coupled HMC pair.</span>
+<span class="w">    </span><span class="sd">"""Build a ``SamplingAlgorithm`` for a coupled HMC pair.</span>
 
 <span class="sd">    There is deliberately no top-level ``blackjax.coupled_hmc``; reach this</span>
 <span class="sd">    through ``blackjax.mcmc.coupled_hmc.as_top_level_api``.</span>
@@ -1309,7 +1363,7 @@
 <span class="sd">    num_integration_steps</span>
 <span class="sd">        Pair of integration step counts.</span>
 <span class="sd">    coupling</span>
-<span class="sd">        ``&quot;synchronous&quot;`` or ``&quot;reflection&quot;``; see :func:`build_kernel`.</span>
+<span class="sd">        ``"synchronous"`` or ``"reflection"``; see :func:`build_kernel`.</span>
 <span class="sd">    direction_fn</span>
 <span class="sd">        Reflection direction policy; see :func:`build_kernel`.</span>
 <span class="sd">    integrator</span>
@@ -1319,7 +1373,7 @@
 
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
-<span class="sd">    Each marginal&#39;s concrete metric and integration settings are checked here</span>
+<span class="sd">    Each marginal's concrete metric and integration settings are checked here</span>
 <span class="sd">    by :func:`validate_marginal_inputs`.  Those checks read concrete values on</span>
 <span class="sd">    the host, so they cover the arguments given here and say nothing about</span>
 <span class="sd">    traced values appearing later under ``jit`` or ``vmap``.  Callers who need</span>
@@ -1330,11 +1384,11 @@
 <span class="sd">    -------</span>
 <span class="sd">    A ``SamplingAlgorithm`` whose ``init`` takes a pair of positions.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">step_sizes</span> <span class="o">=</span> <span class="n">_as_pair</span><span class="p">(</span><span class="n">step_size</span><span class="p">,</span> <span class="s2">&quot;step_size&quot;</span><span class="p">)</span>
-    <span class="n">inverse_mass_matrices</span> <span class="o">=</span> <span class="n">_as_pair</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="s2">&quot;inverse_mass_matrix&quot;</span><span class="p">)</span>
-    <span class="n">integration_steps</span> <span class="o">=</span> <span class="n">_as_pair</span><span class="p">(</span><span class="n">num_integration_steps</span><span class="p">,</span> <span class="s2">&quot;num_integration_steps&quot;</span><span class="p">)</span>
-    <span class="n">_as_pair</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="s2">&quot;logdensity_fn&quot;</span><span class="p">)</span>
+<span class="sd">    """</span>
+    <span class="n">step_sizes</span> <span class="o">=</span> <span class="n">_as_pair</span><span class="p">(</span><span class="n">step_size</span><span class="p">,</span> <span class="s2">"step_size"</span><span class="p">)</span>
+    <span class="n">inverse_mass_matrices</span> <span class="o">=</span> <span class="n">_as_pair</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="s2">"inverse_mass_matrix"</span><span class="p">)</span>
+    <span class="n">integration_steps</span> <span class="o">=</span> <span class="n">_as_pair</span><span class="p">(</span><span class="n">num_integration_steps</span><span class="p">,</span> <span class="s2">"num_integration_steps"</span><span class="p">)</span>
+    <span class="n">_as_pair</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="s2">"logdensity_fn"</span><span class="p">)</span>
 
     <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
         <span class="n">validate_marginal_inputs</span><span class="p">(</span>
@@ -1431,8 +1485,8 @@ By The Blackjax developers
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
 
   <footer class="bd-footer">
   </footer>

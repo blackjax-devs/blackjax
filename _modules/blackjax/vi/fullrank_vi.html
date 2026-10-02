@@ -26,21 +26,21 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=4418a689" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e37d73aa" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
     <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
@@ -48,25 +48,32 @@
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/vi/fullrank_vi';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g0c69b5d2f" />
+  <meta name="docsearch:version" content="0.1.dev1+g421add75e" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
   </head>
-  
-  
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
-
+  <body data-default-mode="">
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -92,7 +99,47 @@
 </div>
 
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
     </header>
   
 
@@ -378,11 +425,18 @@
 
 
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div>
 
 
 <button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
@@ -416,14 +470,14 @@
   <h1>Source code for blackjax.vi.fullrank_vi</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Copyright 2020- The Blackjax Authors.</span>
 <span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
 <span class="c1"># You may obtain a copy of the License at</span>
 <span class="c1">#</span>
 <span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
 <span class="c1">#</span>
 <span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
@@ -440,21 +494,21 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.vi._gaussian_vi</span><span class="w"> </span><span class="kn">import</span> <span class="n">KL</span><span class="p">,</span> <span class="n">Objective</span><span class="p">,</span> <span class="n">RenyiAlpha</span><span class="p">,</span> <span class="n">_elbo_step</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;KL&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;RenyiAlpha&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;FRVIState&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;FRVIInfo&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;sample&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;generate_fullrank_logdensity&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;step&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;as_top_level_api&quot;</span><span class="p">,</span>
+    <span class="s2">"KL"</span><span class="p">,</span>
+    <span class="s2">"RenyiAlpha"</span><span class="p">,</span>
+    <span class="s2">"FRVIState"</span><span class="p">,</span>
+    <span class="s2">"FRVIInfo"</span><span class="p">,</span>
+    <span class="s2">"sample"</span><span class="p">,</span>
+    <span class="s2">"generate_fullrank_logdensity"</span><span class="p">,</span>
+    <span class="s2">"step"</span><span class="p">,</span>
+    <span class="s2">"as_top_level_api"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
 <div class="viewcode-block" id="FRVIState">
 <a class="viewcode-back" href="../../../autoapi/blackjax/vi/fullrank_vi/index.html#blackjax.vi.fullrank_vi.FRVIState">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FRVIState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;State of the full-rank VI algorithm.</span>
+<span class="w">    </span><span class="sd">"""State of the full-rank VI algorithm.</span>
 
 <span class="sd">    mu:</span>
 <span class="sd">        Mean of the Gaussian approximation.</span>
@@ -466,7 +520,7 @@
 <span class="sd">    opt_state:</span>
 <span class="sd">        Optax optimizer state.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="FRVIState.mu">
 <a class="viewcode-back" href="../../../autoapi/blackjax/vi/fullrank_vi/index.html#blackjax.vi.fullrank_vi.FRVIState.mu">[docs]</a>
@@ -486,12 +540,12 @@
 <div class="viewcode-block" id="FRVIInfo">
 <a class="viewcode-back" href="../../../autoapi/blackjax/vi/fullrank_vi/index.html#blackjax.vi.fullrank_vi.FRVIInfo">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FRVIInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extra information of the full-rank VI algorithm.</span>
+<span class="w">    </span><span class="sd">"""Extra information of the full-rank VI algorithm.</span>
 
 <span class="sd">    elbo:</span>
 <span class="sd">        ELBO of approximation wrt target distribution.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="FRVIInfo.elbo">
 <a class="viewcode-back" href="../../../autoapi/blackjax/vi/fullrank_vi/index.html#blackjax.vi.fullrank_vi.FRVIInfo.elbo">[docs]</a>
@@ -506,11 +560,11 @@
     <span class="o">*</span><span class="n">optimizer_args</span><span class="p">,</span>
     <span class="o">**</span><span class="n">optimizer_kwargs</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FRVIState</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialize the full-rank VI state with zero mean and identity covariance.</span>
+<span class="w">    </span><span class="sd">"""Initialize the full-rank VI state with zero mean and identity covariance.</span>
 
 <span class="sd">    The Cholesky diagonal is initialized to ``exp(0) = 1``, giving an identity</span>
 <span class="sd">    covariance as the starting approximation.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">mu</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">,</span> <span class="n">position</span><span class="p">)</span>
     <span class="n">dim</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">flatten_util</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">mu</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">chol_params</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">dim</span> <span class="o">*</span> <span class="p">(</span><span class="n">dim</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
@@ -529,12 +583,12 @@
     <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span> <span class="o">=</span> <span class="n">KL</span><span class="p">(),</span>
     <span class="n">stl_estimator</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">FRVIState</span><span class="p">,</span> <span class="n">FRVIInfo</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Approximate the target density using the full-rank Gaussian approximation.</span>
+<span class="w">    </span><span class="sd">"""Approximate the target density using the full-rank Gaussian approximation.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    rng_key</span>
-<span class="sd">        Key for JAX&#39;s pseudo-random number generator.</span>
+<span class="sd">        Key for JAX's pseudo-random number generator.</span>
 <span class="sd">    state</span>
 <span class="sd">        Current state of the full-rank approximation.</span>
 <span class="sd">    logdensity_fn</span>
@@ -560,7 +614,7 @@
 <span class="sd">    info</span>
 <span class="sd">        ``FRVIInfo`` containing the current ELBO value.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">parameters</span> <span class="o">=</span> <span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">chol_params</span><span class="p">)</span>
 
@@ -590,12 +644,12 @@
 <div class="viewcode-block" id="sample">
 <a class="viewcode-back" href="../../../autoapi/blackjax/vi/fullrank_vi/index.html#blackjax.vi.fullrank_vi.sample">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">sample</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">FRVIState</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sample from the full-rank approximation.</span>
+<span class="w">    </span><span class="sd">"""Sample from the full-rank approximation.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    rng_key</span>
-<span class="sd">        Key for JAX&#39;s pseudo-random number generator.</span>
+<span class="sd">        Key for JAX's pseudo-random number generator.</span>
 <span class="sd">    state</span>
 <span class="sd">        Current ``FRVIState``.</span>
 <span class="sd">    num_samples</span>
@@ -606,7 +660,7 @@
 <span class="sd">    Samples from the full-rank Gaussian approximation, as a PyTree with a</span>
 <span class="sd">    leading axis of size ``num_samples``.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">_sample</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">chol_params</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span></div>
 
 
@@ -620,7 +674,7 @@
     <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span> <span class="o">=</span> <span class="n">KL</span><span class="p">(),</span>
     <span class="n">stl_estimator</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;High-level implementation of Full-Rank Variational Inference.</span>
+<span class="w">    </span><span class="sd">"""High-level implementation of Full-Rank Variational Inference.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -642,7 +696,7 @@
 <span class="sd">    -------</span>
 <span class="sd">    A ``VIAlgorithm``.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
@@ -666,7 +720,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_unflatten_cholesky</span><span class="p">(</span><span class="n">chol_params</span><span class="p">,</span> <span class="n">dim</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct the Cholesky factor from a flattened vector of Cholesky parameters.</span>
+<span class="w">    </span><span class="sd">"""Construct the Cholesky factor from a flattened vector of Cholesky parameters.</span>
 
 <span class="sd">    Transforms a flattened vector representation of the Cholesky factor (`chol_params`)</span>
 <span class="sd">    into its proper lower triangular matrix form (`chol_factor`). It specifically</span>
@@ -693,7 +747,7 @@
 <span class="sd">    chol_factor</span>
 <span class="sd">        Cholesky factor of the full-rank covariance matrix.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">tril</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">dim</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span>
     <span class="n">tril</span> <span class="o">=</span> <span class="n">tril</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">jnp</span><span class="o">.</span><span class="n">tril_indices</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">k</span><span class="o">=-</span><span class="mi">1</span><span class="p">)]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">chol_params</span><span class="p">[</span><span class="n">dim</span><span class="p">:])</span>
@@ -705,12 +759,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_sample</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">chol_params</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sample from the full-rank Gaussian approximation of the target distribution.</span>
+<span class="w">    </span><span class="sd">"""Sample from the full-rank Gaussian approximation of the target distribution.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    rng_key</span>
-<span class="sd">        Key for JAX&#39;s pseudo-random number generator.</span>
+<span class="sd">        Key for JAX's pseudo-random number generator.</span>
 <span class="sd">    mu</span>
 <span class="sd">        Mean of the Gaussian approximation.</span>
 <span class="sd">    chol_params</span>
@@ -722,7 +776,7 @@
 <span class="sd">    -------</span>
 <span class="sd">    Samples drawn from the full-rank Gaussian approximation.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">mu_flatten</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">flatten_util</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">mu</span><span class="p">)</span>
     <span class="n">dim</span> <span class="o">=</span> <span class="n">mu_flatten</span><span class="o">.</span><span class="n">size</span>
@@ -735,7 +789,7 @@
 <div class="viewcode-block" id="generate_fullrank_logdensity">
 <a class="viewcode-back" href="../../../autoapi/blackjax/vi/fullrank_vi/index.html#blackjax.vi.fullrank_vi.generate_fullrank_logdensity">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">generate_fullrank_logdensity</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">chol_params</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate the log-density function of a full-rank Gaussian distribution.</span>
+<span class="w">    </span><span class="sd">"""Generate the log-density function of a full-rank Gaussian distribution.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -748,7 +802,7 @@
 <span class="sd">    -------</span>
 <span class="sd">    A function that computes the log-density of the full-rank Gaussian distribution.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="c1"># We compute the log-density directly from the Cholesky factor rather than</span>
     <span class="c1"># using jax.scipy.stats.multivariate_normal.logpdf, which would require</span>
@@ -831,8 +885,8 @@ By The Blackjax developers
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
 
   <footer class="bd-footer">
   </footer>

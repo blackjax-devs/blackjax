@@ -26,21 +26,21 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=4418a689" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e37d73aa" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
     <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
@@ -48,25 +48,32 @@
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/smc/persistent_sampling';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g0c69b5d2f" />
+  <meta name="docsearch:version" content="0.1.dev1+g421add75e" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
   </head>
-  
-  
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
-
+  <body data-default-mode="">
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -92,7 +99,47 @@
 </div>
 
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
     </header>
   
 
@@ -378,11 +425,18 @@
 
 
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div>
 
 
 <button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
@@ -416,14 +470,14 @@
   <h1>Source code for blackjax.smc.persistent_sampling</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Copyright 2020- The Blackjax Authors.</span>
 <span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
 <span class="c1"># You may obtain a copy of the License at</span>
 <span class="c1">#</span>
 <span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
 <span class="c1">#</span>
 <span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
@@ -442,24 +496,24 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;PersistentSMCState&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;PersistentStateInfo&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;init&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;remove_padding&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;compute_log_Z&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;compute_log_persistent_weights&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;resample_from_persistent&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;compute_persistent_ess&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;step&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;as_top_level_api&quot;</span><span class="p">,</span>
+    <span class="s2">"PersistentSMCState"</span><span class="p">,</span>
+    <span class="s2">"PersistentStateInfo"</span><span class="p">,</span>
+    <span class="s2">"init"</span><span class="p">,</span>
+    <span class="s2">"remove_padding"</span><span class="p">,</span>
+    <span class="s2">"compute_log_Z"</span><span class="p">,</span>
+    <span class="s2">"compute_log_persistent_weights"</span><span class="p">,</span>
+    <span class="s2">"resample_from_persistent"</span><span class="p">,</span>
+    <span class="s2">"compute_persistent_ess"</span><span class="p">,</span>
+    <span class="s2">"step"</span><span class="p">,</span>
+    <span class="s2">"build_kernel"</span><span class="p">,</span>
+    <span class="s2">"as_top_level_api"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
 <div class="viewcode-block" id="PersistentSMCState">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.PersistentSMCState">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PersistentSMCState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;State of the Persistent Sampling algorithm.</span>
+<span class="w">    </span><span class="sd">"""State of the Persistent Sampling algorithm.</span>
 
 <span class="sd">    Contains all particles from all iterations, their weights,</span>
 <span class="sd">    log-likelihoods, log normalizing constants, tempering parameters and an</span>
@@ -507,7 +561,7 @@
 <span class="sd">        calculated before sampling the new particles.</span>
 <span class="sd">    num_particles: int</span>
 <span class="sd">        Number of particles.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="PersistentSMCState.persistent_particles">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.PersistentSMCState.persistent_particles">[docs]</a>
@@ -534,7 +588,7 @@
 <div class="viewcode-block" id="PersistentSMCState.particles">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.PersistentSMCState.particles">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">particles</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayLikeTree</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Particles in current iteration.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Particles in current iteration."""</span>
         <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">iteration</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">persistent_particles</span><span class="p">)</span></div>
 
 
@@ -542,7 +596,7 @@
 <div class="viewcode-block" id="PersistentSMCState.tempering_param">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.PersistentSMCState.tempering_param">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">tempering_param</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Tempering parameter in current iteration.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Tempering parameter in current iteration."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tempering_schedule</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">iteration</span><span class="p">]</span></div>
 
 
@@ -550,7 +604,7 @@
 <div class="viewcode-block" id="PersistentSMCState.log_Z">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.PersistentSMCState.log_Z">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_Z</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Log normalizing constant in current iteration.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Log normalizing constant in current iteration."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">persistent_log_Z</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">iteration</span><span class="p">]</span></div>
 
 
@@ -558,8 +612,8 @@
 <div class="viewcode-block" id="PersistentSMCState.persistent_weights">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.PersistentSMCState.persistent_weights">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">persistent_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Weights for all persistent particles in current iteration, normalized</span>
-<span class="sd">        to sum to iteration * n_particles.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Weights for all persistent particles in current iteration, normalized</span>
+<span class="sd">        to sum to iteration * n_particles."""</span>
         <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span>
             <span class="n">compute_log_persistent_weights</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">persistent_log_likelihoods</span><span class="p">,</span>
@@ -575,7 +629,7 @@
 <div class="viewcode-block" id="PersistentSMCState.num_particles">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.PersistentSMCState.num_particles">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">num_particles</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of particles.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Number of particles."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">persistent_log_likelihoods</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span></div>
 </div>
 
@@ -584,7 +638,7 @@
 <div class="viewcode-block" id="PersistentStateInfo">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.PersistentStateInfo">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PersistentStateInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Information from one step of Persistent Sampling.</span>
+<span class="w">    </span><span class="sd">"""Information from one step of Persistent Sampling.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -592,7 +646,7 @@
 <span class="sd">        The index of the particles selected by the resampling step.</span>
 <span class="sd">    update_info: NamedTuple</span>
 <span class="sd">        Additional information returned by the update function.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="PersistentStateInfo.ancestors">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.PersistentStateInfo.ancestors">[docs]</a>
@@ -613,7 +667,7 @@
     <span class="n">n_schedule</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="n">Array</span><span class="p">,</span>
     <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PersistentSMCState</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialize the Persistent Sampling state.</span>
+<span class="w">    </span><span class="sd">"""Initialize the Persistent Sampling state.</span>
 
 <span class="sd">    The arrays are padded with zeros to alow for JIT compilation.</span>
 <span class="sd">    The dimension of the arrays is (n_schedule + 1, n_particles),</span>
@@ -635,7 +689,7 @@
 <span class="sd">        Initial state with particles, uniform weights, log-likelihoods, normalizing</span>
 <span class="sd">        constant 1.0, tempering parameters 0.0, and iteration 0.</span>
 <span class="sd">        All arrays are padded with zeros up to the length of the tempering schedule.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="c1"># Infer the number of particles from the size of the leading dimension of</span>
     <span class="c1"># the first leaf of the inputted PyTree.</span>
@@ -664,7 +718,7 @@
 <div class="viewcode-block" id="remove_padding">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.remove_padding">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">remove_padding</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">PersistentSMCState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PersistentSMCState</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Remove padding from PersistentSMCState arrays up to current iteration.</span>
+<span class="w">    </span><span class="sd">"""Remove padding from PersistentSMCState arrays up to current iteration.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -675,7 +729,7 @@
 <span class="sd">    -------</span>
 <span class="sd">    PersistentSMCState</span>
 <span class="sd">        New PersistentSMCState with arrays trimmed to current iteration.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">iteration</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">iteration</span>
     <span class="k">return</span> <span class="n">PersistentSMCState</span><span class="p">(</span>
         <span class="n">persistent_particles</span><span class="o">=</span><span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
@@ -695,7 +749,7 @@
     <span class="n">log_weights</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
     <span class="n">iteration</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="n">Array</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute log normalizing constant from log weights.</span>
+<span class="w">    </span><span class="sd">"""Compute log normalizing constant from log weights.</span>
 
 <span class="sd">    Implements Equation 16 from the Karamanis2025.</span>
 
@@ -712,7 +766,7 @@
 <span class="sd">        Estimate of log of normalizing constant :math:`\\hat{Z}_{t}` at current</span>
 <span class="sd">        iteration.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">num_particles</span> <span class="o">=</span> <span class="n">log_weights</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">log_normalization_constant</span> <span class="o">=</span> <span class="p">(</span>
@@ -732,7 +786,7 @@
     <span class="n">include_current</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">normalize_to_one</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute importance weights for all persistent particles for</span>
+<span class="w">    </span><span class="sd">"""Compute importance weights for all persistent particles for</span>
 <span class="sd">    current iteration.</span>
 
 <span class="sd">    Implements Equations 14 and 15 from the Karamanis2025.</span>
@@ -740,7 +794,7 @@
 <span class="sd">    NOTE: The returned weights are normalized such that they sum to</span>
 <span class="sd">    :math:`(i \\times N)`, where i is the current iteration and N</span>
 <span class="sd">    is the number of particles. They need to be renormalized to sum to 1.0</span>
-<span class="sd">    before resampling, this can be done using the &#39;normalize_to_one&#39; argument.</span>
+<span class="sd">    before resampling, this can be done using the 'normalize_to_one' argument.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -756,7 +810,7 @@
 <span class="sd">    include_current: bool, optional</span>
 <span class="sd">        If `True`, include the current iteration in the weight computation (i.e.</span>
 <span class="sd">        sum to t rather than t-1 in equations 14-16). This is useful when calculating</span>
-<span class="sd">        the weights after the resampling step, where the current iteration&#39;s particles</span>
+<span class="sd">        the weights after the resampling step, where the current iteration's particles</span>
 <span class="sd">        are already included in the persistent ensemble.</span>
 <span class="sd">    normalize_to_one: bool, optional</span>
 <span class="sd">        If `True`, normalize the weights to sum to 1.0. By default, the weights</span>
@@ -765,13 +819,13 @@
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    normalized_log_weights: Array</span>
-<span class="sd">        Log of normalized weights :math:`W^i_{tt&#39;}` for all :math:`i \\times N`</span>
+<span class="sd">        Log of normalized weights :math:`W^i_{tt'}` for all :math:`i \\times N`</span>
 <span class="sd">        persistent particles at current iteration.</span>
 <span class="sd">    new_log_Z: float</span>
 <span class="sd">        Estimate of log of normalizing constant :math:`\\hat{Z}_{t}` at current</span>
 <span class="sd">        iteration.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="c1"># create mask for all iterations up to current</span>
     <span class="n">current_iteration</span> <span class="o">=</span> <span class="n">iteration</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">include_current</span> <span class="k">else</span> <span class="n">iteration</span>
@@ -836,7 +890,7 @@
     <span class="n">persistent_weights</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
     <span class="n">resample_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ArrayTree</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resample N particles from the :math:`i \\times N`</span>
+<span class="w">    </span><span class="sd">"""Resample N particles from the :math:`i \\times N`</span>
 <span class="sd">    persistent ensemble, where i is the current iteration.</span>
 
 <span class="sd">    Parameters</span>
@@ -848,7 +902,7 @@
 <span class="sd">    persistent_weights: Array</span>
 <span class="sd">        Normalized weights for all :math:`i \\times N` particles.</span>
 <span class="sd">        NOTE: The weights need to sum to 1, this is different from</span>
-<span class="sd">        the &#39;normalized&#39; described by equation 14 in Karamanis2025</span>
+<span class="sd">        the 'normalized' described by equation 14 in Karamanis2025</span>
 <span class="sd">        amd computed by _compute_log_persistent_weights. These sum</span>
 <span class="sd">        to :math:`(i \\times N)`, i.e. the current iteration times</span>
 <span class="sd">        the number of particles (the current number of persistent</span>
@@ -862,7 +916,7 @@
 <span class="sd">        N particles resampled from persistent ensemble.</span>
 <span class="sd">    resample_idx: Array</span>
 <span class="sd">        Indices of the selected particles.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">resample_idx</span> <span class="o">=</span> <span class="n">resample_fn</span><span class="p">(</span>
         <span class="n">rng_key</span><span class="p">,</span>
@@ -886,7 +940,7 @@
     <span class="n">log_persistent_weights</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
     <span class="n">normalize_weights</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Array</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate the effective sample size (ESS) of the persistent</span>
+<span class="w">    </span><span class="sd">"""Calculate the effective sample size (ESS) of the persistent</span>
 <span class="sd">    ensemble. Equation 17 from Karamanis2025.</span>
 
 <span class="sd">    NOTE: For the second identity in equation 17 to hold, the</span>
@@ -908,7 +962,7 @@
 <span class="sd">    -------</span>
 <span class="sd">    ess: float | Array</span>
 <span class="sd">        Effective sample size of the persistent ensemble.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">normalize_weights</span><span class="p">:</span>
         <span class="n">log_persistent_weights</span> <span class="o">=</span> <span class="n">log_persistent_weights</span> <span class="o">-</span> <span class="n">logsumexp</span><span class="p">(</span>
             <span class="n">log_persistent_weights</span>
@@ -930,7 +984,7 @@
     <span class="n">weight_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">compute_log_persistent_weights</span><span class="p">,</span>
     <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">PersistentSMCState</span><span class="p">,</span> <span class="n">PersistentStateInfo</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One step of the Persistent Sampling algorithm, as</span>
+<span class="w">    </span><span class="sd">"""One step of the Persistent Sampling algorithm, as</span>
 <span class="sd">    described in algorithm 2 of Karamanis et al. (2025).</span>
 
 <span class="sd">    Parameters</span>
@@ -966,7 +1020,7 @@
 <span class="sd">        Extra information about the transition: ancestors (resampling indices),</span>
 <span class="sd">        ess (effective sample size), and update_info from the MCMC update step.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="c1"># update iteration and split keys</span>
     <span class="n">iteration</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">iteration</span> <span class="o">+</span> <span class="mi">1</span>
@@ -1043,7 +1097,7 @@
     <span class="n">update_strategy</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">update_and_take_last</span><span class="p">,</span>
     <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a Persistent Sampling kernel, with signature</span>
+<span class="w">    </span><span class="sd">"""Build a Persistent Sampling kernel, with signature</span>
 <span class="sd">    (rng_key,</span>
 <span class="sd">    state,</span>
 <span class="sd">    num_mcmc_steps,</span>
@@ -1074,13 +1128,13 @@
 <span class="sd">        Resampling function (from blackjax.smc.resampling).</span>
 <span class="sd">    update_strategy: Callable</span>
 <span class="sd">        Strategy to update particles using MCMC kernels, by default</span>
-<span class="sd">        &#39;update_and_take_last&#39; from blackjax.smc.base. The function signature must be</span>
+<span class="sd">        'update_and_take_last' from blackjax.smc.base. The function signature must be</span>
 <span class="sd">        (mcmc_init_fn,</span>
 <span class="sd">        loggerposterior_fn,</span>
 <span class="sd">        mcmc_step_fn,</span>
 <span class="sd">        num_mcmc_steps,</span>
 <span class="sd">        n_particles,</span>
-<span class="sd">        batch_size,) -&gt; (mcmc_kernel, n_particles), like &#39;update_and_take_last&#39;.</span>
+<span class="sd">        batch_size,) -&gt; (mcmc_kernel, n_particles), like 'update_and_take_last'.</span>
 <span class="sd">        The mcmc_kernel must have signature</span>
 <span class="sd">        (rng_key, position, mcmc_parameters) -&gt; (new_position, info).</span>
 <span class="sd">    batch_size: int, optional</span>
@@ -1096,7 +1150,7 @@
 <span class="sd">        A callable that takes a rng_key, a PersistentSMCState, a tempering parameter</span>
 <span class="sd">        lmbda, and a dictionary of mcmc_parameters, and that returns a the</span>
 <span class="sd">        PersistentSMCState after the step along with information about the transition.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">update_fn</span><span class="p">(</span>
         <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
@@ -1106,7 +1160,7 @@
         <span class="n">mcmc_parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
         <span class="n">n_particles</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="n">Array</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update function that runs MCMC kernels on the particles.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Update function that runs MCMC kernels on the particles."""</span>
         <span class="n">unshared_mcmc_parameters</span><span class="p">,</span> <span class="n">shared_mcmc_step_fn</span> <span class="o">=</span> <span class="n">unshared_parameters_and_step_fn</span><span class="p">(</span>
             <span class="n">mcmc_parameters</span><span class="p">,</span> <span class="n">mcmc_step_fn</span>
         <span class="p">)</span>
@@ -1117,7 +1171,7 @@
             <span class="n">shared_mcmc_step_fn</span><span class="p">,</span>
             <span class="n">num_mcmc_steps</span><span class="o">=</span><span class="n">num_mcmc_steps</span><span class="p">,</span>
             <span class="n">n_particles</span><span class="o">=</span><span class="n">n_particles</span><span class="p">,</span>
-            <span class="o">**</span><span class="p">({</span><span class="s2">&quot;batch_size&quot;</span><span class="p">:</span> <span class="n">batch_size</span><span class="p">}</span> <span class="k">if</span> <span class="n">batch_size</span> <span class="k">else</span> <span class="p">{}),</span>
+            <span class="o">**</span><span class="p">({</span><span class="s2">"batch_size"</span><span class="p">:</span> <span class="n">batch_size</span><span class="p">}</span> <span class="k">if</span> <span class="n">batch_size</span> <span class="k">else</span> <span class="p">{}),</span>
         <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">mcmc_kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">current_particles</span><span class="p">,</span> <span class="n">unshared_mcmc_parameters</span><span class="p">)</span>
@@ -1129,7 +1183,7 @@
         <span class="n">lmbda</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Array</span><span class="p">,</span>
         <span class="n">mcmc_parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">PersistentSMCState</span><span class="p">,</span> <span class="n">PersistentStateInfo</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Kernel to move the particles one step using the</span>
+<span class="w">        </span><span class="sd">"""Kernel to move the particles one step using the</span>
 <span class="sd">        Persistent Sampling algorithm.</span>
 
 <span class="sd">        Parameters</span>
@@ -1151,10 +1205,10 @@
 <span class="sd">            The new sampling state after one step of Persistent Sampling.</span>
 <span class="sd">        info : PersistentStateInfo</span>
 <span class="sd">            Additional information on the PS step.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">logposterior_fn</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-<span class="w">            </span><span class="sd">&quot;&quot;&quot;Tempered log-posterior function.&quot;&quot;&quot;</span>
+<span class="w">            </span><span class="sd">"""Tempered log-posterior function."""</span>
             <span class="k">return</span> <span class="n">logprior_fn</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="n">lmbda</span> <span class="o">*</span> <span class="n">loglikelihood_fn</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 
         <span class="n">update_fn_wrapper</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
@@ -1193,7 +1247,7 @@
     <span class="n">update_strategy</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">update_and_take_last</span><span class="p">,</span>
     <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Implements the user interface for the Persistent Sampling</span>
 <span class="sd">    kernel. See build_kernel for details.</span>
 
@@ -1237,7 +1291,7 @@
 <span class="sd">        by default 10.</span>
 <span class="sd">    update_strategy : Callable, optional</span>
 <span class="sd">        The strategy to update particles using MCMC kernels, by default</span>
-<span class="sd">        &#39;update_and_take_last&#39; from blackjax.smc.base. See build_kernel for</span>
+<span class="sd">        'update_and_take_last' from blackjax.smc.base. See build_kernel for</span>
 <span class="sd">        details.</span>
 <span class="sd">    batch_size : int, optional</span>
 <span class="sd">        Number of particles processed per sequential batch when</span>
@@ -1256,7 +1310,7 @@
 <span class="sd">        The step method has signature</span>
 <span class="sd">        (rng_key: PRNGKey, state: PersistentSMCState, lmbda: float | Array) -&gt;</span>
 <span class="sd">        (new_state: PersistentSMCState, info: PersistentStateInfo)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">kernel</span> <span class="o">=</span> <span class="n">build_kernel</span><span class="p">(</span>
         <span class="n">logprior_fn</span><span class="p">,</span>
@@ -1348,8 +1402,8 @@ By The Blackjax developers
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
 
   <footer class="bd-footer">
   </footer>

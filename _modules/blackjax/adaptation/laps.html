@@ -26,21 +26,21 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=4418a689" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e37d73aa" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
     <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
@@ -48,25 +48,32 @@
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/adaptation/laps';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g0c69b5d2f" />
+  <meta name="docsearch:version" content="0.1.dev1+g421add75e" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
   </head>
-  
-  
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
-
+  <body data-default-mode="">
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -92,7 +99,47 @@
 </div>
 
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
     </header>
   
 
@@ -378,11 +425,18 @@
 
 
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div>
 
 
 <button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
@@ -416,18 +470,18 @@
   <h1>Source code for blackjax.adaptation.laps</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Copyright 2020- The Blackjax Authors.</span>
 <span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
 <span class="c1"># You may obtain a copy of the License at</span>
 <span class="c1">#</span>
 <span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
 <span class="c1">#</span>
 <span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
-<span class="c1"># &quot;&quot;&quot;Public API for Late Adjusted Parallel Sampler (LAPS)&quot;&quot;&quot;</span>
+<span class="c1"># """Public API for Late Adjusted Parallel Sampler (LAPS)"""</span>
 
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">NamedTuple</span>
@@ -503,14 +557,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">contract</span> <span class="o">=</span> <span class="n">contract</span></div>
 
 
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        num_adaptation_samples: amount of tuning in the adjusted phase before fixing params</span>
 <span class="sd">        steps_per_sample: number of steps per sample</span>
 <span class="sd">        acc_prob_target: target acceptance probability</span>
 <span class="sd">        observables: function to compute observables, for diagnostics</span>
 <span class="sd">        observables_for_bias: function to compute observables for bias, for diagnostics</span>
 <span class="sd">        contract: function to contract observables, for diagnostics</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
 
         <span class="c1"># Determine the initial hyperparameters #</span>
 
@@ -534,28 +588,28 @@
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/laps/index.html#blackjax.adaptation.laps.Adaptation.summary_statistics_fn">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">summary_statistics_fn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">&quot;acceptance_probability&quot;</span><span class="p">:</span> <span class="n">info</span><span class="o">.</span><span class="n">acceptance_rate</span><span class="p">,</span>
-            <span class="s2">&quot;equipartition_diagonal&quot;</span><span class="p">:</span> <span class="n">equipartition_diagonal</span><span class="p">(</span><span class="n">state</span><span class="p">),</span>
-            <span class="s2">&quot;observables&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">observables</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">position</span><span class="p">),</span>
-            <span class="s2">&quot;observables_for_bias&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">observables_for_bias</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">position</span><span class="p">),</span>
+            <span class="s2">"acceptance_probability"</span><span class="p">:</span> <span class="n">info</span><span class="o">.</span><span class="n">acceptance_rate</span><span class="p">,</span>
+            <span class="s2">"equipartition_diagonal"</span><span class="p">:</span> <span class="n">equipartition_diagonal</span><span class="p">(</span><span class="n">state</span><span class="p">),</span>
+            <span class="s2">"observables"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">observables</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">position</span><span class="p">),</span>
+            <span class="s2">"observables_for_bias"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">observables_for_bias</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">position</span><span class="p">),</span>
         <span class="p">}</span></div>
 
 
 <div class="viewcode-block" id="Adaptation.update">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/laps/index.html#blackjax.adaptation.laps.Adaptation.update">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">adaptation_state</span><span class="p">,</span> <span class="n">Etheta</span><span class="p">):</span>
-        <span class="n">acc_prob</span> <span class="o">=</span> <span class="n">Etheta</span><span class="p">[</span><span class="s2">&quot;acceptance_probability&quot;</span><span class="p">]</span>
-        <span class="n">equi_diag</span> <span class="o">=</span> <span class="n">equipartition_diagonal_loss</span><span class="p">(</span><span class="n">Etheta</span><span class="p">[</span><span class="s2">&quot;equipartition_diagonal&quot;</span><span class="p">])</span>
-        <span class="n">true_bias</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="p">(</span><span class="n">Etheta</span><span class="p">[</span><span class="s2">&quot;observables_for_bias&quot;</span><span class="p">])</span>
+        <span class="n">acc_prob</span> <span class="o">=</span> <span class="n">Etheta</span><span class="p">[</span><span class="s2">"acceptance_probability"</span><span class="p">]</span>
+        <span class="n">equi_diag</span> <span class="o">=</span> <span class="n">equipartition_diagonal_loss</span><span class="p">(</span><span class="n">Etheta</span><span class="p">[</span><span class="s2">"equipartition_diagonal"</span><span class="p">])</span>
+        <span class="n">true_bias</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract</span><span class="p">(</span><span class="n">Etheta</span><span class="p">[</span><span class="s2">"observables_for_bias"</span><span class="p">])</span>
 
         <span class="n">info_to_be_stored</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;L&quot;</span><span class="p">:</span> <span class="n">adaptation_state</span><span class="o">.</span><span class="n">step_size</span> <span class="o">*</span> <span class="n">adaptation_state</span><span class="o">.</span><span class="n">steps_per_sample</span><span class="p">,</span>
-            <span class="s2">&quot;steps_per_sample&quot;</span><span class="p">:</span> <span class="n">adaptation_state</span><span class="o">.</span><span class="n">steps_per_sample</span><span class="p">,</span>
-            <span class="s2">&quot;step_size&quot;</span><span class="p">:</span> <span class="n">adaptation_state</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
-            <span class="s2">&quot;acc_prob&quot;</span><span class="p">:</span> <span class="n">acc_prob</span><span class="p">,</span>
-            <span class="s2">&quot;equi_diag&quot;</span><span class="p">:</span> <span class="n">equi_diag</span><span class="p">,</span>
-            <span class="s2">&quot;bias&quot;</span><span class="p">:</span> <span class="n">true_bias</span><span class="p">,</span>
-            <span class="s2">&quot;observables&quot;</span><span class="p">:</span> <span class="n">Etheta</span><span class="p">[</span><span class="s2">&quot;observables&quot;</span><span class="p">],</span>
+            <span class="s2">"L"</span><span class="p">:</span> <span class="n">adaptation_state</span><span class="o">.</span><span class="n">step_size</span> <span class="o">*</span> <span class="n">adaptation_state</span><span class="o">.</span><span class="n">steps_per_sample</span><span class="p">,</span>
+            <span class="s2">"steps_per_sample"</span><span class="p">:</span> <span class="n">adaptation_state</span><span class="o">.</span><span class="n">steps_per_sample</span><span class="p">,</span>
+            <span class="s2">"step_size"</span><span class="p">:</span> <span class="n">adaptation_state</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
+            <span class="s2">"acc_prob"</span><span class="p">:</span> <span class="n">acc_prob</span><span class="p">,</span>
+            <span class="s2">"equi_diag"</span><span class="p">:</span> <span class="n">equi_diag</span><span class="p">,</span>
+            <span class="s2">"bias"</span><span class="p">:</span> <span class="n">true_bias</span><span class="p">,</span>
+            <span class="s2">"observables"</span><span class="p">:</span> <span class="n">Etheta</span><span class="p">[</span><span class="s2">"observables"</span><span class="p">],</span>
         <span class="p">}</span>
 
         <span class="c1"># Bisection to find step size</span>
@@ -581,7 +635,7 @@
 <div class="viewcode-block" id="bias">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/laps/index.html#blackjax.adaptation.laps.bias">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">bias</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;should be transfered to benchmarks/&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""should be transfered to benchmarks/"""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">observables</span><span class="p">(</span><span class="n">position</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">position</span><span class="p">))</span>
@@ -632,7 +686,7 @@
     <span class="n">contract</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
     <span class="n">superchain_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    model: the target density object</span>
 <span class="sd">    num_steps1: number of steps in the first phase</span>
 <span class="sd">    num_steps2: number of steps in the second phase</span>
@@ -651,7 +705,7 @@
 <span class="sd">    observables: the observables (for diagnostic use)</span>
 <span class="sd">    all_chains_info: summary statistics calculated and stored for all chain at each iteration so it can be memory intensive</span>
 <span class="sd">    diagnostics: whether to return diagnostics</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">key_init</span><span class="p">,</span> <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
 
@@ -711,7 +765,7 @@
 
     <span class="n">gradient_calls_per_step</span> <span class="o">=</span> <span class="p">(</span>
         <span class="nb">len</span><span class="p">(</span><span class="n">_integrator_coefficients</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
-    <span class="p">)</span>  <span class="c1"># The number of B updates in scheme = BABAB..AB is len(scheme)//2 + 1. The number of gradient calls is then len(scheme)//2, because the last B&#39;s gradient can be reused in the next step.</span>
+    <span class="p">)</span>  <span class="c1"># The number of B updates in scheme = BABAB..AB is len(scheme)//2 + 1. The number of gradient calls is then len(scheme)//2, because the last B's gradient can be reused in the next step.</span>
 
     <span class="k">if</span> <span class="n">diagonal_preconditioning</span><span class="p">:</span>
         <span class="n">inverse_mass_matrix</span> <span class="o">=</span> <span class="n">final_adaptation_state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span>
@@ -743,7 +797,7 @@
         <span class="p">)</span>
 
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Only microcanonical mode is supported for LAPS.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Only microcanonical mode is supported for LAPS."</span><span class="p">)</span>
 
     <span class="n">initial_state</span> <span class="o">=</span> <span class="n">HMCState</span><span class="p">(</span>
         <span class="n">final_state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">final_state</span><span class="o">.</span><span class="n">logdensity</span><span class="p">,</span> <span class="n">final_state</span><span class="o">.</span><span class="n">logdensity_grad</span>
@@ -779,7 +833,7 @@
     <span class="p">)</span>
 
     <span class="k">if</span> <span class="n">diagnostics</span><span class="p">:</span>
-        <span class="n">info</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;phase_1&quot;</span><span class="p">:</span> <span class="n">info1</span><span class="p">,</span> <span class="s2">&quot;phase_2&quot;</span><span class="p">:</span> <span class="n">info2</span><span class="p">}</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"phase_1"</span><span class="p">:</span> <span class="n">info1</span><span class="p">,</span> <span class="s2">"phase_2"</span><span class="p">:</span> <span class="n">info2</span><span class="p">}</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">info</span> <span class="o">=</span> <span class="kc">None</span>
 
@@ -847,8 +901,8 @@ By The Blackjax developers
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
 
   <footer class="bd-footer">
   </footer>

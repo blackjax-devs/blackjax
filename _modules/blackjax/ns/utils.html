@@ -26,21 +26,21 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=4418a689" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e37d73aa" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
     <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
@@ -48,25 +48,32 @@
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/ns/utils';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g0c69b5d2f" />
+  <meta name="docsearch:version" content="0.1.dev1+g421add75e" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
   </head>
-  
-  
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
-
+  <body data-default-mode="">
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -92,7 +99,47 @@
 </div>
 
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
     </header>
   
 
@@ -378,11 +425,18 @@
 
 
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div>
 
 
 <button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
@@ -416,27 +470,27 @@
   <h1>Source code for blackjax.ns.utils</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Copyright 2020- The Blackjax Authors.</span>
 <span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
 <span class="c1"># You may obtain a copy of the License at</span>
 <span class="c1">#</span>
 <span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
 <span class="c1">#</span>
 <span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
-<span class="sd">&quot;&quot;&quot;Utility functions for setting up and post-processing Nested Sampling runs.</span>
+<span class="sd">"""Utility functions for setting up and post-processing Nested Sampling runs.</span>
 
 <span class="sd">References</span>
 <span class="sd">----------</span>
-<span class="sd">.. [1] Skilling, J. (2006). &quot;Nested sampling for general Bayesian computation.&quot;</span>
+<span class="sd">.. [1] Skilling, J. (2006). "Nested sampling for general Bayesian computation."</span>
 <span class="sd">       Bayesian Analysis, 1(4), 833-859. https://doi.org/10.1214/06-BA127</span>
-<span class="sd">.. [2] Fowlie, A., Handley, W., &amp; Su, L. (2021). &quot;Nested sampling with plateaus.&quot;</span>
+<span class="sd">.. [2] Fowlie, A., Handley, W., &amp; Su, L. (2021). "Nested sampling with plateaus."</span>
 <span class="sd">       Monthly Notices of the Royal Astronomical Society, 503(1), 1199-1205.</span>
 <span class="sd">       https://doi.org/10.1093/mnras/stab590</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 
@@ -450,9 +504,9 @@
 <div class="viewcode-block" id="log1mexp">
 <a class="viewcode-back" href="../../../autoapi/blackjax/ns/utils/index.html#blackjax.ns.utils.log1mexp">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">log1mexp</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Computes log(1 - exp(x)) in a numerically stable way.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Computes log(1 - exp(x)) in a numerically stable way."""</span>
     <span class="c1"># precision hack: clamp x &lt;= -eps so float32 cumsum drift in logX</span>
-    <span class="c1"># can&#39;t push the argument positive and produce NaN downstream.</span>
+    <span class="c1"># can't push the argument positive and produce NaN downstream.</span>
     <span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
         <span class="n">x</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mf">0.6931472</span><span class="p">,</span>  <span class="c1"># approx log(2)</span>
@@ -465,7 +519,7 @@
 <div class="viewcode-block" id="compute_num_live">
 <a class="viewcode-back" href="../../../autoapi/blackjax/ns/utils/index.html#blackjax.ns.utils.compute_num_live">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">compute_num_live</span><span class="p">(</span><span class="n">info</span><span class="p">:</span> <span class="n">NSInfo</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the effective number of live points at each death contour (Fowlie, Handley &amp; Su, 2021).</span>
+<span class="w">    </span><span class="sd">"""Compute the effective number of live points at each death contour (Fowlie, Handley &amp; Su, 2021).</span>
 
 <span class="sd">    When doing batch deletions, the jump in energy level can be smoothed by</span>
 <span class="sd">    transforming 1 jump of size k into k jumps of size 1. This function computes</span>
@@ -473,8 +527,8 @@
 
 <span class="sd">    Expects the **complete finalised output** -- the dead points together with the</span>
 <span class="sd">    final live particles (e.g. from :func:`finalise`): it relies on every</span>
-<span class="sd">    particle&#39;s birth event being present. Called on a dead-only subset that omits</span>
-<span class="sd">    the initial live particles&#39; births, the live counts are wrong (1 instead of</span>
+<span class="sd">    particle's birth event being present. Called on a dead-only subset that omits</span>
+<span class="sd">    the initial live particles' births, the live counts are wrong (1 instead of</span>
 <span class="sd">    ``N`` for a standard run).</span>
 
 <span class="sd">    Returns</span>
@@ -482,8 +536,8 @@
 <span class="sd">    Array</span>
 <span class="sd">        An array where each element `num_live[j]` is the effective number of live</span>
 <span class="sd">        points `m*_i` when the j-th particle (in the sorted list of dead particles)</span>
-<span class="sd">        was considered &quot;dead&quot;.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">        was considered "dead".</span>
+<span class="sd">    """</span>
     <span class="n">birth_logL</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">particles</span><span class="o">.</span><span class="n">loglikelihood_birth</span>
     <span class="n">death_logL</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">particles</span><span class="o">.</span><span class="n">loglikelihood</span>
 
@@ -508,7 +562,7 @@
 <div class="viewcode-block" id="logX">
 <a class="viewcode-back" href="../../../autoapi/blackjax/ns/utils/index.html#blackjax.ns.utils.logX">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">logX</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">dead_info</span><span class="p">:</span> <span class="n">NSInfo</span><span class="p">,</span> <span class="n">shape</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Simulate the stochastic evolution of log prior volumes (Skilling, 2006).</span>
+<span class="w">    </span><span class="sd">"""Simulate the stochastic evolution of log prior volumes (Skilling, 2006).</span>
 
 <span class="sd">    Wraps the effective population size in `compute_num_live`, along with stochastic</span>
 <span class="sd">    simulation of the log prior shrinkage associated with each deleted particle.</span>
@@ -521,7 +575,7 @@
 <span class="sd">    dead_info</span>
 <span class="sd">        An `NSInfo` object (or compatible PyTree) containing `loglikelihood_birth`</span>
 <span class="sd">        and `loglikelihood` for all dead particles accumulated during an NS run.</span>
-<span class="sd">        It&#39;s assumed these particles are already sorted by their death log-likelihood.</span>
+<span class="sd">        It's assumed these particles are already sorted by their death log-likelihood.</span>
 <span class="sd">    shape</span>
 <span class="sd">        The shape of Monte Carlo samples to generate for the stochastic</span>
 <span class="sd">        log-volume sequence. Each sample represents one possible path of</span>
@@ -535,7 +589,7 @@
 <span class="sd">        - `log_dX_elements`: An array of shape `(num_dead_particles, shape)`</span>
 <span class="sd">          containing `shape` simulated sequences of log prior volume elements `log(dX_i)`.</span>
 <span class="sd">          `dX_i` is the trapezoidal volume element `(X_{i-1} - X_{i+1}) / 2`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">rng_key</span><span class="p">,</span> <span class="n">subkey</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
     <span class="n">u</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span>
         <span class="n">subkey</span><span class="p">,</span>
@@ -559,7 +613,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">log_weights</span><span class="p">(</span>
     <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">dead_info</span><span class="p">:</span> <span class="n">NSInfo</span><span class="p">,</span> <span class="n">shape</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate the log importance weights for Nested Sampling results.</span>
+<span class="w">    </span><span class="sd">"""Calculate the log importance weights for Nested Sampling results.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -580,7 +634,7 @@
 <span class="sd">    Array</span>
 <span class="sd">        An array of log importance weights, shape `(num_dead_particles, *shape)`.</span>
 <span class="sd">        The original order of particles in `dead_info` is preserved.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">sort_indices</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">dead_info</span><span class="o">.</span><span class="n">particles</span><span class="o">.</span><span class="n">loglikelihood</span><span class="p">)</span>
     <span class="n">unsort_indices</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">sort_indices</span><span class="p">)</span>
     <span class="n">unsort_indices</span> <span class="o">=</span> <span class="n">unsort_indices</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">sort_indices</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sort_indices</span><span class="p">)))</span>
@@ -594,7 +648,7 @@
 <div class="viewcode-block" id="finalise">
 <a class="viewcode-back" href="../../../autoapi/blackjax/ns/utils/index.html#blackjax.ns.utils.finalise">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">finalise</span><span class="p">(</span><span class="n">live</span><span class="p">:</span> <span class="n">NSState</span><span class="p">,</span> <span class="n">dead</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">NSInfo</span><span class="p">],</span> <span class="n">update_info</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NSInfo</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Combines the history of dead particle information with the final live points.</span>
+<span class="w">    </span><span class="sd">"""Combines the history of dead particle information with the final live points.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -602,7 +656,7 @@
 <span class="sd">        The final `NSState` of the Nested Sampler, containing the live particles.</span>
 <span class="sd">    dead</span>
 <span class="sd">        A list of `NSInfo` objects, where each object contains information</span>
-<span class="sd">        about the particles that &quot;died&quot; at one step of the NS algorithm.</span>
+<span class="sd">        about the particles that "died" at one step of the NS algorithm.</span>
 <span class="sd">    update_info</span>
 <span class="sd">        Whether to concatenate the `update_info` from each element of `dead`.</span>
 <span class="sd">        If False, the returned `update_info` is None. Default is True.</span>
@@ -616,7 +670,7 @@
 <span class="sd">        `dead` only -- no entry is added for the final live points, so it is</span>
 <span class="sd">        shorter than `particles` by the number of live points. When</span>
 <span class="sd">        ``update_info=False`` the `update_info` field is None.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">if</span> <span class="n">update_info</span><span class="p">:</span>
         <span class="n">update_infos</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">update_info</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dead</span><span class="p">]</span>
@@ -635,7 +689,7 @@
 <div class="viewcode-block" id="ess">
 <a class="viewcode-back" href="../../../autoapi/blackjax/ns/utils/index.html#blackjax.ns.utils.ess">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">ess</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">dead</span><span class="p">:</span> <span class="n">NSInfo</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Computes the Effective Sample Size (ESS) from log-weights.</span>
+<span class="w">    </span><span class="sd">"""Computes the Effective Sample Size (ESS) from log-weights.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -649,7 +703,7 @@
 <span class="sd">    -------</span>
 <span class="sd">    Array</span>
 <span class="sd">        The mean Effective Sample Size, a scalar float.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">logw</span> <span class="o">=</span> <span class="n">log_weights</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">dead</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">logw</span> <span class="o">-=</span> <span class="n">logw</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
     <span class="n">l_sum_w</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">logsumexp</span><span class="p">(</span><span class="n">logw</span><span class="p">)</span>
@@ -662,7 +716,7 @@
 <div class="viewcode-block" id="sample">
 <a class="viewcode-back" href="../../../autoapi/blackjax/ns/utils/index.html#blackjax.ns.utils.sample">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">sample</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">dead</span><span class="p">:</span> <span class="n">NSInfo</span><span class="p">,</span> <span class="n">shape</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayTree</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resamples particles according to their importance weights.</span>
+<span class="w">    </span><span class="sd">"""Resamples particles according to their importance weights.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -678,7 +732,7 @@
 <span class="sd">    -------</span>
 <span class="sd">    ArrayTree</span>
 <span class="sd">        A PyTree of resampled particles, where each leaf has `shape`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">logw</span> <span class="o">=</span> <span class="n">log_weights</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">dead</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">indices</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span>
         <span class="n">rng_key</span><span class="p">,</span>
@@ -694,9 +748,9 @@
 <div class="viewcode-block" id="get_first_row">
 <a class="viewcode-back" href="../../../autoapi/blackjax/ns/utils/index.html#blackjax.ns.utils.get_first_row">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_first_row</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">ArrayTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayTree</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extracts the first &quot;row&quot; (element along the leading axis) of each leaf in a PyTree.</span>
+<span class="w">    </span><span class="sd">"""Extracts the first "row" (element along the leading axis) of each leaf in a PyTree.</span>
 
-<span class="sd">    This is typically used to get a single particle&#39;s structure or values from</span>
+<span class="sd">    This is typically used to get a single particle's structure or values from</span>
 <span class="sd">    a PyTree representing a collection of particles, where the leading dimension</span>
 <span class="sd">    of each leaf array corresponds to the particle index.</span>
 
@@ -710,7 +764,7 @@
 <span class="sd">    ArrayTree</span>
 <span class="sd">        A PyTree with the same structure as `x`, but where each leaf is the</span>
 <span class="sd">        first slice `leaf[0]` of the corresponding leaf in `x`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">)</span></div>
 
 
@@ -720,7 +774,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">uniform_prior</span><span class="p">(</span>
     <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">num_live</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ArrayTree</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sample initial particles and build a log-prior for a box-uniform prior.</span>
+<span class="w">    </span><span class="sd">"""Sample initial particles and build a log-prior for a box-uniform prior.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -731,7 +785,7 @@
 <span class="sd">    bounds</span>
 <span class="sd">        A dictionary mapping parameter names to their bounds (tuples of min and max).</span>
 <span class="sd">        Each parameter will be sampled uniformly within these bounds.</span>
-<span class="sd">        Example: {&#39;param1&#39;: (0.0, 1.0), &#39;param2&#39;: (-5.0, 5.0)}</span>
+<span class="sd">        Example: {'param1': (0.0, 1.0), 'param2': (-5.0, 5.0)}</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -739,7 +793,7 @@
 <span class="sd">        - `particles`: A PyTree of sampled parameters, where each leaf has shape `(num_live,)`.</span>
 <span class="sd">        - `logprior_fn`: A function that computes the log-prior probability</span>
 <span class="sd">          for a given set of parameters.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">logprior_fn</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
         <span class="n">logprior</span> <span class="o">=</span> <span class="mf">0.0</span>
@@ -822,8 +876,8 @@ By The Blackjax developers
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
 
   <footer class="bd-footer">
   </footer>

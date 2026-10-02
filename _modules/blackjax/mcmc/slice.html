@@ -26,21 +26,21 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=4418a689" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e37d73aa" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
     <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
@@ -48,25 +48,32 @@
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/mcmc/slice';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g0c69b5d2f" />
+  <meta name="docsearch:version" content="0.1.dev1+g421add75e" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
   </head>
-  
-  
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
-
+  <body data-default-mode="">
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -92,7 +99,47 @@
 </div>
 
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
     </header>
   
 
@@ -378,11 +425,18 @@
 
 
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div>
 
 
 <button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
@@ -416,18 +470,18 @@
   <h1>Source code for blackjax.mcmc.slice</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Copyright 2020- The Blackjax Authors.</span>
 <span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
 <span class="c1"># You may obtain a copy of the License at</span>
 <span class="c1">#</span>
 <span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
 <span class="c1">#</span>
 <span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
-<span class="sd">&quot;&quot;&quot;Public API for the Slice sampling family.</span>
+<span class="sd">"""Public API for the Slice sampling family.</span>
 
 <span class="sd">Every slice update is univariate: a one-dimensional slice through the current</span>
 <span class="sd">point. Multivariate behaviour is determined entirely by the proposal generator</span>
@@ -457,9 +511,9 @@
 
 <span class="sd">References</span>
 <span class="sd">----------</span>
-<span class="sd">.. [1] Radford M. Neal, &quot;Slice sampling&quot;, The Annals of Statistics,</span>
+<span class="sd">.. [1] Radford M. Neal, "Slice sampling", The Annals of Statistics,</span>
 <span class="sd">   Ann. Statist. 31(3), 705-767, (June 2003).</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">TypeAlias</span>
 
@@ -475,34 +529,34 @@
 <span class="n">AcceptFn</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Array</span><span class="p">],</span> <span class="n">Array</span><span class="p">]</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;SliceState&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;SliceInfo&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;init&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;build_coordinate_kernel&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;as_top_level_api&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;coordinate_slice&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;direction_proposal&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;coordinate_proposal&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;sample_direction&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;stepping_out&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;doubling&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;random_order&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;fixed_order&quot;</span><span class="p">,</span>
+    <span class="s2">"SliceState"</span><span class="p">,</span>
+    <span class="s2">"SliceInfo"</span><span class="p">,</span>
+    <span class="s2">"init"</span><span class="p">,</span>
+    <span class="s2">"build_kernel"</span><span class="p">,</span>
+    <span class="s2">"build_coordinate_kernel"</span><span class="p">,</span>
+    <span class="s2">"as_top_level_api"</span><span class="p">,</span>
+    <span class="s2">"coordinate_slice"</span><span class="p">,</span>
+    <span class="s2">"direction_proposal"</span><span class="p">,</span>
+    <span class="s2">"coordinate_proposal"</span><span class="p">,</span>
+    <span class="s2">"sample_direction"</span><span class="p">,</span>
+    <span class="s2">"stepping_out"</span><span class="p">,</span>
+    <span class="s2">"doubling"</span><span class="p">,</span>
+    <span class="s2">"random_order"</span><span class="p">,</span>
+    <span class="s2">"fixed_order"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
 <div class="viewcode-block" id="SliceState">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/slice/index.html#blackjax.mcmc.slice.SliceState">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SliceState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;State of the Slice sampling chain.</span>
+<span class="w">    </span><span class="sd">"""State of the Slice sampling chain.</span>
 
 <span class="sd">    position</span>
 <span class="sd">        Current position of the chain.</span>
 <span class="sd">    logdensity</span>
 <span class="sd">        Log-density of the target at ``position``.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="SliceState.position">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/slice/index.html#blackjax.mcmc.slice.SliceState.position">[docs]</a>
@@ -518,7 +572,7 @@
 <div class="viewcode-block" id="SliceInfo">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/slice/index.html#blackjax.mcmc.slice.SliceInfo">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SliceInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Additional information on a Slice sampling transition.</span>
+<span class="w">    </span><span class="sd">"""Additional information on a Slice sampling transition.</span>
 
 <span class="sd">    is_accepted</span>
 <span class="sd">        Whether shrinkage found a valid point within ``max_shrinkage`` steps.</span>
@@ -542,7 +596,7 @@
 <span class="sd">        PyTree aligned with ``position``. The bracket width is</span>
 <span class="sd">        ``bracket_right - bracket_left``.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="SliceInfo.is_accepted">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/slice/index.html#blackjax.mcmc.slice.SliceInfo.is_accepted">[docs]</a>
@@ -570,7 +624,7 @@
 <div class="viewcode-block" id="init">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/slice/index.html#blackjax.mcmc.slice.init">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SliceState</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create an initial state from a position and log-density function.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Create an initial state from a position and log-density function."""</span>
     <span class="k">return</span> <span class="n">SliceState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">(</span><span class="n">position</span><span class="p">))</span></div>
 
 
@@ -580,7 +634,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">stepping_out</span><span class="p">(</span>
     <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">in_slice</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">max_expansions</span><span class="p">:</span> <span class="nb">int</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">AcceptFn</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Neal (2003) Fig. 3 stepping-out interval, in t-space (x0 at t=0).</span>
+<span class="w">    </span><span class="sd">"""Neal (2003) Fig. 3 stepping-out interval, in t-space (x0 at t=0).</span>
 
 <span class="sd">    An interval procedure is a pluggable callable (pass it as</span>
 <span class="sd">    ``interval=stepping_out``). It returns its own acceptance test so the kernel</span>
@@ -591,7 +645,7 @@
 <span class="sd">    -------</span>
 <span class="sd">    The tuple ``(left, right, num_expansions, accept_fn)``: the bracket</span>
 <span class="sd">    endpoints, the number of expansions, and the acceptance test.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">u_key</span><span class="p">,</span> <span class="n">jk_key</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
     <span class="n">u</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">u_key</span><span class="p">)</span>
     <span class="n">left</span> <span class="o">=</span> <span class="o">-</span><span class="n">width</span> <span class="o">*</span> <span class="n">u</span>
@@ -626,7 +680,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_best_interval</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Index of the first ``True`` (else the last), for the doubling cap.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Index of the first ``True`` (else the last), for the doubling cap."""</span>
     <span class="n">k</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">mults</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">k</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
     <span class="n">shifts</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
@@ -638,19 +692,19 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">doubling</span><span class="p">(</span>
     <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">in_slice</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">max_expansions</span><span class="p">:</span> <span class="nb">int</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">AcceptFn</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Neal (2003) Fig. 4 doubling interval, vectorized, in t-space.</span>
+<span class="w">    </span><span class="sd">"""Neal (2003) Fig. 4 doubling interval, vectorized, in t-space.</span>
 
 <span class="sd">    Expands one (randomly chosen) side at a time, doubling the bracket each</span>
 <span class="sd">    step, until both ends are outside the slice or ``max_expansions`` is hit. A</span>
 <span class="sd">    pluggable interval callable, like :func:`stepping_out`. Its ``accept_fn`` is</span>
-<span class="sd">    Neal&#39;s Fig. 6 acceptance test bound to this (original) bracket, which is</span>
-<span class="sd">    required for doubling&#39;s reversibility.</span>
+<span class="sd">    Neal's Fig. 6 acceptance test bound to this (original) bracket, which is</span>
+<span class="sd">    required for doubling's reversibility.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    The tuple ``(left, right, num_expansions, accept_fn)``: the bracket</span>
 <span class="sd">    endpoints, the number of expansions, and the acceptance test.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
     <span class="n">initial_left</span> <span class="o">=</span> <span class="o">-</span><span class="n">width</span> <span class="o">*</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">key1</span><span class="p">)</span>
     <span class="n">initial_right</span> <span class="o">=</span> <span class="n">initial_left</span> <span class="o">+</span> <span class="n">width</span>
@@ -687,13 +741,13 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_doubling_accept</span><span class="p">(</span>
     <span class="n">in_slice</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">left</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Neal (2003) Fig. 6 acceptance test for a doubling-found interval.</span>
+<span class="w">    </span><span class="sd">"""Neal (2003) Fig. 6 acceptance test for a doubling-found interval.</span>
 
 <span class="sd">    Works on the original bracket ``(left, right)`` (not the shrunk one),</span>
 <span class="sd">    bisecting toward ``t`` until the sub-interval is within ~``width`` (the</span>
 <span class="sd">    1.1 factor guards round-off), rejecting if the doubling started from ``t``</span>
 <span class="sd">    would have stopped earlier. ``x0`` is at ``t = 0``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">cond</span><span class="p">(</span><span class="n">carry</span><span class="p">):</span>
         <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">ok</span> <span class="o">=</span> <span class="n">carry</span>
@@ -725,13 +779,13 @@
     <span class="n">current_state</span><span class="p">,</span>
     <span class="n">max_shrinkage</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Neal (2003) Fig. 5 shrinkage, in t-space (x0 at t=0).</span>
+<span class="w">    </span><span class="sd">"""Neal (2003) Fig. 5 shrinkage, in t-space (x0 at t=0).</span>
 
 <span class="sd">    Threads the accepted candidate state through the loop, so whatever the</span>
 <span class="sd">    proposal records on it (e.g. a nested-sampling ``loglikelihood``) is carried</span>
 <span class="sd">    out rather than recomputed. Budget-capped; on exhaustion the chain stays put</span>
 <span class="sd">    (``current_state`` is returned).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">cond</span><span class="p">(</span><span class="n">carry</span><span class="p">):</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">found</span> <span class="o">=</span> <span class="n">carry</span>
@@ -772,11 +826,11 @@
     <span class="n">max_expansions</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">max_shrinkage</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One univariate slice through the current point.</span>
+<span class="w">    </span><span class="sd">"""One univariate slice through the current point.</span>
 
 <span class="sd">    ``slice_fn(t) -&gt; (state, is_valid)`` produces the candidate at coordinate</span>
 <span class="sd">    ``t``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">level_key</span><span class="p">,</span> <span class="n">interval_key</span><span class="p">,</span> <span class="n">shrink_key</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
     <span class="n">level</span> <span class="o">=</span> <span class="n">current_state</span><span class="o">.</span><span class="n">logdensity</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">level_key</span><span class="p">))</span>
 
@@ -821,7 +875,7 @@
     <span class="n">max_expansions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="n">max_shrinkage</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a slice kernel driven by a proposal generator.</span>
+<span class="w">    </span><span class="sd">"""Build a slice kernel driven by a proposal generator.</span>
 
 <span class="sd">    The kernel performs one univariate slice using ``proposal_generator``, a</span>
 <span class="sd">    callable ``(rng_key, position, logdensity_fn) -&gt; slice_fn`` where</span>
@@ -848,7 +902,7 @@
 <span class="sd">    A kernel that takes a rng_key, the current state, a log-density function, a</span>
 <span class="sd">    proposal generator and a bracket width, and returns a new state along with</span>
 <span class="sd">    information about the transition.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span>
         <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
@@ -871,7 +925,7 @@
 <div class="viewcode-block" id="random_order">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/slice/index.html#blackjax.mcmc.slice.random_order">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">random_order</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A fresh random permutation of the ``d`` coordinate indices (the default).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""A fresh random permutation of the ``d`` coordinate indices (the default)."""</span>
     <span class="k">return</span> <span class="n">random</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span></div>
 
 
@@ -879,7 +933,7 @@
 <div class="viewcode-block" id="fixed_order">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/slice/index.html#blackjax.mcmc.slice.fixed_order">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">fixed_order</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sweep the coordinates in fixed natural order ``0, 1, ..., d - 1``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Sweep the coordinates in fixed natural order ``0, 1, ..., d - 1``."""</span>
     <span class="k">del</span> <span class="n">rng_key</span>
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">d</span><span class="p">)</span></div>
 
@@ -893,7 +947,7 @@
     <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Default per-axis proposal for the coordinate sweep.</span>
+<span class="w">    </span><span class="sd">"""Default per-axis proposal for the coordinate sweep.</span>
 
 <span class="sd">    The coordinate analogue of :func:`direction_proposal`: a unit step along</span>
 <span class="sd">    flattened axis ``i`` (the one-hot direction ``e_i``), so ``x(t)`` is</span>
@@ -904,7 +958,7 @@
 <span class="sd">    A constraint is added the same way as on the multivariate path -- by</span>
 <span class="sd">    overriding the proposal (``axis_proposal``) to gate ``is_valid``; there is no</span>
 <span class="sd">    built-in constraint argument.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">del</span> <span class="n">rng_key</span>  <span class="c1"># the coordinate move is deterministic given the axis</span>
     <span class="n">flat</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">flatten_util</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
 
@@ -926,9 +980,9 @@
     <span class="n">max_expansions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="n">max_shrinkage</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a coordinate-wise (slice-within-Gibbs) kernel.</span>
+<span class="w">    </span><span class="sd">"""Build a coordinate-wise (slice-within-Gibbs) kernel.</span>
 
-<span class="sd">    One step updates each scalar coordinate&#39;s full conditional with a univariate</span>
+<span class="sd">    One step updates each scalar coordinate's full conditional with a univariate</span>
 <span class="sd">    slice, in the order given by ``coordinate_order``, the choice function</span>
 <span class="sd">    ``(rng_key, d) -&gt; indices`` (:func:`random_order`, the default, or</span>
 <span class="sd">    :func:`fixed_order`). Each coordinate move is drawn by ``axis_proposal``, the</span>
@@ -941,7 +995,7 @@
 <span class="sd">    -------</span>
 <span class="sd">    A kernel that takes a rng_key, the current state and a log-density function,</span>
 <span class="sd">    and returns a new state along with information about the transition.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span>
         <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">SliceState</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span>
@@ -1004,13 +1058,13 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">sample_direction</span><span class="p">(</span>
     <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Array</span> <span class="o">=</span> <span class="mf">1.0</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayTree</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A random slice direction shaped by ``scale`` and normalized to unit length.</span>
+<span class="w">    </span><span class="sd">"""A random slice direction shaped by ``scale`` and normalized to unit length.</span>
 
 <span class="sd">    ``scale`` is a scalar (isotropic), a vector (per-coordinate / diagonal) or a</span>
 <span class="sd">    dense matrix (a full preconditioner, applied as a linear map to</span>
 <span class="sd">    standard-normal noise, so its covariance is ``scale @ scale.T``). Defaults</span>
 <span class="sd">    to ``1.0`` (uniformly random unit directions).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">noise</span> <span class="o">=</span> <span class="n">generate_gaussian_noise</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">scale</span><span class="p">)</span>
     <span class="n">flat</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">flatten_util</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">noise</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">unravel_fn</span><span class="p">(</span><span class="n">flat</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">flat</span><span class="p">))</span></div>
@@ -1020,12 +1074,12 @@
 <div class="viewcode-block" id="direction_proposal">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/slice/index.html#blackjax.mcmc.slice.direction_proposal">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">direction_proposal</span><span class="p">(</span><span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Array</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Proposal-generator factory: slice along a random ``scale``-shaped direction.</span>
+<span class="w">    </span><span class="sd">"""Proposal-generator factory: slice along a random ``scale``-shaped direction.</span>
 
 <span class="sd">    See :func:`sample_direction` for ``scale`` (scalar / vector / dense, unit by</span>
 <span class="sd">    default). Pass as</span>
 <span class="sd">    ``slice_sampling(logp, proposal_generator=direction_proposal(scale))``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">proposal_generator</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">):</span>
         <span class="n">direction</span> <span class="o">=</span> <span class="n">sample_direction</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span>
@@ -1051,7 +1105,7 @@
     <span class="n">max_expansions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="n">max_shrinkage</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Multivariate slice sampler, ``blackjax.slice_sampling``.</span>
+<span class="w">    </span><span class="sd">"""Multivariate slice sampler, ``blackjax.slice_sampling``.</span>
 
 <span class="sd">    Each step takes one univariate slice along a random direction (chaining such</span>
 <span class="sd">    moves is the hit-and-run strategy) drawn by ``proposal_generator``. The</span>
@@ -1092,7 +1146,7 @@
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    A ``SamplingAlgorithm``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">kernel</span> <span class="o">=</span> <span class="n">build_kernel</span><span class="p">(</span><span class="n">interval</span><span class="p">,</span> <span class="n">max_expansions</span><span class="p">,</span> <span class="n">max_shrinkage</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">build_sampling_algorithm</span><span class="p">(</span>
         <span class="n">kernel</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">kernel_args</span><span class="o">=</span><span class="p">(</span><span class="n">proposal_generator</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span>
@@ -1112,9 +1166,9 @@
     <span class="n">axis_proposal</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">coordinate_proposal</span><span class="p">,</span>
     <span class="n">max_shrinkage</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Coordinate-wise (slice-within-Gibbs) slice sampler.</span>
+<span class="w">    </span><span class="sd">"""Coordinate-wise (slice-within-Gibbs) slice sampler.</span>
 
-<span class="sd">    Updates each scalar coordinate&#39;s full conditional with a univariate slice,</span>
+<span class="sd">    Updates each scalar coordinate's full conditional with a univariate slice,</span>
 <span class="sd">    swept in the order given by ``coordinate_order``. The single-variable</span>
 <span class="sd">    counterpart to the multivariate :func:`as_top_level_api`.</span>
 
@@ -1143,7 +1197,7 @@
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    A ``SamplingAlgorithm``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">kernel</span> <span class="o">=</span> <span class="n">build_coordinate_kernel</span><span class="p">(</span>
         <span class="n">interval</span><span class="o">=</span><span class="n">interval</span><span class="p">,</span>
         <span class="n">axis_proposal</span><span class="o">=</span><span class="n">axis_proposal</span><span class="p">,</span>
@@ -1216,8 +1270,8 @@ By The Blackjax developers
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
 
   <footer class="bd-footer">
   </footer>

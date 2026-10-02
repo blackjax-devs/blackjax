@@ -26,21 +26,21 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=4418a689" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e37d73aa" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
     <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
@@ -48,25 +48,32 @@
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/mcmc/random_walk';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g0c69b5d2f" />
+  <meta name="docsearch:version" content="0.1.dev1+g421add75e" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
   </head>
-  
-  
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
-
+  <body data-default-mode="">
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -92,7 +99,47 @@
 </div>
 
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
     </header>
   
 
@@ -378,11 +425,18 @@
 
 
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div>
 
 
 <button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
@@ -416,25 +470,25 @@
   <h1>Source code for blackjax.mcmc.random_walk</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Copyright 2020- The Blackjax Authors.</span>
 <span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
 <span class="c1"># You may obtain a copy of the License at</span>
 <span class="c1">#</span>
 <span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
 <span class="c1">#</span>
 <span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="sd">Implements the (basic) user interfaces for Random Walk Rosenbluth-Metropolis-Hastings kernels.</span>
 <span class="sd">Some interfaces are exposed here for convenience and for entry level users, who might be familiar</span>
 <span class="sd">with simpler versions of the algorithms, but in all cases they are particular instantiations</span>
 <span class="sd">of the Random Walk Rosenbluth-Metropolis-Hastings.</span>
 
-<span class="sd">Let&#39;s note $x_{t-1}$ to the previous position and $x_t$ to the newly sampled one.</span>
+<span class="sd">Let's note $x_{t-1}$ to the previous position and $x_t$ to the newly sampled one.</span>
 
 <span class="sd">The variants offered are:</span>
 
@@ -443,16 +497,16 @@
 
 <span class="sd">    Function: `additive_step`</span>
 
-<span class="sd">2. Independent proposal distribution: $P(x_t)$ doesn&#39;t depend on $x_{t_1}$.</span>
+<span class="sd">2. Independent proposal distribution: $P(x_t)$ doesn't depend on $x_{t_1}$.</span>
 
 <span class="sd">    Function: `irmh`</span>
 
 <span class="sd">3. Proposal distribution using a symmetric function. That means $P(x_t|x_{t-1}) = P(x_{t-1}|x_t)$.</span>
-<span class="sd">   See &#39;Metropolis Algorithm&#39; in [1].</span>
+<span class="sd">   See 'Metropolis Algorithm' in [1].</span>
 
 <span class="sd">    Function: `rmh` without proposal_logdensity_fn.</span>
 
-<span class="sd">4. Asymmetric proposal distribution. See &#39;Metropolis-Hastings&#39; Algorithm in [1].</span>
+<span class="sd">4. Asymmetric proposal distribution. See 'Metropolis-Hastings' Algorithm in [1].</span>
 
 <span class="sd">    Function: `rmh` with proposal_logdensity_fn.</span>
 
@@ -475,7 +529,7 @@
 <span class="sd">        step = jax.jit(random_walk.step)</span>
 <span class="sd">        new_state, info = step(rng_key, state)</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
@@ -487,25 +541,25 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">generate_gaussian_noise</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;build_additive_step&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;normal&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;build_irmh&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;build_rmh&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;RWInfo&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;RWState&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;rmh_proposal&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;build_rmh_transition_energy&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;additive_step_random_walk&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;irmh_as_top_level_api&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;rmh_as_top_level_api&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;normal_random_walk&quot;</span><span class="p">,</span>
+    <span class="s2">"build_additive_step"</span><span class="p">,</span>
+    <span class="s2">"normal"</span><span class="p">,</span>
+    <span class="s2">"build_irmh"</span><span class="p">,</span>
+    <span class="s2">"build_rmh"</span><span class="p">,</span>
+    <span class="s2">"RWInfo"</span><span class="p">,</span>
+    <span class="s2">"RWState"</span><span class="p">,</span>
+    <span class="s2">"rmh_proposal"</span><span class="p">,</span>
+    <span class="s2">"build_rmh_transition_energy"</span><span class="p">,</span>
+    <span class="s2">"additive_step_random_walk"</span><span class="p">,</span>
+    <span class="s2">"irmh_as_top_level_api"</span><span class="p">,</span>
+    <span class="s2">"rmh_as_top_level_api"</span><span class="p">,</span>
+    <span class="s2">"normal_random_walk"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
 <div class="viewcode-block" id="normal">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.normal">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">normal</span><span class="p">(</span><span class="n">sigma</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normal Random Walk proposal.</span>
+<span class="w">    </span><span class="sd">"""Normal Random Walk proposal.</span>
 
 <span class="sd">    Propose a new position such that its distance to the current position is</span>
 <span class="sd">    normally distributed. Suitable for continuous variables.</span>
@@ -519,9 +573,9 @@
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    A callable that takes a PRNGKey and a position and returns a proposed move.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">sigma</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;sigma must be a vector or a matrix.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"sigma must be a vector or a matrix."</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">propose</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayTree</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">generate_gaussian_noise</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">)</span>
@@ -533,14 +587,14 @@
 <div class="viewcode-block" id="RWState">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.RWState">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">RWState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;State of the RW chain.</span>
+<span class="w">    </span><span class="sd">"""State of the RW chain.</span>
 
 <span class="sd">    position</span>
 <span class="sd">        Current position of the chain.</span>
 <span class="sd">    logdensity</span>
 <span class="sd">        Current value of the log-density</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="RWState.position">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.RWState.position">[docs]</a>
@@ -556,7 +610,7 @@
 <div class="viewcode-block" id="RWInfo">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.RWInfo">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">RWInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Additional information on the RW chain.</span>
+<span class="w">    </span><span class="sd">"""Additional information on the RW chain.</span>
 
 <span class="sd">    This additional information can be used for debugging or computing</span>
 <span class="sd">    diagnostics.</span>
@@ -570,7 +624,7 @@
 <span class="sd">    proposal</span>
 <span class="sd">        The state proposed by the proposal.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="RWInfo.acceptance_rate">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.RWInfo.acceptance_rate">[docs]</a>
@@ -588,7 +642,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RWState</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a chain state from a position.</span>
+<span class="w">    </span><span class="sd">"""Create a chain state from a position.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -601,21 +655,21 @@
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    The initial state of the RW chain.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">RWState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">(</span><span class="n">position</span><span class="p">))</span>
 
 
 <div class="viewcode-block" id="build_additive_step">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.build_additive_step">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_additive_step</span><span class="p">():</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a Random Walk Rosenbluth-Metropolis-Hastings kernel</span>
+<span class="w">    </span><span class="sd">"""Build a Random Walk Rosenbluth-Metropolis-Hastings kernel</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    A kernel that takes a rng_key and a Pytree that contains the current state</span>
 <span class="sd">    of the chain and that returns a new state of the chain along with</span>
 <span class="sd">    information about the transition.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">inner_kernel</span> <span class="o">=</span> <span class="n">build_rmh</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span>
@@ -635,7 +689,7 @@
 <div class="viewcode-block" id="normal_random_walk">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.normal_random_walk">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">normal_random_walk</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">sigma</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    logdensity_fn</span>
@@ -646,7 +700,7 @@
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">         A ``SamplingAlgorithm``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">additive_step_random_walk</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">normal</span><span class="p">(</span><span class="n">sigma</span><span class="p">))</span></div>
 
 
@@ -656,7 +710,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">additive_step_random_walk</span><span class="p">(</span>
     <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">random_step</span><span class="p">:</span> <span class="n">Callable</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the user interface for the Additive Step RMH</span>
+<span class="w">    </span><span class="sd">"""Implements the user interface for the Additive Step RMH</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
@@ -690,7 +744,7 @@
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    A ``SamplingAlgorithm``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">kernel</span> <span class="o">=</span> <span class="n">build_additive_step</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">build_sampling_algorithm</span><span class="p">(</span>
         <span class="n">kernel</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">kernel_args</span><span class="o">=</span><span class="p">(</span><span class="n">random_step</span><span class="p">,)</span>
@@ -701,7 +755,7 @@
 <div class="viewcode-block" id="build_irmh">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.build_irmh">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_irmh</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Build an Independent Random Walk Rosenbluth-Metropolis-Hastings kernel. This implies</span>
 <span class="sd">    that the proposal distribution does not depend on the particle being mutated :cite:p:`wang2022exact`.</span>
 
@@ -711,7 +765,7 @@
 <span class="sd">    of the chain and that returns a new state of the chain along with</span>
 <span class="sd">    information about the transition.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">inner_kernel</span> <span class="o">=</span> <span class="n">build_rmh</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span>
@@ -721,7 +775,7 @@
         <span class="n">proposal_distribution</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">proposal_logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">RWState</span><span class="p">,</span> <span class="n">RWInfo</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        proposal_distribution</span>
@@ -731,7 +785,7 @@
 <span class="sd">            For non-symmetric proposals, a function that returns the log-density</span>
 <span class="sd">            to obtain a given proposal knowing the current state. If it is not</span>
 <span class="sd">            provided we assume the proposal is symmetric.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">proposal_generator</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">ArrayTree</span><span class="p">):</span>
             <span class="k">del</span> <span class="n">position</span>
@@ -752,7 +806,7 @@
     <span class="n">proposal_distribution</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">proposal_logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the independent RMH.</span>
+<span class="w">    </span><span class="sd">"""Implements the (basic) user interface for the independent RMH.</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
@@ -778,7 +832,7 @@
 <span class="sd">        The log density probability density function from which we wish to sample.</span>
 <span class="sd">    proposal_distribution</span>
 <span class="sd">        A Callable that takes a random number generator and produces a new proposal. The</span>
-<span class="sd">        proposal is independent of the sampler&#39;s current state.</span>
+<span class="sd">        proposal is independent of the sampler's current state.</span>
 <span class="sd">    proposal_logdensity_fn:</span>
 <span class="sd">        For non-symmetric proposals, a function that returns the log-density</span>
 <span class="sd">        to obtain a given proposal knowing the current state. If it is not</span>
@@ -787,7 +841,7 @@
 <span class="sd">    -------</span>
 <span class="sd">    A ``SamplingAlgorithm``.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">kernel</span> <span class="o">=</span> <span class="n">build_irmh</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">build_sampling_algorithm</span><span class="p">(</span>
         <span class="n">kernel</span><span class="p">,</span>
@@ -801,7 +855,7 @@
 <div class="viewcode-block" id="build_rmh">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.build_rmh">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_rmh</span><span class="p">():</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a Rosenbluth-Metropolis-Hastings kernel.</span>
+<span class="w">    </span><span class="sd">"""Build a Rosenbluth-Metropolis-Hastings kernel.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -809,7 +863,7 @@
 <span class="sd">    of the chain and that returns a new state of the chain along with</span>
 <span class="sd">    information about the transition.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span>
         <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
@@ -818,7 +872,7 @@
         <span class="n">transition_generator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">proposal_logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">RWState</span><span class="p">,</span> <span class="n">RWInfo</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Move the chain by one step using the Rosenbluth Metropolis Hastings</span>
+<span class="w">        </span><span class="sd">"""Move the chain by one step using the Rosenbluth Metropolis Hastings</span>
 <span class="sd">        algorithm.</span>
 
 <span class="sd">        Parameters</span>
@@ -842,7 +896,7 @@
 <span class="sd">        The next state of the chain and additional information about the current</span>
 <span class="sd">        step.</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">transition_energy</span> <span class="o">=</span> <span class="n">build_rmh_transition_energy</span><span class="p">(</span><span class="n">proposal_logdensity_fn</span><span class="p">)</span>
 
         <span class="n">compute_acceptance_ratio</span> <span class="o">=</span> <span class="n">proposal</span><span class="o">.</span><span class="n">compute_asymmetric_acceptance_ratio</span><span class="p">(</span>
@@ -866,7 +920,7 @@
     <span class="n">proposal_generator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">PRNGKey</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">],</span> <span class="n">ArrayTree</span><span class="p">],</span>
     <span class="n">proposal_logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ArrayLikeTree</span><span class="p">],</span> <span class="n">ArrayTree</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the user interface for the RMH.</span>
+<span class="w">    </span><span class="sd">"""Implements the user interface for the RMH.</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
@@ -900,7 +954,7 @@
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    A ``SamplingAlgorithm``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">kernel</span> <span class="o">=</span> <span class="n">build_rmh</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">build_sampling_algorithm</span><span class="p">(</span>
         <span class="n">kernel</span><span class="p">,</span>
@@ -914,7 +968,7 @@
 <div class="viewcode-block" id="build_rmh_transition_energy">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.build_rmh_transition_energy">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_rmh_transition_energy</span><span class="p">(</span><span class="n">proposal_logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the transition energy function for the Random Walk Metropolis-Hastings kernel.</span>
+<span class="w">    </span><span class="sd">"""Build the transition energy function for the Random Walk Metropolis-Hastings kernel.</span>
 
 <span class="sd">    For a symmetric proposal (``proposal_logdensity_fn is None``) the transition</span>
 <span class="sd">    energy reduces to ``-logdensity(new_state)``.  For an asymmetric proposal</span>
@@ -930,7 +984,7 @@
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    A callable ``(prev_state, new_state) -&gt; transition_energy``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">proposal_logdensity_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">transition_energy</span><span class="p">(</span><span class="n">prev_state</span><span class="p">,</span> <span class="n">new_state</span><span class="p">):</span>
@@ -953,7 +1007,7 @@
     <span class="n">compute_acceptance_ratio</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">sample_proposal</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">proposal</span><span class="o">.</span><span class="n">static_binomial_sampling</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a Random Walk Metropolis-Hastings proposal generator.</span>
+<span class="w">    </span><span class="sd">"""Build a Random Walk Metropolis-Hastings proposal generator.</span>
 
 <span class="sd">    Draws a new position from ``transition_distribution``, evaluates the</span>
 <span class="sd">    log-density, computes the acceptance ratio, and accepts or rejects</span>
@@ -973,7 +1027,7 @@
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    A callable ``(rng_key, state) -&gt; (new_state, do_accept, p_accept)``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">generate</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">previous_state</span><span class="p">:</span> <span class="n">RWState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">RWState</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
         <span class="n">key_proposal</span><span class="p">,</span> <span class="n">key_accept</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
@@ -1051,8 +1105,8 @@ By The Blackjax developers
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
 
   <footer class="bd-footer">
   </footer>

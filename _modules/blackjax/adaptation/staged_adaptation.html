@@ -26,21 +26,21 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=4418a689" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e37d73aa" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
     <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
@@ -48,25 +48,32 @@
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/adaptation/staged_adaptation';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g0c69b5d2f" />
+  <meta name="docsearch:version" content="0.1.dev1+g421add75e" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
   </head>
-  
-  
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
-
+  <body data-default-mode="">
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -92,7 +99,47 @@
 </div>
 
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
     </header>
   
 
@@ -378,11 +425,18 @@
 
 
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div>
 
 
 <button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
@@ -416,18 +470,18 @@
   <h1>Source code for blackjax.adaptation.staged_adaptation</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Copyright 2020- The Blackjax Authors.</span>
 <span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
 <span class="c1"># You may obtain a copy of the License at</span>
 <span class="c1">#</span>
 <span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
 <span class="c1">#</span>
 <span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
-<span class="sd">&quot;&quot;&quot;Staged warmup adaptation engine for HMC-family algorithms.</span>
+<span class="sd">"""Staged warmup adaptation engine for HMC-family algorithms.</span>
 
 <span class="sd">This module provides the :func:`staged_adaptation` engine and the</span>
 <span class="sd">:func:`build_schedule` function (previously in ``window_adaptation.py``;</span>
@@ -450,7 +504,7 @@
 <span class="sd">-----</span>
 <span class="sd">``build_schedule`` is defined here (canonical location) and re-exported from</span>
 <span class="sd">``window_adaptation`` for backward compatibility.  Import from either module.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
@@ -471,9 +525,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">pytree_size</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;StagedAdaptationState&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;build_schedule&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;staged_adaptation&quot;</span><span class="p">,</span>
+    <span class="s2">"StagedAdaptationState"</span><span class="p">,</span>
+    <span class="s2">"build_schedule"</span><span class="p">,</span>
+    <span class="s2">"staged_adaptation"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -486,7 +540,7 @@
 <div class="viewcode-block" id="StagedAdaptationState">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/staged_adaptation/index.html#blackjax.adaptation.staged_adaptation.StagedAdaptationState">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">StagedAdaptationState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Scan-carry state for the staged adaptation engine.</span>
+<span class="w">    </span><span class="sd">"""Scan-carry state for the staged adaptation engine.</span>
 
 <span class="sd">    Field names intentionally mirror the previous</span>
 <span class="sd">    ``WindowAdaptationState`` fields so that any downstream code accessing</span>
@@ -514,7 +568,7 @@
 <span class="sd">    inverse_mass_matrix</span>
 <span class="sd">        Current inverse mass matrix; updated at each slow-window boundary and</span>
 <span class="sd">        read by the MCMC kernel at every scan step.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="StagedAdaptationState.ss_state">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/staged_adaptation/index.html#blackjax.adaptation.staged_adaptation.StagedAdaptationState.ss_state">[docs]</a>
@@ -547,7 +601,7 @@
     <span class="n">n_da_updates</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="n">metric_telemetry</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the (init, update, final) triple for the staged adaptation HOST.</span>
+<span class="w">    </span><span class="sd">"""Build the (init, update, final) triple for the staged adaptation HOST.</span>
 
 <span class="sd">    This is the low-level engine constructor.  Step-size dual averaging and</span>
 <span class="sd">    the stage-dispatch logic live here; mass-matrix adaptation is fully</span>
@@ -580,14 +634,14 @@
 <span class="sd">        -&gt; StagedAdaptationState``</span>
 <span class="sd">    final</span>
 <span class="sd">        ``(warmup_state) -&gt; (step_size, inverse_mass_matrix)``</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">da_init</span><span class="p">,</span> <span class="n">da_update</span><span class="p">,</span> <span class="n">da_final</span> <span class="o">=</span> <span class="n">dual_averaging_adaptation</span><span class="p">(</span><span class="n">target_acceptance_rate</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_maybe_multi_da_update</span><span class="p">(</span>
         <span class="n">ss_state</span><span class="p">:</span> <span class="n">DualAveragingAdaptationState</span><span class="p">,</span>
         <span class="n">acceptance_rates</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DualAveragingAdaptationState</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply one DA update using the mean acceptance rate.</span>
+<span class="w">        </span><span class="sd">"""Apply one DA update using the mean acceptance rate.</span>
 
 <span class="sd">        When ``n_da_updates == 1`` (single-chain), calls ``da_update`` with</span>
 <span class="sd">        the scalar ``acceptance_rates`` unchanged.  When ``n_da_updates &gt; 1``</span>
@@ -597,23 +651,23 @@
 <span class="sd">        (M updates, one per chain) inflated the DA gain ~√M and caused</span>
 <span class="sd">        self-sustained limit cycles; the mean-pool form treats the M</span>
 <span class="sd">        measurements as one mean observation with M-fold reduced variance.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="n">n_da_updates</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">da_update</span><span class="p">(</span><span class="n">ss_state</span><span class="p">,</span> <span class="n">acceptance_rates</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">da_update</span><span class="p">(</span><span class="n">ss_state</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">acceptance_rates</span><span class="p">))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_stamp_host_fields</span><span class="p">(</span><span class="n">imm_state</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">warmup_step_index</span><span class="p">,</span> <span class="o">**</span><span class="n">epsilons</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write the host-owned fields into the publication record.</span>
+<span class="w">        </span><span class="sd">"""Write the host-owned fields into the publication record.</span>
 
 <span class="sd">        The metric core computes the record but sees neither the scan index nor</span>
 <span class="sd">        the step-size state, so it leaves these placeholders; this is the only</span>
-<span class="sd">        writer.  Every epsilon is cast to the dual-averaging scheme&#39;s own</span>
+<span class="sd">        writer.  Every epsilon is cast to the dual-averaging scheme's own</span>
 <span class="sd">        working dtype (float64 under ``jax_enable_x64``) rather than a fixed</span>
 <span class="sd">        float32, which would silently destroy the chronology the record</span>
 <span class="sd">        promises.  The scan index is the only field here measured in warmup</span>
-<span class="sd">        steps -- the record&#39;s core-update counts are not.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        steps -- the record's core-update counts are not.</span>
+<span class="sd">        """</span>
         <span class="n">record</span> <span class="o">=</span> <span class="n">imm_state</span><span class="o">.</span><span class="n">publication</span>
         <span class="n">eps_dtype</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">epsilon_in_force</span><span class="o">.</span><span class="n">dtype</span>
         <span class="k">return</span> <span class="n">imm_state</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span>
@@ -630,18 +684,18 @@
         <span class="n">imm_state</span> <span class="o">=</span> <span class="n">metric_core</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">n_dims</span><span class="p">)</span>
         <span class="n">ss_state</span> <span class="o">=</span> <span class="n">da_init</span><span class="p">(</span><span class="n">initial_step_size</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">metric_telemetry</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">imm_state</span><span class="p">,</span> <span class="s2">&quot;publication&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">imm_state</span><span class="p">,</span> <span class="s2">"publication"</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s2">&quot;staged_adaptation: metric_telemetry=True requires a metric core &quot;</span>
-                    <span class="s2">&quot;that carries a publication record, but &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">imm_state</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> has no &#39;publication&#39; field. Build the &quot;</span>
-                    <span class="s2">&quot;core with build_meta_adaptation_core(..., telemetry=True), or pass &quot;</span>
-                    <span class="s2">&quot;metric=&#39;auto&#39; with n_chains=1 and let staged_adaptation build it.&quot;</span>
+                    <span class="s2">"staged_adaptation: metric_telemetry=True requires a metric core "</span>
+                    <span class="s2">"that carries a publication record, but "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">imm_state</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> has no 'publication' field. Build the "</span>
+                    <span class="s2">"core with build_meta_adaptation_core(..., telemetry=True), or pass "</span>
+                    <span class="s2">"metric='auto' with n_chains=1 and let staged_adaptation build it."</span>
                 <span class="p">)</span>
-            <span class="c1"># Match the record&#39;s epsilon dtype to the DA&#39;s own, then leave the</span>
+            <span class="c1"># Match the record's epsilon dtype to the DA's own, then leave the</span>
             <span class="c1"># values NaN: no window has been published yet.</span>
             <span class="n">eps_dtype</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">ss_state</span><span class="o">.</span><span class="n">log_step_size</span><span class="p">)</span><span class="o">.</span><span class="n">dtype</span>
-            <span class="n">nan</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">eps_dtype</span><span class="p">)</span>
+            <span class="n">nan</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">eps_dtype</span><span class="p">)</span>
             <span class="n">imm_state</span> <span class="o">=</span> <span class="n">imm_state</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span>
                 <span class="n">publication</span><span class="o">=</span><span class="n">imm_state</span><span class="o">.</span><span class="n">publication</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span>
                     <span class="n">warmup_step_index</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
@@ -664,7 +718,7 @@
         <span class="n">acceptance_rate</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
         <span class="n">ws</span><span class="p">:</span> <span class="n">StagedAdaptationState</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StagedAdaptationState</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update adaptation state during a fast (step-size-only) window.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Update adaptation state during a fast (step-size-only) window."""</span>
         <span class="k">del</span> <span class="n">position</span><span class="p">,</span> <span class="n">grad</span>
         <span class="n">new_ss</span> <span class="o">=</span> <span class="n">_maybe_multi_da_update</span><span class="p">(</span><span class="n">ws</span><span class="o">.</span><span class="n">ss_state</span><span class="p">,</span> <span class="n">acceptance_rate</span><span class="p">)</span>
         <span class="n">new_step_size</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">new_ss</span><span class="o">.</span><span class="n">log_step_size</span><span class="p">)</span>
@@ -678,7 +732,7 @@
         <span class="n">acceptance_rate</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
         <span class="n">ws</span><span class="p">:</span> <span class="n">StagedAdaptationState</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StagedAdaptationState</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update adaptation state during a slow (step-size + mass-matrix) window.</span>
+<span class="w">        </span><span class="sd">"""Update adaptation state during a slow (step-size + mass-matrix) window.</span>
 
 <span class="sd">        Delegates mass-matrix accumulation to ``metric_core.update``.  For</span>
 <span class="sd">        welford-path cores, ``grad`` is accepted for interface uniformity but</span>
@@ -686,11 +740,11 @@
 <span class="sd">        inside ``mass_matrix_adaptation.update`` resolves at JAX trace time).</span>
 <span class="sd">        For fisher-path cores, ``grad`` is forwarded to the Fisher-block</span>
 <span class="sd">        accumulator.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">new_metric_st</span> <span class="o">=</span> <span class="n">metric_core</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">ws</span><span class="o">.</span><span class="n">imm_state</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">grad</span><span class="p">)</span>
         <span class="n">new_ss</span> <span class="o">=</span> <span class="n">_maybe_multi_da_update</span><span class="p">(</span><span class="n">ws</span><span class="o">.</span><span class="n">ss_state</span><span class="p">,</span> <span class="n">acceptance_rate</span><span class="p">)</span>
         <span class="n">new_step_size</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">new_ss</span><span class="o">.</span><span class="n">log_step_size</span><span class="p">)</span>
-        <span class="c1"># Propagate the core&#39;s current inverse_mass_matrix to the MCMC kernel</span>
+        <span class="c1"># Propagate the core's current inverse_mass_matrix to the MCMC kernel</span>
         <span class="c1"># at every slow step, not just at window-end.  For all non-accumulating</span>
         <span class="c1"># cores (welford, fisher-diag, reset-low-rank, sample-cov) update() does</span>
         <span class="c1"># not write inverse_mass_matrix, so new_metric_st.inverse_mass_matrix ==</span>
@@ -698,7 +752,7 @@
         <span class="c1"># ws.inverse_mass_matrix return.  For the accumulating core, update() may</span>
         <span class="c1"># recompute inverse_mass_matrix mid-window (when recompute_counter %</span>
         <span class="c1"># recompute_every == 0), and this line surfaces that to MCMC — matching</span>
-        <span class="c1"># the legacy base() accumulating scan loop&#39;s slow_recompute_only() which</span>
+        <span class="c1"># the legacy base() accumulating scan loop's slow_recompute_only() which</span>
         <span class="c1"># also updated adaptation_state.sigma/U/lam immediately.  Consistent with</span>
         <span class="c1"># slow_final(), which already reads new_metric_st.inverse_mass_matrix.</span>
         <span class="k">return</span> <span class="n">StagedAdaptationState</span><span class="p">(</span>
@@ -708,7 +762,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">slow_final</span><span class="p">(</span>
         <span class="n">ws</span><span class="p">:</span> <span class="n">StagedAdaptationState</span><span class="p">,</span> <span class="n">epsilon_in_force</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">warmup_step_index</span><span class="o">=-</span><span class="mi">1</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StagedAdaptationState</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Finalize a slow window: recompute IMM and re-initialise step-size DA.</span>
+<span class="w">        </span><span class="sd">"""Finalize a slow window: recompute IMM and re-initialise step-size DA.</span>
 
 <span class="sd">        Delegates IMM computation and window-buffer reset to</span>
 <span class="sd">        ``metric_core.final``.  The new inverse mass matrix is read from</span>
@@ -717,10 +771,10 @@
 
 <span class="sd">        ``epsilon_in_force`` is the step size the MCMC kernel actually used for</span>
 <span class="sd">        the transition whose draw this window just absorbed — read from the</span>
-<span class="sd">        carry *before* this step&#39;s dual-averaging update, which is the only</span>
+<span class="sd">        carry *before* this step's dual-averaging update, which is the only</span>
 <span class="sd">        place it exists.  It is used for telemetry only and is ignored when</span>
 <span class="sd">        ``metric_telemetry`` is off.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">new_metric_st</span> <span class="o">=</span> <span class="n">metric_core</span><span class="o">.</span><span class="n">final</span><span class="p">(</span><span class="n">ws</span><span class="o">.</span><span class="n">imm_state</span><span class="p">)</span>
         <span class="n">epsilon_after_window_da</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">ws</span><span class="o">.</span><span class="n">ss_state</span><span class="o">.</span><span class="n">log_step_size</span><span class="p">)</span>
         <span class="n">epsilon_window_average</span> <span class="o">=</span> <span class="n">da_final</span><span class="p">(</span><span class="n">ws</span><span class="o">.</span><span class="n">ss_state</span><span class="p">)</span>
@@ -753,7 +807,7 @@
         <span class="n">acceptance_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">warmup_step_index</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StagedAdaptationState</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Dispatch one warmup step to the correct fast/slow update.</span>
+<span class="w">        </span><span class="sd">"""Dispatch one warmup step to the correct fast/slow update.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -775,7 +829,7 @@
 <span class="sd">        -------</span>
 <span class="sd">        StagedAdaptationState</span>
 <span class="sd">            Updated warmup state.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">stage</span><span class="p">,</span> <span class="n">is_middle_window_end</span> <span class="o">=</span> <span class="n">adaptation_stage</span>
 
         <span class="n">ws</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span>
@@ -789,7 +843,7 @@
 
         <span class="k">if</span> <span class="n">metric_telemetry</span><span class="p">:</span>
             <span class="c1"># Capture the step size the kernel used for the transition just</span>
-            <span class="c1"># absorbed, before slow_update&#39;s DA update overwrote it.</span>
+            <span class="c1"># absorbed, before slow_update's DA update overwrote it.</span>
             <span class="n">epsilon_in_force</span> <span class="o">=</span> <span class="n">adaptation_state</span><span class="o">.</span><span class="n">step_size</span>
             <span class="n">ws</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
                 <span class="n">is_middle_window_end</span><span class="p">,</span>
@@ -809,7 +863,7 @@
         <span class="k">return</span> <span class="n">ws</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">final</span><span class="p">(</span><span class="n">ws</span><span class="p">:</span> <span class="n">StagedAdaptationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the final step size and inverse mass matrix after warmup.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return the final step size and inverse mass matrix after warmup."""</span>
         <span class="n">step_size</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">ws</span><span class="o">.</span><span class="n">ss_state</span><span class="o">.</span><span class="n">log_step_size_avg</span><span class="p">)</span>
         <span class="n">inverse_mass_matrix</span> <span class="o">=</span> <span class="n">ws</span><span class="o">.</span><span class="n">imm_state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span>
         <span class="k">return</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span>
@@ -830,14 +884,14 @@
     <span class="n">final_buffer_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
     <span class="n">first_window_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">25</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the schedule for Stan&#39;s warmup.</span>
+<span class="w">    </span><span class="sd">"""Return the schedule for Stan's warmup.</span>
 
-<span class="sd">    The schedule below is intended to be as close as possible to Stan&#39;s :cite:p:`stan_hmc_param`.</span>
+<span class="sd">    The schedule below is intended to be as close as possible to Stan's :cite:p:`stan_hmc_param`.</span>
 <span class="sd">    The warmup period is split into three stages:</span>
 
 <span class="sd">    1. An initial fast interval to reach the typical set. Only the step size is</span>
 <span class="sd">    adapted in this window.</span>
-<span class="sd">    2. &quot;Slow&quot; parameters that require global information (typically covariance)</span>
+<span class="sd">    2. "Slow" parameters that require global information (typically covariance)</span>
 <span class="sd">    are estimated in a series of expanding intervals with no memory; the step</span>
 <span class="sd">    size is re-initialized at the end of each window. Each window is twice the</span>
 <span class="sd">    size of the preceding window.</span>
@@ -874,7 +928,7 @@
 <span class="sd">    -------</span>
 <span class="sd">    A list of tuples (window_label, is_middle_window_end).</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">schedule</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="c1"># Give up on mass matrix adaptation when the number of warmup steps is too small.</span>
@@ -934,16 +988,16 @@
     <span class="n">metric_telemetry</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">telemetry_full_matrices</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">MetricCore</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve (metric, schedule_fn) to a (MetricCore, schedule_callable) pair.</span>
+<span class="w">    </span><span class="sd">"""Resolve (metric, schedule_fn) to a (MetricCore, schedule_callable) pair.</span>
 
 <span class="sd">    Extracted from :func:`staged_adaptation` for testability.</span>
 
 <span class="sd">    The auto-override rule is:</span>
-<span class="sd">    - ``metric=&quot;auto&quot;`` AND ``schedule_fn is None`` (caller did not specify one)</span>
+<span class="sd">    - ``metric="auto"`` AND ``schedule_fn is None`` (caller did not specify one)</span>
 <span class="sd">      → schedule is set to :func:`~blackjax.adaptation.low_rank_adaptation.build_growing_window_schedule`.</span>
-<span class="sd">    - ``metric=&quot;auto&quot;`` AND ``schedule_fn`` is an explicit callable</span>
+<span class="sd">    - ``metric="auto"`` AND ``schedule_fn`` is an explicit callable</span>
 <span class="sd">      → the explicit schedule is **honored as-is** (NOT replaced by the growing-window</span>
-<span class="sd">      schedule even though ``metric=&quot;auto&quot;``).</span>
+<span class="sd">      schedule even though ``metric="auto"``).</span>
 <span class="sd">    - All other metric paths with ``schedule_fn is None`` → :func:`build_schedule` (Stan doubling).</span>
 
 <span class="sd">    Parameters</span>
@@ -951,10 +1005,10 @@
 <span class="sd">    metric</span>
 <span class="sd">        The mass-matrix adaptation specification (same as :func:`staged_adaptation`).</span>
 <span class="sd">    schedule_fn</span>
-<span class="sd">        An explicit schedule callable, or ``None`` meaning &quot;use the default for</span>
-<span class="sd">        this metric path&quot;.</span>
+<span class="sd">        An explicit schedule callable, or ``None`` meaning "use the default for</span>
+<span class="sd">        this metric path".</span>
 <span class="sd">    max_grad_budget</span>
-<span class="sd">        Required when ``metric=&quot;auto&quot;``; ignored otherwise.</span>
+<span class="sd">        Required when ``metric="auto"``; ignored otherwise.</span>
 <span class="sd">    imm_shrinkage_to_previous, initial_inverse_mass_matrix</span>
 <span class="sd">        Forwarded to ``recipe.build_core`` for recipe-based metrics; ignored when</span>
 <span class="sd">        ``metric`` is already a :class:`~blackjax.adaptation.metric_recipes.MetricCore`.</span>
@@ -963,13 +1017,13 @@
 <span class="sd">    -------</span>
 <span class="sd">    tuple[MetricCore, Callable]</span>
 <span class="sd">        ``(metric_core, resolved_schedule_fn)``</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">metric</span> <span class="o">==</span> <span class="s2">&quot;auto&quot;</span><span class="p">:</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">metric</span> <span class="o">==</span> <span class="s2">"auto"</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">max_grad_budget</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;staged_adaptation: max_grad_budget is required when metric=&#39;auto&#39;. &quot;</span>
-                <span class="s2">&quot;Pass a positive integer, e.g. &quot;</span>
-                <span class="s2">&quot;staged_adaptation(nuts, logdensity_fn, metric=&#39;auto&#39;, max_grad_budget=50_000).&quot;</span>
+                <span class="s2">"staged_adaptation: max_grad_budget is required when metric='auto'. "</span>
+                <span class="s2">"Pass a positive integer, e.g. "</span>
+                <span class="s2">"staged_adaptation(nuts, logdensity_fn, metric='auto', max_grad_budget=50_000)."</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">n_chains</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.meta</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_multi_chain_meta_core</span>
@@ -992,7 +1046,7 @@
         <span class="c1"># Using None as the sentinel (not build_schedule) is load-bearing: an</span>
         <span class="c1"># explicit schedule_fn=build_schedule must be preserved — the old</span>
         <span class="c1"># `if schedule_fn is build_schedule` sentinel could not distinguish</span>
-        <span class="c1"># between &quot;user explicitly chose Stan&quot; and &quot;user passed nothing&quot;.</span>
+        <span class="c1"># between "user explicitly chose Stan" and "user passed nothing".</span>
         <span class="k">if</span> <span class="n">schedule_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.low_rank_adaptation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
                 <span class="n">build_growing_window_schedule</span><span class="p">,</span>
@@ -1032,10 +1086,10 @@
             <span class="n">resolved_schedule</span> <span class="o">=</span> <span class="n">build_schedule</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;staged_adaptation: metric must be a str, MetricRecipe, or MetricCore &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;(got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">metric</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">). &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;Pass a registry name (e.g. &#39;welford_diag&#39;) or construct a &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;MetricRecipe or MetricCore directly.&quot;</span>
+            <span class="sa">f</span><span class="s2">"staged_adaptation: metric must be a str, MetricRecipe, or MetricCore "</span>
+            <span class="sa">f</span><span class="s2">"(got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">metric</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">). "</span>
+            <span class="sa">f</span><span class="s2">"Pass a registry name (e.g. 'welford_diag') or construct a "</span>
+            <span class="sa">f</span><span class="s2">"MetricRecipe or MetricCore directly."</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">metric_core</span><span class="p">,</span> <span class="n">resolved_schedule</span>
 
@@ -1045,7 +1099,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">staged_adaptation</span><span class="p">(</span>
     <span class="n">algorithm</span><span class="p">,</span>
     <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">metric</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">MetricRecipe</span> <span class="o">|</span> <span class="n">MetricCore</span> <span class="o">=</span> <span class="s2">&quot;welford_diag&quot;</span><span class="p">,</span>
+    <span class="n">metric</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">MetricRecipe</span> <span class="o">|</span> <span class="n">MetricCore</span> <span class="o">=</span> <span class="s2">"welford_diag"</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">max_grad_budget</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">n_chains</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
@@ -1061,7 +1115,7 @@
     <span class="n">telemetry_full_matrices</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AdaptationAlgorithm</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adapt the step size and inverse mass matrix for HMC-family algorithms.</span>
+<span class="w">    </span><span class="sd">"""Adapt the step size and inverse mass matrix for HMC-family algorithms.</span>
 
 <span class="sd">    The :func:`staged_adaptation` engine implements the same Stan warmup</span>
 <span class="sd">    schedule as :func:`~blackjax.adaptation.window_adaptation.window_adaptation`</span>
@@ -1076,14 +1130,14 @@
 <span class="sd">        A sampling algorithm whose kernel signature is ``(rng_key, state,</span>
 <span class="sd">        logdensity_fn, step_size, inverse_mass_matrix, **extra_parameters)``,</span>
 <span class="sd">        e.g. :data:`blackjax.nuts`, :data:`blackjax.hmc`, :data:`blackjax.mhmc`.</span>
-<span class="sd">        The algorithm&#39;s ``build_kernel`` method is inspected to decide whether</span>
+<span class="sd">        The algorithm's ``build_kernel`` method is inspected to decide whether</span>
 <span class="sd">        to pass an integrator.</span>
 <span class="sd">    logdensity_fn</span>
 <span class="sd">        The log density probability density function to sample.</span>
 <span class="sd">    metric</span>
 <span class="sd">        The mass-matrix adaptation specification.  Accepts:</span>
 
-<span class="sd">        - ``&quot;auto&quot;`` — the meta-adaptation controller</span>
+<span class="sd">        - ``"auto"`` — the meta-adaptation controller</span>
 <span class="sd">          (:mod:`~blackjax.adaptation.meta_adaptation`). Automatically selects</span>
 <span class="sd">          the diagonal vs low-rank path and the growing-window schedule.</span>
 <span class="sd">          Requires ``max_grad_budget`` to be set.  The emitted metric is always</span>
@@ -1092,15 +1146,15 @@
 <span class="sd">          the diagonal metric).</span>
 
 <span class="sd">          .. warning::</span>
-<span class="sd">             ``metric=&quot;auto&quot;`` is **experimental (v1)**.  The low-rank</span>
+<span class="sd">             ``metric="auto"`` is **experimental (v1)**.  The low-rank</span>
 <span class="sd">             escalation is not robustly calibrated at high dimension: when</span>
-<span class="sd">             the residual spectrum&#39;s dominant structure sits near the detection</span>
+<span class="sd">             the residual spectrum's dominant structure sits near the detection</span>
 <span class="sd">             boundary, whether the controller escalates can depend on the</span>
 <span class="sd">             random seed.  Use for exploration and algorithm development, not</span>
 <span class="sd">             for production efficiency claims.  A multi-chain escalation</span>
 <span class="sd">             trigger (planned for v2) is expected to make the decision robust.</span>
-<span class="sd">        - **str** — a registry name (``&quot;welford_diag&quot;`` (default),</span>
-<span class="sd">          ``&quot;welford_dense&quot;``, ``&quot;fisher_diag&quot;``); looked up via</span>
+<span class="sd">        - **str** — a registry name (``"welford_diag"`` (default),</span>
+<span class="sd">          ``"welford_dense"``, ``"fisher_diag"``); looked up via</span>
 <span class="sd">          :func:`~blackjax.adaptation.metric_recipes.lookup_recipe` and built</span>
 <span class="sd">          with ``imm_shrinkage_to_previous`` and ``initial_inverse_mass_matrix``.</span>
 <span class="sd">        - :class:`~blackjax.adaptation.metric_recipes.MetricRecipe` — built</span>
@@ -1110,7 +1164,7 @@
 <span class="sd">          ``initial_inverse_mass_matrix`` are ignored (closed over in the core).</span>
 <span class="sd">    max_grad_budget</span>
 <span class="sd">        Maximum total gradient budget (leapfrog evaluations).  Required when</span>
-<span class="sd">        ``metric=&quot;auto&quot;``; ignored otherwise.  The meta-adaptation controller</span>
+<span class="sd">        ``metric="auto"``; ignored otherwise.  The meta-adaptation controller</span>
 <span class="sd">        converts this to a warmup step count via a conservative divisor (see</span>
 <span class="sd">        :mod:`~blackjax.adaptation.meta_adaptation`).  Passed as-is; use</span>
 <span class="sd">        :func:`~blackjax.adaptation.meta_adaptation.extract_meta_verdict` after</span>
@@ -1118,8 +1172,8 @@
 <span class="sd">        counts.</span>
 <span class="sd">    imm_shrinkage_to_previous</span>
 <span class="sd">        Pseudo-count controlling shrinkage of the per-window IMM toward the</span>
-<span class="sd">        previous window&#39;s IMM (Bayesian persistence).  Default ``0.0``</span>
-<span class="sd">        reproduces Stan&#39;s per-window-reset behavior exactly.  Ignored when</span>
+<span class="sd">        previous window's IMM (Bayesian persistence).  Default ``0.0``</span>
+<span class="sd">        reproduces Stan's per-window-reset behavior exactly.  Ignored when</span>
 <span class="sd">        ``metric`` is a :class:`~blackjax.adaptation.metric_recipes.MetricCore`.</span>
 <span class="sd">    initial_inverse_mass_matrix</span>
 <span class="sd">        Optional seed array for the initial inverse mass matrix.  Ignored when</span>
@@ -1135,7 +1189,7 @@
 <span class="sd">        metrics even when they are withheld, the raw-truth and</span>
 <span class="sd">        escalation-applicability gate masks, and the step-size chronology across</span>
 <span class="sd">        the boundary.  Supported on both the single- and multi-chain</span>
-<span class="sd">        ``metric=&quot;auto&quot;`` paths; raises for a core that carries no publication</span>
+<span class="sd">        ``metric="auto"`` paths; raises for a core that carries no publication</span>
 <span class="sd">        record.  Default ``False``, which is a Python-time constant — the off</span>
 <span class="sd">        path traces and computes exactly as before.  Read the records with</span>
 <span class="sd">        :func:`~blackjax.adaptation.meta._telemetry.publication_adapt_info_fn`</span>
@@ -1158,11 +1212,11 @@
 <span class="sd">        Callable ``(num_steps: int) -&gt; Array`` that returns a</span>
 <span class="sd">        ``(num_steps, 2)`` array of ``(stage, is_window_end)`` pairs, or</span>
 <span class="sd">        ``None`` (default) to use the path-appropriate default.</span>
-<span class="sd">        When ``None`` and ``metric=&quot;auto&quot;``, the default is</span>
+<span class="sd">        When ``None`` and ``metric="auto"``, the default is</span>
 <span class="sd">        :func:`~blackjax.adaptation.low_rank_adaptation.build_growing_window_schedule`</span>
-<span class="sd">        (nutpie&#39;s proportional-to-tune, 1.5×-growing-window schedule).</span>
+<span class="sd">        (nutpie's proportional-to-tune, 1.5×-growing-window schedule).</span>
 <span class="sd">        When ``None`` and any other ``metric``, the default is</span>
-<span class="sd">        :func:`build_schedule` (Stan&#39;s fixed-absolute, 2×-doubling schedule).</span>
+<span class="sd">        :func:`build_schedule` (Stan's fixed-absolute, 2×-doubling schedule).</span>
 <span class="sd">        An explicit callable is always honored regardless of ``metric``.</span>
 <span class="sd">    initial_metric_state</span>
 <span class="sd">        Optional pre-built mass-matrix adaptation core state.  When not</span>
@@ -1177,7 +1231,7 @@
 <span class="sd">    **extra_parameters</span>
 <span class="sd">        Algorithm-specific parameters forwarded to the MCMC kernel at every step,</span>
 <span class="sd">        e.g. ``num_integration_steps`` for HMC/MHMC (divides budget when</span>
-<span class="sd">        ``metric=&#39;auto&#39;``) or ``num_max_steps`` for dynamic HMC.</span>
+<span class="sd">        ``metric='auto'``) or ``num_max_steps`` for dynamic HMC.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -1199,26 +1253,26 @@
 <span class="sd">    blackjax.adaptation.metric_recipes.REGISTRY :</span>
 <span class="sd">        Registry of named :class:`~blackjax.adaptation.metric_recipes.MetricRecipe`</span>
 <span class="sd">        objects for the ``metric`` string argument.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="c1"># Resolve metric → MetricCore and schedule_fn → schedule callable.</span>
     <span class="c1"># The helper encapsulates the auto-override rule (growing-window only when</span>
     <span class="c1"># schedule_fn is None, never when the caller supplied one explicitly).</span>
     <span class="c1"># Use a distinct name so mypy knows _resolved_schedule_fn is Callable (not None).</span>
     <span class="c1"># Validate n_chains before resolution (fail early with a clear message).</span>
     <span class="k">if</span> <span class="n">n_chains</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;staged_adaptation: n_chains must be &gt;= 1, got </span><span class="si">{</span><span class="n">n_chains</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">n_chains</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">metric</span> <span class="o">!=</span> <span class="s2">&quot;auto&quot;</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"staged_adaptation: n_chains must be &gt;= 1, got </span><span class="si">{</span><span class="n">n_chains</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">n_chains</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">metric</span> <span class="o">!=</span> <span class="s2">"auto"</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;staged_adaptation: n_chains &gt; 1 is only supported with metric=&#39;auto&#39; &quot;</span>
-            <span class="s2">&quot;(the multi-chain pooled gate is implemented in the meta-adaptation &quot;</span>
-            <span class="s2">&quot;controller). For other metric strings pass n_chains=1 (default) and &quot;</span>
-            <span class="s2">&quot;vmap the warmup call externally.&quot;</span>
+            <span class="s2">"staged_adaptation: n_chains &gt; 1 is only supported with metric='auto' "</span>
+            <span class="s2">"(the multi-chain pooled gate is implemented in the meta-adaptation "</span>
+            <span class="s2">"controller). For other metric strings pass n_chains=1 (default) and "</span>
+            <span class="s2">"vmap the warmup call externally."</span>
         <span class="p">)</span>
 
     <span class="k">if</span> <span class="n">telemetry_full_matrices</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">metric_telemetry</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;staged_adaptation: telemetry_full_matrices=True requires &quot;</span>
-            <span class="s2">&quot;metric_telemetry=True; there is no record to attach the matrices to.&quot;</span>
+            <span class="s2">"staged_adaptation: telemetry_full_matrices=True requires "</span>
+            <span class="s2">"metric_telemetry=True; there is no record to attach the matrices to."</span>
         <span class="p">)</span>
     <span class="n">metric_core</span><span class="p">,</span> <span class="n">_resolved_schedule_fn</span> <span class="o">=</span> <span class="n">_resolve_metric_and_schedule</span><span class="p">(</span>
         <span class="n">metric</span><span class="p">,</span>
@@ -1233,7 +1287,7 @@
 
     <span class="c1"># Closure variables for the auto-metric path: used inside run() to derive</span>
     <span class="c1"># num_steps from max_grad_budget when the caller does not supply one.</span>
-    <span class="n">_is_auto_metric</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">metric</span> <span class="o">==</span> <span class="s2">&quot;auto&quot;</span>
+    <span class="n">_is_auto_metric</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">metric</span> <span class="o">==</span> <span class="s2">"auto"</span>
     <span class="n">_is_multi_chain</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">n_chains</span> <span class="o">&gt;</span> <span class="mi">1</span>
     <span class="n">_n_chains</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">n_chains</span>
     <span class="n">_auto_max_grad_budget</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">max_grad_budget</span> <span class="k">if</span> <span class="n">_is_auto_metric</span> <span class="k">else</span> <span class="kc">None</span>
@@ -1248,7 +1302,7 @@
     <span class="c1"># an explicit parameter set (e.g. HMC accepts num_integration_steps but NOT</span>
     <span class="c1"># max_num_doublings) must not receive unknown kwargs — they raise TypeError.</span>
     <span class="n">_kernel_sig_params</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">mcmc_kernel</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span>
-    <span class="n">_kernel_accepts_doublings</span> <span class="o">=</span> <span class="s2">&quot;max_num_doublings&quot;</span> <span class="ow">in</span> <span class="n">_kernel_sig_params</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span>
+    <span class="n">_kernel_accepts_doublings</span> <span class="o">=</span> <span class="s2">"max_num_doublings"</span> <span class="ow">in</span> <span class="n">_kernel_sig_params</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span>
         <span class="n">p</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">VAR_KEYWORD</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">_kernel_sig_params</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
     <span class="p">)</span>
 
@@ -1306,10 +1360,10 @@
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-        <span class="c1"># Resolve num_steps: when metric=&quot;auto&quot; and the caller did not supply a</span>
-        <span class="c1"># value, derive it from max_grad_budget so the growing-window schedule&#39;s</span>
+        <span class="c1"># Resolve num_steps: when metric="auto" and the caller did not supply a</span>
+        <span class="c1"># value, derive it from max_grad_budget so the growing-window schedule's</span>
         <span class="c1"># largest window has enough draws to support the rank-detection check.</span>
-        <span class="c1"># A None sentinel distinguishes &quot;caller did not supply&quot; from an explicit</span>
+        <span class="c1"># A None sentinel distinguishes "caller did not supply" from an explicit</span>
         <span class="c1"># value (even if that explicit value happens to equal 1000).</span>
         <span class="c1"># For multi-chain (n_chains &gt; 1) the budget is split across chains, so</span>
         <span class="c1"># each chain runs total // n_chains steps.</span>
@@ -1329,7 +1383,7 @@
                 <span class="c1"># (no num_integration_steps in extra_parameters), use the</span>
                 <span class="c1"># NUTS-calibrated conservative constant.</span>
                 <span class="n">_grads_per_step</span> <span class="o">=</span> <span class="n">extra_parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-                    <span class="s2">&quot;num_integration_steps&quot;</span><span class="p">,</span> <span class="n">_ASSUMED_AVG_LEAPFROGS_PER_STEP</span>
+                    <span class="s2">"num_integration_steps"</span><span class="p">,</span> <span class="n">_ASSUMED_AVG_LEAPFROGS_PER_STEP</span>
                 <span class="p">)</span>
                 <span class="n">_denom</span> <span class="o">=</span> <span class="n">_grads_per_step</span> <span class="o">*</span> <span class="p">(</span><span class="n">_n_chains</span> <span class="k">if</span> <span class="n">_is_multi_chain</span> <span class="k">else</span> <span class="mi">1</span><span class="p">)</span>
                 <span class="n">num_steps</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">_auto_max_grad_budget</span> <span class="o">//</span> <span class="n">_denom</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
@@ -1337,11 +1391,11 @@
                 <span class="n">num_steps</span> <span class="o">=</span> <span class="mi">1000</span>
 
         <span class="c1"># Default effective schedule is the resolved one; overridden for the</span>
-        <span class="c1"># multi-chain metric=&quot;auto&quot; path inside the block below (BLOCKER-1 fix).</span>
+        <span class="c1"># multi-chain metric="auto" path inside the block below (BLOCKER-1 fix).</span>
         <span class="n">_eff_schedule_fn</span> <span class="o">=</span> <span class="n">_resolved_schedule_fn</span>
 
-        <span class="c1"># For metric=&quot;auto&quot;: warn when the largest warmup window is below the</span>
-        <span class="c1"># rank-detection support floor for this model&#39;s dimension.  The check</span>
+        <span class="c1"># For metric="auto": warn when the largest warmup window is below the</span>
+        <span class="c1"># rank-detection support floor for this model's dimension.  The check</span>
         <span class="c1"># runs once at run() call time (Python, not JAX-traced), so model</span>
         <span class="c1"># dimension is available from position.</span>
         <span class="k">if</span> <span class="n">_is_auto_metric</span><span class="p">:</span>
@@ -1352,7 +1406,7 @@
                 <span class="n">_MIN_TRAIN_K_RATIO</span><span class="p">,</span>
             <span class="p">)</span>
 
-            <span class="c1"># One chain&#39;s slice via jax.tree.map: works for bare (M, d) Arrays</span>
+            <span class="c1"># One chain's slice via jax.tree.map: works for bare (M, d) Arrays</span>
             <span class="c1"># AND structured PyTree positions (jnp.asarray crashes on a dict).</span>
             <span class="n">_pos_for_size</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">position</span><span class="p">)</span> <span class="k">if</span> <span class="n">_is_multi_chain</span> <span class="k">else</span> <span class="n">position</span>
@@ -1391,20 +1445,20 @@
             <span class="c1"># the effective support; compare it against _min_rank_support.</span>
             <span class="n">_eff_max_window</span> <span class="o">=</span> <span class="n">_max_window</span> <span class="o">*</span> <span class="p">(</span><span class="n">_n_chains</span> <span class="k">if</span> <span class="n">_is_multi_chain</span> <span class="k">else</span> <span class="mi">1</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">_max_window</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">_eff_max_window</span> <span class="o">&lt;</span> <span class="n">_min_rank_support</span><span class="p">:</span>
-                <span class="n">_chains_suffix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;, n_chains=</span><span class="si">{</span><span class="n">_n_chains</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">_is_multi_chain</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+                <span class="n">_chains_suffix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">", n_chains=</span><span class="si">{</span><span class="n">_n_chains</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">_is_multi_chain</span> <span class="k">else</span> <span class="s2">""</span>
                 <span class="n">_pool_suffix</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot; (pooled count = </span><span class="si">{</span><span class="n">_eff_max_window</span><span class="si">}</span><span class="s2">)&quot;</span> <span class="k">if</span> <span class="n">_is_multi_chain</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+                    <span class="sa">f</span><span class="s2">" (pooled count = </span><span class="si">{</span><span class="n">_eff_max_window</span><span class="si">}</span><span class="s2">)"</span> <span class="k">if</span> <span class="n">_is_multi_chain</span> <span class="k">else</span> <span class="s2">""</span>
                 <span class="p">)</span>
                 <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;metric=&#39;auto&#39;: the largest warmup window (</span><span class="si">{</span><span class="n">_max_window</span><span class="si">}</span><span class="s2"> steps&quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_pool_suffix</span><span class="si">}</span><span class="s2">) &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;is below the rank-detection support floor for this model &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;(d=</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">, estimated rank capacity </span><span class="si">{</span><span class="n">_actual_rank</span><span class="si">}</span><span class="s2">, &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;floor=</span><span class="si">{</span><span class="n">_min_rank_support</span><span class="si">}</span><span class="s2"> steps). &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;Low-rank structure in the posterior may not be detectable &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;with this budget (num_steps=</span><span class="si">{</span><span class="n">num_steps</span><span class="si">}{</span><span class="n">_chains_suffix</span><span class="si">}</span><span class="s2">). &quot;</span>
-                    <span class="s2">&quot;Increase max_grad_budget to enable low-rank escalation &quot;</span>
-                    <span class="s2">&quot;at this dimension.&quot;</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">"metric='auto': the largest warmup window (</span><span class="si">{</span><span class="n">_max_window</span><span class="si">}</span><span class="s2"> steps"</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_pool_suffix</span><span class="si">}</span><span class="s2">) "</span>
+                    <span class="sa">f</span><span class="s2">"is below the rank-detection support floor for this model "</span>
+                    <span class="sa">f</span><span class="s2">"(d=</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">, estimated rank capacity </span><span class="si">{</span><span class="n">_actual_rank</span><span class="si">}</span><span class="s2">, "</span>
+                    <span class="sa">f</span><span class="s2">"floor=</span><span class="si">{</span><span class="n">_min_rank_support</span><span class="si">}</span><span class="s2"> steps). "</span>
+                    <span class="sa">f</span><span class="s2">"Low-rank structure in the posterior may not be detectable "</span>
+                    <span class="sa">f</span><span class="s2">"with this budget (num_steps=</span><span class="si">{</span><span class="n">num_steps</span><span class="si">}{</span><span class="n">_chains_suffix</span><span class="si">}</span><span class="s2">). "</span>
+                    <span class="s2">"Increase max_grad_budget to enable low-rank escalation "</span>
+                    <span class="s2">"at this dimension."</span><span class="p">,</span>
                     <span class="ne">UserWarning</span><span class="p">,</span>
                     <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
                 <span class="p">)</span>
@@ -1433,7 +1487,7 @@
             <span class="c1"># num_steps is already the per-chain step count (total // n_chains).</span>
             <span class="c1"># ----------------------------------------------------------------</span>
 
-            <span class="c1"># Warmup-only treedepth cap (metric=&quot;auto&quot; multi-chain path, NUTS only).</span>
+            <span class="c1"># Warmup-only treedepth cap (metric="auto" multi-chain path, NUTS only).</span>
             <span class="c1"># The identity-metric first window with M dispersed inits produces</span>
             <span class="c1"># deep trees (987 lf/step on ill_cond vs 31 equilibrated), burning</span>
             <span class="c1"># warmup budget before the metric is known.  Cap max_num_doublings=5</span>
@@ -1445,10 +1499,10 @@
             <span class="c1"># on an unknown kwarg if we inject it unconditionally).</span>
             <span class="n">_WARMUP_DOUBLINGS_CAP</span> <span class="o">=</span> <span class="mi">5</span>
             <span class="k">if</span> <span class="n">_is_auto_metric</span> <span class="ow">and</span> <span class="n">_kernel_accepts_doublings</span><span class="p">:</span>
-                <span class="n">_user_doublings</span> <span class="o">=</span> <span class="n">extra_parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;max_num_doublings&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+                <span class="n">_user_doublings</span> <span class="o">=</span> <span class="n">extra_parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"max_num_doublings"</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
                 <span class="n">_warmup_extra_params</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
                     <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
-                    <span class="s2">&quot;max_num_doublings&quot;</span><span class="p">:</span> <span class="nb">min</span><span class="p">(</span><span class="n">_user_doublings</span><span class="p">,</span> <span class="n">_WARMUP_DOUBLINGS_CAP</span><span class="p">),</span>
+                    <span class="s2">"max_num_doublings"</span><span class="p">:</span> <span class="nb">min</span><span class="p">(</span><span class="n">_user_doublings</span><span class="p">,</span> <span class="n">_WARMUP_DOUBLINGS_CAP</span><span class="p">),</span>
                 <span class="p">}</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">_warmup_extra_params</span> <span class="o">=</span> <span class="n">extra_parameters</span>
@@ -1456,7 +1510,7 @@
             <span class="n">init_states</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">pos</span><span class="p">:</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">))(</span>
                 <span class="n">position</span>
             <span class="p">)</span>
-            <span class="c1"># Adapt init uses one chain&#39;s position so pytree_size → d (not M*d);</span>
+            <span class="c1"># Adapt init uses one chain's position so pytree_size → d (not M*d);</span>
             <span class="c1"># jax.tree.map for PyTree positions (see the rank-support check above).</span>
             <span class="n">init_adaptation_state</span> <span class="o">=</span> <span class="n">adapt_init</span><span class="p">(</span>
                 <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">position</span><span class="p">),</span> <span class="n">initial_step_size</span>
@@ -1482,7 +1536,7 @@
                 <span class="n">new_states_mc</span><span class="p">,</span> <span class="n">infos_mc</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">_step_one</span><span class="p">)(</span><span class="n">chain_keys</span><span class="p">,</span> <span class="n">states_mc</span><span class="p">)</span>
 
                 <span class="c1"># Pass (M, d) positions and grads to adapt_step; the multi-chain</span>
-                <span class="c1"># metric core&#39;s update() handles (M, d) arrays natively.</span>
+                <span class="c1"># metric core's update() handles (M, d) arrays natively.</span>
                 <span class="n">positions_mc</span> <span class="o">=</span> <span class="n">new_states_mc</span><span class="o">.</span><span class="n">position</span>
                 <span class="n">grads_mc</span> <span class="o">=</span> <span class="n">new_states_mc</span><span class="o">.</span><span class="n">logdensity_grad</span>
                 <span class="c1"># Shared-ε: pass the full per-chain acceptance rate vector (M,)</span>
@@ -1516,8 +1570,8 @@
 
         <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span> <span class="o">=</span> <span class="n">adapt_final</span><span class="p">(</span><span class="n">last_warmup_state</span><span class="p">)</span>
         <span class="n">parameters</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;step_size&quot;</span><span class="p">:</span> <span class="n">step_size</span><span class="p">,</span>
-            <span class="s2">&quot;inverse_mass_matrix&quot;</span><span class="p">:</span> <span class="n">inverse_mass_matrix</span><span class="p">,</span>
+            <span class="s2">"step_size"</span><span class="p">:</span> <span class="n">step_size</span><span class="p">,</span>
+            <span class="s2">"inverse_mass_matrix"</span><span class="p">:</span> <span class="n">inverse_mass_matrix</span><span class="p">,</span>
             <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
         <span class="p">}</span>
 
@@ -1593,8 +1647,8 @@ By The Blackjax developers
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
 
   <footer class="bd-footer">
   </footer>

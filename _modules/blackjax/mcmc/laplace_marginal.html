@@ -26,21 +26,21 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=4418a689" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e37d73aa" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
     <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
@@ -48,25 +48,32 @@
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/mcmc/laplace_marginal';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g0c69b5d2f" />
+  <meta name="docsearch:version" content="0.1.dev1+g421add75e" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
   </head>
-  
-  
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
-
+  <body data-default-mode="">
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -92,7 +99,47 @@
 </div>
 
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
     </header>
   
 
@@ -378,11 +425,18 @@
 
 
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div>
 
 
 <button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
@@ -416,18 +470,18 @@
   <h1>Source code for blackjax.mcmc.laplace_marginal</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Copyright 2020- The Blackjax Authors.</span>
 <span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
 <span class="c1"># You may obtain a copy of the License at</span>
 <span class="c1">#</span>
 <span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
 <span class="c1">#</span>
 <span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
-<span class="sd">&quot;&quot;&quot;Adjoint-differentiated Laplace marginal log-density.</span>
+<span class="sd">"""Adjoint-differentiated Laplace marginal log-density.</span>
 
 <span class="sd">Provides a differentiable approximation to the marginal log-density obtained</span>
 <span class="sd">by integrating out latent Gaussian variables via the Laplace approximation.</span>
@@ -446,12 +500,12 @@
 
 <span class="sd">References</span>
 <span class="sd">----------</span>
-<span class="sd">Margossian et al., &quot;Hamiltonian Monte Carlo using an adjoint-differentiated</span>
-<span class="sd">Laplace approximation&quot;, NeurIPS 2020. arXiv:2004.12550.</span>
+<span class="sd">Margossian et al., "Hamiltonian Monte Carlo using an adjoint-differentiated</span>
+<span class="sd">Laplace approximation", NeurIPS 2020. arXiv:2004.12550.</span>
 
-<span class="sd">Margossian, &quot;General adjoint-differentiated Laplace approximation&quot;, 2023.</span>
+<span class="sd">Margossian, "General adjoint-differentiated Laplace approximation", 2023.</span>
 <span class="sd">arXiv:2306.14976.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">dataclasses</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span>
 
@@ -463,17 +517,17 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;LaplaceHMCInfo&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;LaplaceMarginal&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;laplace_marginal_factory&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;laplace_lbfgs_grad_evals&quot;</span><span class="p">,</span>
+    <span class="s2">"LaplaceHMCInfo"</span><span class="p">,</span>
+    <span class="s2">"LaplaceMarginal"</span><span class="p">,</span>
+    <span class="s2">"laplace_marginal_factory"</span><span class="p">,</span>
+    <span class="s2">"laplace_lbfgs_grad_evals"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
 <div class="viewcode-block" id="LaplaceHMCInfo">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/laplace_marginal/index.html#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LaplaceHMCInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Info returned by any ``laplace_*hmc`` kernel step.</span>
+<span class="w">    </span><span class="sd">"""Info returned by any ``laplace_*hmc`` kernel step.</span>
 
 <span class="sd">    Contains all standard :class:`~blackjax.mcmc.hmc.HMCInfo` fields for</span>
 <span class="sd">    backward compatibility, plus L-BFGS convergence diagnostics from the</span>
@@ -533,7 +587,7 @@
 <span class="sd">        silent-non-convergence bug diagnosed in blackjax issue #925.**</span>
 <span class="sd">        When ``True``, ``theta*`` may be a poor MAP estimate and the Laplace</span>
 <span class="sd">        log-marginal (and its gradient) is unreliable for this step.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="c1"># ---- HMCInfo fields (field names and order preserved for compat) ----</span>
 <div class="viewcode-block" id="LaplaceHMCInfo.momentum">
@@ -586,8 +640,8 @@
 
 <div class="viewcode-block" id="laplace_lbfgs_grad_evals">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/laplace_marginal/index.html#blackjax.mcmc.laplace_marginal.laplace_lbfgs_grad_evals">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">laplace_lbfgs_grad_evals</span><span class="p">(</span><span class="n">info</span><span class="p">:</span> <span class="s2">&quot;LaplaceHMCInfo&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Array&quot;</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Estimated total inner L-BFGS gradient evaluations for one kernel step.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">laplace_lbfgs_grad_evals</span><span class="p">(</span><span class="n">info</span><span class="p">:</span> <span class="s2">"LaplaceHMCInfo"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Array"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Estimated total inner L-BFGS gradient evaluations for one kernel step.</span>
 
 <span class="sd">    The Laplace-HMC family requires an inner L-BFGS solve at each leapfrog step</span>
 <span class="sd">    to find ``theta*(phi)`` and at the post-accept ``theta*`` refresh.</span>
@@ -619,9 +673,9 @@
 <span class="sd">    to replace the heuristic ``num_integration_steps × 5``.  The measured</span>
 <span class="sd">    ``lbfgs_iter_num`` will differ per recipe depending on ``maxiter``,</span>
 <span class="sd">    ``gtol``, model curvature, and step size.  Mean values across a chain</span>
-<span class="sd">    can be extracted from ``chain_stats[&quot;lbfgs_iter_num&quot;]`` when the harness</span>
+<span class="sd">    can be extracted from ``chain_stats["lbfgs_iter_num"]`` when the harness</span>
 <span class="sd">    captures that field.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
         <span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">num_integration_steps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">info</span><span class="o">.</span><span class="n">lbfgs_iter_num</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span>
     <span class="p">)</span></div>
@@ -632,7 +686,7 @@
 <div class="viewcode-block" id="LaplaceMarginal">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/laplace_marginal/index.html#blackjax.mcmc.laplace_marginal.LaplaceMarginal">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LaplaceMarginal</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bundle of pure functions for the Laplace-approximated marginal density.</span>
+<span class="w">    </span><span class="sd">"""Bundle of pure functions for the Laplace-approximated marginal density.</span>
 
 <span class="sd">    Each attribute is a plain callable, testable and reusable independently.</span>
 <span class="sd">    The dataclass is a named container — there is no mutable state.</span>
@@ -652,7 +706,7 @@
 <span class="sd">      Use with ``jax.value_and_grad(..., has_aux=True)``.</span>
 <span class="sd">    - ``sample_theta(rng_key, phi, theta_star) -&gt; theta_sample``: draws one</span>
 <span class="sd">      sample from ``p(theta | phi, y) ≈ N(theta_star, H(phi)^{-1})``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="LaplaceMarginal.solve_theta">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/laplace_marginal/index.html#blackjax.mcmc.laplace_marginal.LaplaceMarginal.solve_theta">[docs]</a>
@@ -678,10 +732,10 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">phi</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">theta_prev</span><span class="p">:</span> <span class="n">ArrayTree</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluate log p̂(phi | y).  Alias for ``log_marginal``.</span>
+<span class="w">        </span><span class="sd">"""Evaluate log p̂(phi | y).  Alias for ``log_marginal``.</span>
 
 <span class="sd">        Compatible with ``jax.value_and_grad(..., has_aux=True)``.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_marginal</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">theta_prev</span><span class="p">)</span></div>
 
 
@@ -693,7 +747,7 @@
     <span class="n">theta_init</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
     <span class="o">**</span><span class="n">optimizer_kwargs</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LaplaceMarginal</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a Laplace-approximated marginal log-density over hyperparameters.</span>
+<span class="w">    </span><span class="sd">"""Build a Laplace-approximated marginal log-density over hyperparameters.</span>
 
 <span class="sd">    For a model ``log_joint_fn(theta, phi) = log p(theta, phi, y)``, returns a</span>
 <span class="sd">    ``LaplaceMarginal`` whose ``__call__`` evaluates the Laplace approximation::</span>
@@ -707,7 +761,7 @@
 
 <span class="sd">    Gradients w.r.t. ``phi`` are computed via the implicit function theorem</span>
 <span class="sd">    (``jax.lax.custom_root``): the L-BFGS iterations are *not* unrolled.</span>
-<span class="sd">    The log-determinant gradient uses JAX&#39;s built-in VJP for</span>
+<span class="sd">    The log-determinant gradient uses JAX's built-in VJP for</span>
 <span class="sd">    ``jnp.linalg.slogdet``.</span>
 
 <span class="sd">    Parameters</span>
@@ -757,13 +811,13 @@
 <span class="sd">      ``theta*(phi)`` for all ``phi`` encountered during sampling.</span>
 <span class="sd">    - Memory is O(d²) and log-determinant computation is O(d³) where</span>
 <span class="sd">      ``d = dim(theta)``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">theta_flat_init</span><span class="p">,</span> <span class="n">unravel_theta</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">theta_init</span><span class="p">)</span>
     <span class="n">d</span> <span class="o">=</span> <span class="n">theta_flat_init</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
     <span class="c1"># Extract optimizer settings used to compute diagnostics.</span>
-    <span class="n">_maxiter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">optimizer_kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;maxiter&quot;</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>
-    <span class="n">_gtol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">optimizer_kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gtol&quot;</span><span class="p">,</span> <span class="mf">1e-8</span><span class="p">)</span>
+    <span class="n">_maxiter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">optimizer_kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"maxiter"</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>
+    <span class="n">_gtol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">optimizer_kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"gtol"</span><span class="p">,</span> <span class="mf">1e-8</span><span class="p">)</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># solve_theta_with_info: sole minimize_lbfgs call site</span>
@@ -771,7 +825,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">solve_theta_with_info</span><span class="p">(</span>
         <span class="n">phi</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">theta_prev</span><span class="p">:</span> <span class="n">ArrayTree</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ArrayTree</span><span class="p">,</span> <span class="n">LBFGSDiagnostics</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Find theta*(phi) and return L-BFGS convergence diagnostics.</span>
+<span class="w">        </span><span class="sd">"""Find theta*(phi) and return L-BFGS convergence diagnostics.</span>
 
 <span class="sd">        This is the single ``minimize_lbfgs`` call site.  All other</span>
 <span class="sd">        solve functions delegate here.</span>
@@ -794,7 +848,7 @@
 <span class="sd">            ``hit_maxiter=True`` is the primary non-convergence alarm: it fires</span>
 <span class="sd">            when the optimizer exhausted its ``maxiter`` budget, indicating that</span>
 <span class="sd">            ``theta_star`` may be a poor MAP estimate.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">initial</span> <span class="o">=</span> <span class="n">theta_prev</span> <span class="k">if</span> <span class="n">theta_prev</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">theta_init</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">objective</span><span class="p">(</span><span class="n">theta</span><span class="p">):</span>
@@ -815,12 +869,12 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">solve_theta</span><span class="p">(</span>
         <span class="n">phi</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">theta_prev</span><span class="p">:</span> <span class="n">ArrayTree</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayTree</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Find theta*(phi) via L-BFGS.  Warm-starts from theta_prev if given.</span>
+<span class="w">        </span><span class="sd">"""Find theta*(phi) via L-BFGS.  Warm-starts from theta_prev if given.</span>
 
 <span class="sd">        Delegates to :func:`solve_theta_with_info` and discards the</span>
 <span class="sd">        diagnostics.  Exists as a backward-compatible API for callers</span>
 <span class="sd">        (e.g. ``init()``) that only need ``theta_star``.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="n">solve_theta_with_info</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">theta_prev</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -829,7 +883,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">get_theta_star</span><span class="p">(</span>
         <span class="n">phi</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">theta_prev</span><span class="p">:</span> <span class="n">ArrayTree</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayTree</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Find theta*(phi) with correct implicit-function-theorem gradient.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Find theta*(phi) with correct implicit-function-theorem gradient."""</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">f_residual</span><span class="p">(</span><span class="n">theta_flat</span><span class="p">):</span>
             <span class="c1"># Gradient of log_joint w.r.t. theta (= 0 at the mode).</span>
@@ -862,7 +916,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">log_marginal</span><span class="p">(</span>
         <span class="n">phi</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">theta_prev</span><span class="p">:</span> <span class="n">ArrayTree</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluate log p̂(phi | y).  Returns (lp, theta_star) for has_aux=True.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Evaluate log p̂(phi | y).  Returns (lp, theta_star) for has_aux=True."""</span>
         <span class="n">theta_star</span> <span class="o">=</span> <span class="n">get_theta_star</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">theta_prev</span><span class="p">)</span>
         <span class="n">theta_flat_star</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">theta_star</span><span class="p">)</span>
 
@@ -886,7 +940,7 @@
         <span class="n">phi</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
         <span class="n">theta_star</span><span class="p">:</span> <span class="n">ArrayTree</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayTree</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sample theta ~ N(theta_star, H(phi)^{-1}).</span>
+<span class="w">        </span><span class="sd">"""Sample theta ~ N(theta_star, H(phi)^{-1}).</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -902,7 +956,7 @@
 <span class="sd">        -------</span>
 <span class="sd">        A sample from the Laplace-approximate posterior</span>
 <span class="sd">        ``p(theta | phi, y) ≈ N(theta_star, H^{-1})``.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">theta_flat_star</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">theta_star</span><span class="p">)</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">log_joint_flat</span><span class="p">(</span><span class="n">t_flat</span><span class="p">):</span>
@@ -991,8 +1045,8 @@ By The Blackjax developers
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
 
   <footer class="bd-footer">
   </footer>

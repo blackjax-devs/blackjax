@@ -27,21 +27,21 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=4418a689" />
     <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=e37d73aa" />
   
   <!-- So that users can add custom icons -->
-  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
     <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
@@ -49,27 +49,34 @@
     <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'examples/howto_use_funsor';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Use with Oryx models" href="howto_use_oryx.html" />
     <link rel="prev" title="Use with Numpyro models" href="howto_use_numpyro.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g0c69b5d2f" />
+  <meta name="docsearch:version" content="0.1.dev1+g421add75e" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
   </head>
-  
-  
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
-
+  <body data-default-mode="">
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -95,7 +102,51 @@
 </div>
 
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
     </header>
   
 
@@ -379,11 +430,18 @@
 
 
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div>
 
 
 <button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
@@ -411,7 +469,7 @@
                 <h2> Contents </h2>
             </div>
             <nav aria-label="Page">
-                <ul class="visible nav section-nav flex-column">
+                <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup-and-data">Setup and data</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-model-and-log-density">The model and log-density</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#window-adaptation">Window adaptation</a></li>
@@ -451,7 +509,7 @@ Funsor; BlackJax NUTS then samples the continuous parameters <code class="docuti
 <p class="admonition-title">Before you start</p>
 <p>You will need <a class="reference external" href="https://github.com/pyro-ppl/funsor">Funsor</a> to run this
 example:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pip install &quot;funsor&gt;=0.4.7&quot;
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pip install "funsor&gt;=0.4.7"
 </pre></div>
 </div>
 </div>
@@ -467,7 +525,7 @@ example:</p>
 <span class="kn">import</span><span class="w"> </span><span class="nn">funsor</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">funsor.ops</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ops</span>
 
-<span class="n">funsor</span><span class="o">.</span><span class="n">set_backend</span><span class="p">(</span><span class="s2">&quot;jax&quot;</span><span class="p">)</span>          <span class="c1"># must be called before Tensor/Variable are used</span>
+<span class="n">funsor</span><span class="o">.</span><span class="n">set_backend</span><span class="p">(</span><span class="s2">"jax"</span><span class="p">)</span>          <span class="c1"># must be called before Tensor/Variable are used</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">funsor.domains</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bint</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">funsor.tensor</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
@@ -475,7 +533,7 @@ example:</p>
 <span class="kn">from</span><span class="w"> </span><span class="nn">funsor.jax.distributions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Categorical</span><span class="p">,</span> <span class="n">Normal</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">date</span>
-<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">)))</span>
+<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">"%Y%m</span><span class="si">%d</span><span class="s2">"</span><span class="p">)))</span>
 </pre></div>
 </div>
 </div>
@@ -503,9 +561,9 @@ verify that the sampler recovers the true parameters.</p>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;N=</span><span class="si">{</span><span class="n">N</span><span class="si">}</span><span class="s2"> observations, K=</span><span class="si">{</span><span class="n">K</span><span class="si">}</span><span class="s2"> components&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;True means : </span><span class="si">{</span><span class="n">true_mu</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;True weights: </span><span class="si">{</span><span class="n">true_pi</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"N=</span><span class="si">{</span><span class="n">N</span><span class="si">}</span><span class="s2"> observations, K=</span><span class="si">{</span><span class="n">K</span><span class="si">}</span><span class="s2"> components"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"True means : </span><span class="si">{</span><span class="n">true_mu</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"True weights: </span><span class="si">{</span><span class="n">true_pi</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -552,43 +610,43 @@ Jacobian correction is needed.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">gmm_logdensity</span><span class="p">(</span><span class="n">position</span><span class="p">):</span>
-    <span class="n">mu</span>     <span class="o">=</span> <span class="n">position</span><span class="p">[</span><span class="s2">&quot;mu&quot;</span><span class="p">]</span>          <span class="c1"># (K,)   component means</span>
-    <span class="n">log_pi</span> <span class="o">=</span> <span class="n">position</span><span class="p">[</span><span class="s2">&quot;log_pi&quot;</span><span class="p">]</span>      <span class="c1"># (K-1,) unconstrained free logits</span>
+    <span class="n">mu</span>     <span class="o">=</span> <span class="n">position</span><span class="p">[</span><span class="s2">"mu"</span><span class="p">]</span>          <span class="c1"># (K,)   component means</span>
+    <span class="n">log_pi</span> <span class="o">=</span> <span class="n">position</span><span class="p">[</span><span class="s2">"log_pi"</span><span class="p">]</span>      <span class="c1"># (K-1,) unconstrained free logits</span>
     <span class="c1"># Prepend a fixed zero so softmax maps K-1 reals bijectively onto Δ^{K-1}.</span>
     <span class="n">pi</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">log_pi</span><span class="p">]))</span>   <span class="c1"># (K,)</span>
 
     <span class="c1"># ── Named Funsor tensors ─────────────────────────────────────────────────</span>
     <span class="c1"># Tensor(arr, inputs): arr is indexed by the dimensions named in inputs.</span>
     <span class="c1"># pi_f has no named dim: Categorical indexes it internally via value=z.</span>
-    <span class="n">mu_f</span> <span class="o">=</span> <span class="n">Tensor</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span>   <span class="p">{</span><span class="s2">&quot;k&quot;</span><span class="p">:</span> <span class="n">Bint</span><span class="p">[</span><span class="n">K</span><span class="p">]})</span>   <span class="c1"># mu_f[k]  for k ∈ {0, …, K-1}</span>
+    <span class="n">mu_f</span> <span class="o">=</span> <span class="n">Tensor</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span>   <span class="p">{</span><span class="s2">"k"</span><span class="p">:</span> <span class="n">Bint</span><span class="p">[</span><span class="n">K</span><span class="p">]})</span>   <span class="c1"># mu_f[k]  for k ∈ {0, …, K-1}</span>
     <span class="n">pi_f</span> <span class="o">=</span> <span class="n">Tensor</span><span class="p">(</span><span class="n">pi</span><span class="p">,</span>   <span class="p">{})</span>               <span class="c1"># (K,) simplex, no named dim</span>
-    <span class="n">x_f</span>  <span class="o">=</span> <span class="n">Tensor</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="n">Bint</span><span class="p">[</span><span class="n">N</span><span class="p">]})</span>   <span class="c1"># x_f[n]   for n ∈ {0, …, N-1}</span>
+    <span class="n">x_f</span>  <span class="o">=</span> <span class="n">Tensor</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="p">{</span><span class="s2">"n"</span><span class="p">:</span> <span class="n">Bint</span><span class="p">[</span><span class="n">N</span><span class="p">]})</span>   <span class="c1"># x_f[n]   for n ∈ {0, …, N-1}</span>
 
     <span class="c1"># ── Discrete variable: component assignment ──────────────────────────────</span>
-    <span class="n">z</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s2">&quot;z&quot;</span><span class="p">,</span> <span class="n">Bint</span><span class="p">[</span><span class="n">K</span><span class="p">])</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s2">"z"</span><span class="p">,</span> <span class="n">Bint</span><span class="p">[</span><span class="n">K</span><span class="p">])</span>
 
-    <span class="c1"># ── log p(z | π) — Categorical, Funsor over {&quot;z&quot;} ───────────────────────</span>
-    <span class="n">log_cat_prior</span> <span class="o">=</span> <span class="n">Categorical</span><span class="p">(</span><span class="n">probs</span><span class="o">=</span><span class="n">pi_f</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">z</span><span class="p">)</span>              <span class="c1"># inputs: {&quot;z&quot;: Bint[K]}</span>
+    <span class="c1"># ── log p(z | π) — Categorical, Funsor over {"z"} ───────────────────────</span>
+    <span class="n">log_cat_prior</span> <span class="o">=</span> <span class="n">Categorical</span><span class="p">(</span><span class="n">probs</span><span class="o">=</span><span class="n">pi_f</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">z</span><span class="p">)</span>              <span class="c1"># inputs: {"z": Bint[K]}</span>
 
-    <span class="c1"># ── log p(x_n | z) — Normal likelihood, Funsor over {&quot;z&quot;, &quot;n&quot;} ──────────</span>
-    <span class="c1"># mu_f(k=z) substitutes k→z: Funsor over {&quot;z&quot;: Bint[K]}.</span>
-    <span class="c1"># Normal&#39;s loc depends on &quot;z&quot; and value depends on &quot;n&quot;, so the result</span>
+    <span class="c1"># ── log p(x_n | z) — Normal likelihood, Funsor over {"z", "n"} ──────────</span>
+    <span class="c1"># mu_f(k=z) substitutes k→z: Funsor over {"z": Bint[K]}.</span>
+    <span class="c1"># Normal's loc depends on "z" and value depends on "n", so the result</span>
     <span class="c1"># spans both dimensions automatically as an outer product.</span>
     <span class="n">mu_z</span>    <span class="o">=</span> <span class="n">mu_f</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="n">z</span><span class="p">)</span>
-    <span class="n">log_lik</span> <span class="o">=</span> <span class="n">Normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">mu_z</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">x_f</span><span class="p">)</span>             <span class="c1"># inputs: {&quot;z&quot;: Bint[K], &quot;n&quot;: Bint[N]}</span>
+    <span class="n">log_lik</span> <span class="o">=</span> <span class="n">Normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">mu_z</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">x_f</span><span class="p">)</span>             <span class="c1"># inputs: {"z": Bint[K], "n": Bint[N]}</span>
 
     <span class="c1"># ── Exact marginalisation of z ───────────────────────────────────────────</span>
-    <span class="c1"># reduce(logaddexp, &quot;z&quot;) computes log Σ_z exp(log_joint) for every n.</span>
+    <span class="c1"># reduce(logaddexp, "z") computes log Σ_z exp(log_joint) for every n.</span>
     <span class="c1"># Funsor evaluates all K states and combines with logsumexp inside JAX —</span>
     <span class="c1"># the result is fully differentiable w.r.t. mu and pi.</span>
-    <span class="n">log_joint</span>      <span class="o">=</span> <span class="n">log_cat_prior</span> <span class="o">+</span> <span class="n">log_lik</span>                      <span class="c1"># inputs: {&quot;z&quot;: Bint[K], &quot;n&quot;: Bint[N]}</span>
-    <span class="n">log_marginal_n</span> <span class="o">=</span> <span class="n">log_joint</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">ops</span><span class="o">.</span><span class="n">logaddexp</span><span class="p">,</span> <span class="s2">&quot;z&quot;</span><span class="p">)</span>         <span class="c1"># inputs: {&quot;n&quot;: Bint[N]}</span>
+    <span class="n">log_joint</span>      <span class="o">=</span> <span class="n">log_cat_prior</span> <span class="o">+</span> <span class="n">log_lik</span>                      <span class="c1"># inputs: {"z": Bint[K], "n": Bint[N]}</span>
+    <span class="n">log_marginal_n</span> <span class="o">=</span> <span class="n">log_joint</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">ops</span><span class="o">.</span><span class="n">logaddexp</span><span class="p">,</span> <span class="s2">"z"</span><span class="p">)</span>         <span class="c1"># inputs: {"n": Bint[N]}</span>
 
     <span class="c1"># ── μ prior: μ_k ~ Normal(0, 5), summed over K components ───────────────</span>
-    <span class="n">log_mu_prior</span> <span class="o">=</span> <span class="n">Normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mf">5.</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">mu_f</span><span class="p">)</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">ops</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="s2">&quot;k&quot;</span><span class="p">)</span>
+    <span class="n">log_mu_prior</span> <span class="o">=</span> <span class="n">Normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mf">5.</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">mu_f</span><span class="p">)</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">ops</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="s2">"k"</span><span class="p">)</span>
 
     <span class="c1"># ── Total log-density ────────────────────────────────────────────────────</span>
-    <span class="n">log_p</span> <span class="o">=</span> <span class="n">log_marginal_n</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">ops</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="s2">&quot;n&quot;</span><span class="p">)</span>                   <span class="c1"># scalar Funsor, inputs: {}</span>
+    <span class="n">log_p</span> <span class="o">=</span> <span class="n">log_marginal_n</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">ops</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">)</span>                   <span class="c1"># scalar Funsor, inputs: {}</span>
     <span class="k">return</span> <span class="n">log_p</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span> <span class="n">log_mu_prior</span><span class="o">.</span><span class="n">data</span>
 </pre></div>
 </div>
@@ -599,11 +657,11 @@ that <code class="docutils literal notranslate"><span class="pre">jax.grad</span
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">position0</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;mu&quot;</span><span class="p">:</span>     <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">3.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">3.</span><span class="p">]),</span>
-    <span class="s2">&quot;log_pi&quot;</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">K</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span>   <span class="c1"># K-1 free logits; first logit fixed at 0</span>
+    <span class="s2">"mu"</span><span class="p">:</span>     <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">3.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">3.</span><span class="p">]),</span>
+    <span class="s2">"log_pi"</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">K</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span>   <span class="c1"># K-1 free logits; first logit fixed at 0</span>
 <span class="p">}</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;log p(data | init):&quot;</span><span class="p">,</span> <span class="n">gmm_logdensity</span><span class="p">(</span><span class="n">position0</span><span class="p">))</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;grad w.r.t. mu    :&quot;</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">gmm_logdensity</span><span class="p">)(</span><span class="n">position0</span><span class="p">)[</span><span class="s2">&quot;mu&quot;</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"log p(data | init):"</span><span class="p">,</span> <span class="n">gmm_logdensity</span><span class="p">(</span><span class="n">position0</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"grad w.r.t. mu    :"</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">gmm_logdensity</span><span class="p">)(</span><span class="n">position0</span><span class="p">)[</span><span class="s2">"mu"</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
@@ -633,8 +691,8 @@ for sampling.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.22 s, sys: 131 ms, total: 3.35 s
-Wall time: 1.5 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.52 s, sys: 196 ms, total: 3.72 s
+Wall time: 1.66 s
 </pre></div>
 </div>
 </div>
@@ -673,8 +731,8 @@ Wall time: 1.5 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.19 s, sys: 29.1 ms, total: 2.22 s
-Wall time: 908 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.58 s, sys: 36.8 ms, total: 2.62 s
+Wall time: 1.13 s
 </pre></div>
 </div>
 </div>
@@ -692,11 +750,11 @@ across runs with different random seeds.</p>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 
-<span class="n">mu_samples</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;mu&quot;</span><span class="p">]</span>
+<span class="n">mu_samples</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">"mu"</span><span class="p">]</span>
 <span class="c1"># Reconstruct full K-simplex from K-1 free logits.</span>
 <span class="n">pi_samples</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span>
     <span class="k">lambda</span> <span class="n">lp</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">lp</span><span class="p">]))</span>
-<span class="p">)(</span><span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;log_pi&quot;</span><span class="p">])</span>
+<span class="p">)(</span><span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">"log_pi"</span><span class="p">])</span>
 
 <span class="c1"># Resolve label switching: sort components by ascending mean value so the</span>
 <span class="c1"># plotting order matches true_mu = [-4, 0, 4].</span>
@@ -704,21 +762,31 @@ across runs with different random seeds.</p>
 <span class="n">mu_samples</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">take_along_axis</span><span class="p">(</span><span class="n">mu_samples</span><span class="p">,</span> <span class="n">sort_idx</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">pi_samples</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">take_along_axis</span><span class="p">(</span><span class="n">pi_samples</span><span class="p">,</span> <span class="n">sort_idx</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
-<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">sharey</span><span class="o">=</span><span class="s2">&quot;row&quot;</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">sharey</span><span class="o">=</span><span class="s2">"row"</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">K</span><span class="p">):</span>
     <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">mu_samples</span><span class="p">[:,</span> <span class="n">k</span><span class="p">]),</span> <span class="n">bins</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">true_mu</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;true&quot;</span><span class="p">)</span>
-    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;μ[</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">true_mu</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">"red"</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">"--"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"true"</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">"μ[</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">]"</span><span class="p">)</span>
     <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pi_samples</span><span class="p">[:,</span> <span class="n">k</span><span class="p">]),</span> <span class="n">bins</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">true_pi</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;true&quot;</span><span class="p">)</span>
-    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;π[</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">true_pi</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">"red"</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">"--"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"true"</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">"π[</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">]"</span><span class="p">)</span>
 <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">();</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/5407be221f57ff5c9d049f1d59696a06a24c7c9b5fdd164b4a9dacd7057fa139.png" src="../_images/5407be221f57ff5c9d049f1d59696a06a24c7c9b5fdd164b4a9dacd7057fa139.png" />
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">ModuleNotFoundError</span><span class="g g-Whitespace">                       </span>Traceback (most recent call last)
+<span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">9</span><span class="p">],</span> <span class="n">line</span> <span class="mi">1</span>
+<span class="ne">----&gt; </span><span class="mi">1</span> <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="g g-Whitespace">      </span><span class="mi">2</span> 
+<span class="g g-Whitespace">      </span><span class="mi">3</span> <span class="n">mu_samples</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">"mu"</span><span class="p">]</span>
+<span class="g g-Whitespace">      </span><span class="mi">4</span> <span class="c1"># Reconstruct full K-simplex from K-1 free logits.</span>
+
+<span class="ne">ModuleNotFoundError</span>: No module named 'matplotlib'
+</pre></div>
+</div>
 </div>
 </div>
 <div class="cell tag_hide-input docutils container">
@@ -728,22 +796,15 @@ across runs with different random seeds.</p>
 <p class="expanded admonition-title">Hide code cell source</p>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Posterior E[μ]:&quot;</span><span class="p">,</span> <span class="n">mu_samples</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="s2">&quot;  true:&quot;</span><span class="p">,</span> <span class="n">true_mu</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Posterior E[π]:&quot;</span><span class="p">,</span> <span class="n">pi_samples</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="s2">&quot;  true:&quot;</span><span class="p">,</span> <span class="n">true_pi</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">"Posterior E[μ]:"</span><span class="p">,</span> <span class="n">mu_samples</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="s2">"  true:"</span><span class="p">,</span> <span class="n">true_mu</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Posterior E[π]:"</span><span class="p">,</span> <span class="n">pi_samples</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="s2">"  true:"</span><span class="p">,</span> <span class="n">true_pi</span><span class="p">)</span>
 
 <span class="n">accept</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">infos</span><span class="o">.</span><span class="n">acceptance_rate</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mean acceptance rate: </span><span class="si">{</span><span class="n">accept</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Mean acceptance rate: </span><span class="si">{</span><span class="n">accept</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </details>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Posterior E[μ]: [-3.9599998  0.04       4.0099998]   true: [-4.  0.  4.]
-Posterior E[π]: [0.32999998 0.38       0.29      ]   true: [0.3 0.4 0.3]
-Mean acceptance rate: 0.92
-</pre></div>
-</div>
-</div>
 </div>
 </section>
 <section id="alternative-numpyro-model-syntax">
@@ -761,7 +822,7 @@ BlackJax call site are required.</p>
 <p class="admonition-title">Before you start</p>
 <p>You will need <a class="reference external" href="https://github.com/pyro-ppl/numpyro">NumPyro</a> in addition to
 Funsor:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pip install numpyro &quot;funsor&gt;=0.4.7&quot;
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pip install numpyro "funsor&gt;=0.4.7"
 </pre></div>
 </div>
 </div>
@@ -784,14 +845,14 @@ no manual log-prob arithmetic is needed.</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nd">@config_enumerate</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">gmm_model_npy</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">K</span><span class="p">):</span>
     <span class="c1"># Continuous parameters — sampled by BlackJax NUTS</span>
-    <span class="n">pi</span> <span class="o">=</span> <span class="n">numpyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s2">&quot;pi&quot;</span><span class="p">,</span> <span class="n">dist</span><span class="o">.</span><span class="n">Dirichlet</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">K</span><span class="p">)))</span>
-    <span class="k">with</span> <span class="n">numpyro</span><span class="o">.</span><span class="n">plate</span><span class="p">(</span><span class="s2">&quot;components&quot;</span><span class="p">,</span> <span class="n">K</span><span class="p">):</span>
-        <span class="n">mu</span> <span class="o">=</span> <span class="n">numpyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s2">&quot;mu&quot;</span><span class="p">,</span> <span class="n">dist</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">))</span>
+    <span class="n">pi</span> <span class="o">=</span> <span class="n">numpyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s2">"pi"</span><span class="p">,</span> <span class="n">dist</span><span class="o">.</span><span class="n">Dirichlet</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">K</span><span class="p">)))</span>
+    <span class="k">with</span> <span class="n">numpyro</span><span class="o">.</span><span class="n">plate</span><span class="p">(</span><span class="s2">"components"</span><span class="p">,</span> <span class="n">K</span><span class="p">):</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">numpyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s2">"mu"</span><span class="p">,</span> <span class="n">dist</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">))</span>
 
     <span class="c1"># Discrete assignment — Funsor marginalises this out</span>
-    <span class="k">with</span> <span class="n">numpyro</span><span class="o">.</span><span class="n">plate</span><span class="p">(</span><span class="s2">&quot;obs&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)):</span>
-        <span class="n">z</span> <span class="o">=</span> <span class="n">numpyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s2">&quot;z&quot;</span><span class="p">,</span> <span class="n">dist</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span><span class="n">pi</span><span class="p">))</span>
-        <span class="n">numpyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">dist</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="p">[</span><span class="n">z</span><span class="p">],</span> <span class="mf">1.0</span><span class="p">),</span> <span class="n">obs</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">numpyro</span><span class="o">.</span><span class="n">plate</span><span class="p">(</span><span class="s2">"obs"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)):</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">numpyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s2">"z"</span><span class="p">,</span> <span class="n">dist</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span><span class="n">pi</span><span class="p">))</span>
+        <span class="n">numpyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s2">"x"</span><span class="p">,</span> <span class="n">dist</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="p">[</span><span class="n">z</span><span class="p">],</span> <span class="mf">1.0</span><span class="p">),</span> <span class="n">obs</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -810,12 +871,7 @@ the Funsor enumeration — the same pattern used in the plain NumPyro tutorial.<
     <span class="n">dynamic_args</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">initial_position_npy</span> <span class="o">=</span> <span class="n">init_params_npy</span><span class="o">.</span><span class="n">z</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Sites and shapes:&quot;</span><span class="p">,</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">shape</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">initial_position_npy</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Sites and shapes: {&#39;pi&#39;: (2,), &#39;mu&#39;: (3,)}
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Sites and shapes:"</span><span class="p">,</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">shape</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">initial_position_npy</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
 </pre></div>
 </div>
 </div>
@@ -830,14 +886,8 @@ bijectively onto the K-simplex.</p>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">logdensity_fn_npy</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">position</span><span class="p">:</span> <span class="o">-</span><span class="n">potential_fn_gen_npy</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">K</span><span class="p">)(</span><span class="n">position</span><span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;log p(data | init):&quot;</span><span class="p">,</span> <span class="n">logdensity_fn_npy</span><span class="p">(</span><span class="n">initial_position_npy</span><span class="p">))</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;grad w.r.t. mu    :&quot;</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">logdensity_fn_npy</span><span class="p">)(</span><span class="n">initial_position_npy</span><span class="p">)[</span><span class="s2">&quot;mu&quot;</span><span class="p">])</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>log p(data | init): -1268.7512
-grad w.r.t. mu    : [ 137.34174  -209.26659   -21.829649]
+<span class="nb">print</span><span class="p">(</span><span class="s2">"log p(data | init):"</span><span class="p">,</span> <span class="n">logdensity_fn_npy</span><span class="p">(</span><span class="n">initial_position_npy</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"grad w.r.t. mu    :"</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">logdensity_fn_npy</span><span class="p">)(</span><span class="n">initial_position_npy</span><span class="p">)[</span><span class="s2">"mu"</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
@@ -857,12 +907,6 @@ grad w.r.t. mu    : [ 137.34174  -209.26659   -21.829649]
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.88 s, sys: 50.9 ms, total: 2.93 s
-Wall time: 1.27 s
-</pre></div>
-</div>
-</div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -875,12 +919,6 @@ Wall time: 1.27 s
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.6 s, sys: 38 ms, total: 2.63 s
-Wall time: 1.06 s
-</pre></div>
-</div>
-</div>
 </div>
 <p>To recover <code class="docutils literal notranslate"><span class="pre">π</span></code> on the simplex, apply the stick-breaking transform to the
 unconstrained samples.</p>
@@ -888,28 +926,25 @@ unconstrained samples.</p>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">numpyro.distributions.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">StickBreakingTransform</span>
 
-<span class="n">mu_samples_npy</span> <span class="o">=</span> <span class="n">states_npy</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;mu&quot;</span><span class="p">]</span>
-<span class="n">pi_samples_npy</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">StickBreakingTransform</span><span class="p">())(</span><span class="n">states_npy</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;pi&quot;</span><span class="p">])</span>
+<span class="n">mu_samples_npy</span> <span class="o">=</span> <span class="n">states_npy</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">"mu"</span><span class="p">]</span>
+<span class="n">pi_samples_npy</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">StickBreakingTransform</span><span class="p">())(</span><span class="n">states_npy</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">"pi"</span><span class="p">])</span>
 
 <span class="n">sort_idx_npy</span>   <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">mu_samples_npy</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">mu_samples_npy</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">take_along_axis</span><span class="p">(</span><span class="n">mu_samples_npy</span><span class="p">,</span> <span class="n">sort_idx_npy</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">pi_samples_npy</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">take_along_axis</span><span class="p">(</span><span class="n">pi_samples_npy</span><span class="p">,</span> <span class="n">sort_idx_npy</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
-<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">sharey</span><span class="o">=</span><span class="s2">&quot;row&quot;</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">sharey</span><span class="o">=</span><span class="s2">"row"</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">K</span><span class="p">):</span>
     <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">mu_samples_npy</span><span class="p">[:,</span> <span class="n">k</span><span class="p">]),</span> <span class="n">bins</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">true_mu</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;true&quot;</span><span class="p">)</span>
-    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;μ[</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">true_mu</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">"red"</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">"--"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"true"</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">"μ[</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">]"</span><span class="p">)</span>
     <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pi_samples_npy</span><span class="p">[:,</span> <span class="n">k</span><span class="p">]),</span> <span class="n">bins</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">true_pi</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;true&quot;</span><span class="p">)</span>
-    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;π[</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">true_pi</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">"red"</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">"--"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"true"</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">"π[</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">]"</span><span class="p">)</span>
 <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">();</span>
 </pre></div>
 </div>
-</div>
-<div class="cell_output docutils container">
-<img alt="../_images/ae4b4cd6a9b28119c58a08e58c1a3c986e31698b03837d7c1a6e48a6a0b3d55e.png" src="../_images/ae4b4cd6a9b28119c58a08e58c1a3c986e31698b03837d7c1a6e48a6a0b3d55e.png" />
 </div>
 </div>
 <div class="cell tag_hide-input docutils container">
@@ -919,20 +954,13 @@ unconstrained samples.</p>
 <p class="expanded admonition-title">Hide code cell source</p>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Posterior E[μ]:&quot;</span><span class="p">,</span> <span class="n">mu_samples_npy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="s2">&quot;  true:&quot;</span><span class="p">,</span> <span class="n">true_mu</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Posterior E[π]:&quot;</span><span class="p">,</span> <span class="n">pi_samples_npy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="s2">&quot;  true:&quot;</span><span class="p">,</span> <span class="n">true_pi</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mean acceptance rate: </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">infos_npy</span><span class="o">.</span><span class="n">acceptance_rate</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">"Posterior E[μ]:"</span><span class="p">,</span> <span class="n">mu_samples_npy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="s2">"  true:"</span><span class="p">,</span> <span class="n">true_mu</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Posterior E[π]:"</span><span class="p">,</span> <span class="n">pi_samples_npy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="s2">"  true:"</span><span class="p">,</span> <span class="n">true_pi</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Mean acceptance rate: </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">infos_npy</span><span class="o">.</span><span class="n">acceptance_rate</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </details>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Posterior E[μ]: [-3.9599998  0.04       4.0099998]   true: [-4.  0.  4.]
-Posterior E[π]: [0.32999998 0.38       0.29      ]   true: [0.3 0.4 0.3]
-Mean acceptance rate: 0.91
-</pre></div>
-</div>
-</div>
 </div>
 </section>
 <section id="which-approach-to-use">
@@ -1017,7 +1045,7 @@ Mean acceptance rate: 0.91
     <i class="fa-solid fa-list"></i> Contents
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
-    <ul class="visible nav section-nav flex-column">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup-and-data">Setup and data</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-model-and-log-density">The model and log-density</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#window-adaptation">Window adaptation</a></li>
@@ -1073,8 +1101,8 @@ By The Blackjax developers
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
 
   <footer class="bd-footer">
   </footer>

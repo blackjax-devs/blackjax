@@ -26,21 +26,21 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=4418a689" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e37d73aa" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
     <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
@@ -48,25 +48,32 @@
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/adaptation/metric_buffers';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g0c69b5d2f" />
+  <meta name="docsearch:version" content="0.1.dev1+g421add75e" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
   </head>
-  
-  
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
-
+  <body data-default-mode="">
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -92,7 +99,47 @@
 </div>
 
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
     </header>
   
 
@@ -378,11 +425,18 @@
 
 
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div>
 
 
 <button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
@@ -416,18 +470,18 @@
   <h1>Source code for blackjax.adaptation.metric_buffers</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Copyright 2020- The Blackjax Authors.</span>
 <span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
 <span class="c1"># You may obtain a copy of the License at</span>
 <span class="c1">#</span>
 <span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
 <span class="c1">#</span>
 <span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
-<span class="sd">&quot;&quot;&quot;Data-feeding (buffer) layer for metric adaptation.</span>
+<span class="sd">"""Data-feeding (buffer) layer for metric adaptation.</span>
 
 <span class="sd">Each of the four policies below is a state machine with **fixed-shape,</span>
 <span class="sd">scan-carry-safe state** that feeds CGL-mergeable moment blocks to metric</span>
@@ -454,7 +508,7 @@
 <span class="sd">memory-efficient — the opt-in draw ring is the intended design for high-d</span>
 <span class="sd">single-chain use, not an optional optimization.</span>
 
-<span class="sd">**Ensemble split semantics.** For ``(nc, d)``-block consumers a &quot;split&quot; is</span>
+<span class="sd">**Ensemble split semantics.** For ``(nc, d)``-block consumers a "split" is</span>
 <span class="sd">a **draw-axis partition** (step-ranges; all chains fold into the block via</span>
 <span class="sd">CGL merge) — NEVER a chain-subset.  This is enforced by the</span>
 <span class="sd">``ensemble_batch_buffer`` factory and documented on every ``push_split``</span>
@@ -495,7 +549,7 @@
 <span class="sd">which still takes raw draws; that wiring is deliberate follow-up work.</span>
 <span class="sd">Additionally, in the current in-tree ``window_adaptation`` the wrap-buffer</span>
 <span class="sd">normalizes by the full ``n`` even when ``n &gt; B`` (buffer size); this</span>
-<span class="sd">module&#39;s accumulate-all semantics is the correct Stan-reset behavior —</span>
+<span class="sd">module's accumulate-all semantics is the correct Stan-reset behavior —</span>
 <span class="sd">a future consumer swap is behavior-improving (not bit-identical) in</span>
 <span class="sd">the wrap regime.</span>
 
@@ -516,7 +570,7 @@
 <span class="sd">future moments-consuming Fisher variant would need.  The call-site wiring</span>
 <span class="sd">is a follow-up work item; the data type is here so the D-layer can</span>
 <span class="sd">accumulate gradient moments alongside position moments when needed.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span>
 
@@ -526,18 +580,18 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;MetricBuffer&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;MomentBlock&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;cgl_merge_two&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;cgl_update_batch&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;merge_block_ring&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;diag_from_moment_block&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;AccumulatingSplitPopState&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;LateStartState&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;reset_window_buffer&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;accumulating_split_pop_buffer&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;ensemble_batch_buffer&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;late_start&quot;</span><span class="p">,</span>
+    <span class="s2">"MetricBuffer"</span><span class="p">,</span>
+    <span class="s2">"MomentBlock"</span><span class="p">,</span>
+    <span class="s2">"cgl_merge_two"</span><span class="p">,</span>
+    <span class="s2">"cgl_update_batch"</span><span class="p">,</span>
+    <span class="s2">"merge_block_ring"</span><span class="p">,</span>
+    <span class="s2">"diag_from_moment_block"</span><span class="p">,</span>
+    <span class="s2">"AccumulatingSplitPopState"</span><span class="p">,</span>
+    <span class="s2">"LateStartState"</span><span class="p">,</span>
+    <span class="s2">"reset_window_buffer"</span><span class="p">,</span>
+    <span class="s2">"accumulating_split_pop_buffer"</span><span class="p">,</span>
+    <span class="s2">"ensemble_batch_buffer"</span><span class="p">,</span>
+    <span class="s2">"late_start"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -549,10 +603,10 @@
 <div class="viewcode-block" id="MetricBuffer">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_buffers/index.html#blackjax.adaptation.metric_buffers.MetricBuffer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MetricBuffer</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Buffer policy as a NamedTuple of callables (house-style).</span>
+<span class="w">    </span><span class="sd">"""Buffer policy as a NamedTuple of callables (house-style).</span>
 
 <span class="sd">    Follows the :class:`~blackjax.base.SamplingAlgorithm` convention of</span>
-<span class="sd">    bundling a policy&#39;s callables into a named container so consumers can</span>
+<span class="sd">    bundling a policy's callables into a named container so consumers can</span>
 <span class="sd">    access them by name (``buf.get_moments(state)``) rather than by</span>
 <span class="sd">    positional destructuring.  Still positionally compatible with tuple</span>
 <span class="sd">    unpacking (``NamedTuple`` IS a ``tuple``).</span>
@@ -571,7 +625,7 @@
 <span class="sd">        ``(state) -&gt; tuple[Array, Array]``</span>
 <span class="sd">    get_diag_reference</span>
 <span class="sd">        ``(state) -&gt; Array``</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="MetricBuffer.init">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_buffers/index.html#blackjax.adaptation.metric_buffers.MetricBuffer.init">[docs]</a>
@@ -608,7 +662,7 @@
 <div class="viewcode-block" id="MomentBlock">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_buffers/index.html#blackjax.adaptation.metric_buffers.MomentBlock">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MomentBlock</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;CGL-mergeable sufficient statistics for covariance estimation.</span>
+<span class="w">    </span><span class="sd">"""CGL-mergeable sufficient statistics for covariance estimation.</span>
 
 <span class="sd">    Carries exactly the fields consumed by</span>
 <span class="sd">    :func:`~blackjax.adaptation.metric_estimators.sample_covariance_eigh_low_rank`:</span>
@@ -617,7 +671,7 @@
 
 <span class="sd">        metric = sample_covariance_eigh_low_rank(m2=block.m2, count=block.count, k)</span>
 
-<span class="sd">    The ``m2`` field is the **accumulated sum of squared deviations** (CGL&#39;s</span>
+<span class="sd">    The ``m2`` field is the **accumulated sum of squared deviations** (CGL's</span>
 <span class="sd">    M₂ matrix), NOT the covariance.  For a dense block ``m2`` has shape</span>
 <span class="sd">    ``(d, d)``; for a diagonal block it has shape ``(d,)`` (the diagonal).</span>
 
@@ -636,7 +690,7 @@
 <span class="sd">    An empty (zero-initialised) block has ``count=0``.  The CGL merge</span>
 <span class="sd">    formula is safe for empty blocks — the result equals the non-empty</span>
 <span class="sd">    partner when one block is empty.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="MomentBlock.count">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_buffers/index.html#blackjax.adaptation.metric_buffers.MomentBlock.count">[docs]</a>
@@ -654,7 +708,7 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_FisherMomentBlock</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;CGL-mergeable sufficient statistics for the diagonal Fisher estimator</span>
+<span class="w">    </span><span class="sd">"""CGL-mergeable sufficient statistics for the diagonal Fisher estimator</span>
 <span class="sd">    (position + gradient moments, diagonal variant).</span>
 
 <span class="sd">    Accumulation state for</span>
@@ -689,7 +743,7 @@
 <span class="sd">    gradient variance is needed; no d×d cross-moment is accumulated.</span>
 
 <span class="sd">    See :func:`_fisher_block_init`, :func:`_fisher_block_update_one`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">count</span><span class="p">:</span> <span class="n">Array</span>  <span class="c1"># ()  ambient float dtype</span>
     <span class="n">mean_x</span><span class="p">:</span> <span class="n">Array</span>  <span class="c1"># (d,)</span>
@@ -699,7 +753,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_fisher_block_init</span><span class="p">(</span><span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_FisherMomentBlock</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a zero-initialised :class:`_FisherMomentBlock` for dimension ``d``.</span>
+<span class="w">    </span><span class="sd">"""Return a zero-initialised :class:`_FisherMomentBlock` for dimension ``d``.</span>
 
 <span class="sd">    The ``count`` field uses the ambient float dtype (``jnp.zeros(())`` with</span>
 <span class="sd">    no explicit ``dtype=`` argument) so that CGL merge weights are computed at</span>
@@ -715,7 +769,7 @@
 <span class="sd">    -------</span>
 <span class="sd">    _FisherMomentBlock</span>
 <span class="sd">        All-zero block ready for :func:`_fisher_block_update_one`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">_FisherMomentBlock</span><span class="p">(</span>
         <span class="n">count</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(()),</span>
         <span class="n">mean_x</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">d</span><span class="p">,)),</span>
@@ -730,7 +784,7 @@
     <span class="n">position_flat</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
     <span class="n">grad_flat</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_FisherMomentBlock</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Welford (single-draw CGL) update of a :class:`_FisherMomentBlock`.</span>
+<span class="w">    </span><span class="sd">"""Welford (single-draw CGL) update of a :class:`_FisherMomentBlock`.</span>
 
 <span class="sd">    Incorporates one new ``(position, gradient)`` pair into the running</span>
 <span class="sd">    diagonal moment statistics via the online Welford recurrence.  Equivalent</span>
@@ -751,7 +805,7 @@
 <span class="sd">    -------</span>
 <span class="sd">    _FisherMomentBlock</span>
 <span class="sd">        Updated block with the new draw incorporated.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">count</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">count</span> <span class="o">+</span> <span class="mf">1.0</span>
 
     <span class="c1"># Welford update for position</span>
@@ -783,7 +837,7 @@
 <div class="viewcode-block" id="cgl_merge_two">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_buffers/index.html#blackjax.adaptation.metric_buffers.cgl_merge_two">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">cgl_merge_two</span><span class="p">(</span><span class="n">block_a</span><span class="p">:</span> <span class="n">MomentBlock</span><span class="p">,</span> <span class="n">block_b</span><span class="p">:</span> <span class="n">MomentBlock</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MomentBlock</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;CGL-merge two pre-accumulated moment blocks.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""CGL-merge two pre-accumulated moment blocks.</span>
 
 <span class="sd">    Combines ``(n_a, mean_a, M2_a)`` and ``(n_b, mean_b, M2_b)`` into</span>
 <span class="sd">    ``(n_ab, mean_ab, M2_ab)`` using the parallel Chan–Golub–LeVeque</span>
@@ -814,7 +868,7 @@
 <span class="sd">    -------</span>
 <span class="sd">    MomentBlock</span>
 <span class="sd">        Merged block with combined statistics.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">n_a</span> <span class="o">=</span> <span class="n">block_a</span><span class="o">.</span><span class="n">count</span>
     <span class="n">n_b</span> <span class="o">=</span> <span class="n">block_b</span><span class="o">.</span><span class="n">count</span>
     <span class="n">mean_a</span> <span class="o">=</span> <span class="n">block_a</span><span class="o">.</span><span class="n">mean</span>
@@ -848,7 +902,7 @@
 <div class="viewcode-block" id="cgl_update_batch">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_buffers/index.html#blackjax.adaptation.metric_buffers.cgl_update_batch">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">cgl_update_batch</span><span class="p">(</span><span class="n">block</span><span class="p">:</span> <span class="n">MomentBlock</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MomentBlock</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;CGL-merge an existing moment block with a new batch of raw draws.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""CGL-merge an existing moment block with a new batch of raw draws.</span>
 
 <span class="sd">    Equivalent to computing a temporary block from ``batch`` and calling</span>
 <span class="sd">    :func:`cgl_merge_two`, but avoids the intermediate allocation by</span>
@@ -858,9 +912,9 @@
 <span class="sd">    Single draws should be reshaped to ``(1, d)`` before calling.</span>
 
 <span class="sd">    **Ensemble (nc, d) feeds**: when ``batch`` is a ``(n_chains, d)``</span>
-<span class="sd">    ensemble snapshot, all chains fold into the block&#39;s CGL merge — this</span>
+<span class="sd">    ensemble snapshot, all chains fold into the block's CGL merge — this</span>
 <span class="sd">    is how :func:`ensemble_batch_buffer` satisfies the draw-axis split</span>
-<span class="sd">    semantics: a &quot;split&quot; is a time-range partition across all chains, not a</span>
+<span class="sd">    semantics: a "split" is a time-range partition across all chains, not a</span>
 <span class="sd">    chain-subset partition.</span>
 
 <span class="sd">    Parameters</span>
@@ -874,7 +928,7 @@
 <span class="sd">    -------</span>
 <span class="sd">    MomentBlock</span>
 <span class="sd">        Updated block merging the previous statistics with the new batch.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">n_a</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">count</span>
     <span class="n">mean_a</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">mean</span>
     <span class="n">m2_a</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">m2</span>
@@ -909,7 +963,7 @@
 <div class="viewcode-block" id="merge_block_ring">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_buffers/index.html#blackjax.adaptation.metric_buffers.merge_block_ring">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">merge_block_ring</span><span class="p">(</span><span class="n">counts</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">means</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">m2s</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MomentBlock</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reduce a ring of ``k`` moment blocks into a single merged block.</span>
+<span class="w">    </span><span class="sd">"""Reduce a ring of ``k`` moment blocks into a single merged block.</span>
 
 <span class="sd">    For ``k == 1`` uses a direct-slice short-circuit (no ``lax.scan``</span>
 <span class="sd">    compiled) that is bit-identical to the scan path while avoiding the</span>
@@ -934,7 +988,7 @@
 <span class="sd">    MomentBlock</span>
 <span class="sd">        CGL-merged result across all ``k`` blocks (or the zero block if</span>
 <span class="sd">        all slots are empty).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">k</span> <span class="o">=</span> <span class="n">counts</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
     <span class="c1"># k=1 short-circuit: direct slice avoids scan compile overhead (~1.6×</span>
@@ -971,7 +1025,7 @@
 <div class="viewcode-block" id="diag_from_moment_block">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_buffers/index.html#blackjax.adaptation.metric_buffers.diag_from_moment_block">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">diag_from_moment_block</span><span class="p">(</span><span class="n">block</span><span class="p">:</span> <span class="n">MomentBlock</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bessel-corrected per-coordinate variance from a :class:`MomentBlock`.</span>
+<span class="w">    </span><span class="sd">"""Bessel-corrected per-coordinate variance from a :class:`MomentBlock`.</span>
 
 <span class="sd">    One accumulator serves both the adapted metric and the step-size proxy</span>
 <span class="sd">    channel.  Step-size proxies read this diagonal view; they never read</span>
@@ -1008,7 +1062,7 @@
 <span class="sd">    observe an upward shift of ``count / (count - 1)`` relative to their</span>
 <span class="sd">    expectation; callers using this output as a population-variance proxy</span>
 <span class="sd">    must account for that factor.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">m2</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">m2</span>
     <span class="n">n</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">count</span>
     <span class="n">denom</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
@@ -1029,7 +1083,7 @@
 <div class="viewcode-block" id="AccumulatingSplitPopState">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_buffers/index.html#blackjax.adaptation.metric_buffers.AccumulatingSplitPopState">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">AccumulatingSplitPopState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;State for the split-based rolling-window buffer (``k &gt;= 1``).</span>
+<span class="w">    </span><span class="sd">"""State for the split-based rolling-window buffer (``k &gt;= 1``).</span>
 
 <span class="sd">    Maintains a ring of ``k`` moment blocks (one active + up to ``k-1``</span>
 <span class="sd">    completed).  At each ``push_split``, the ring pointer advances to a</span>
@@ -1060,10 +1114,10 @@
 <span class="sd">    ``jnp.sum(counts &gt; 0)`` and is not stored as a carried field —</span>
 <span class="sd">    storing it would risk staleness under consecutive empty pushes.</span>
 
-<span class="sd">    Split semantics (for ensemble consumers): a &quot;split&quot; is always a</span>
+<span class="sd">    Split semantics (for ensemble consumers): a "split" is always a</span>
 <span class="sd">    **draw-axis time partition** — all chains in a batch fold into the</span>
-<span class="sd">    active block&#39;s CGL merge.  Splits are never chain-subset partitions.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    active block's CGL merge.  Splits are never chain-subset partitions.</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="AccumulatingSplitPopState.counts">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_buffers/index.html#blackjax.adaptation.metric_buffers.AccumulatingSplitPopState.counts">[docs]</a>
@@ -1087,7 +1141,7 @@
 <div class="viewcode-block" id="LateStartState">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_buffers/index.html#blackjax.adaptation.metric_buffers.LateStartState">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LateStartState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;State for the late-start offset policy.</span>
+<span class="w">    </span><span class="sd">"""State for the late-start offset policy.</span>
 
 <span class="sd">    Wraps an inner policy state (any of the three ring-based policies) and</span>
 <span class="sd">    suppresses updates for the first ``offset_steps`` calls to ``update``.</span>
@@ -1102,7 +1156,7 @@
 <span class="sd">        Number of update calls that have been skipped so far, scalar ``()``.</span>
 <span class="sd">        Saturates at ``offset_steps`` (so the carry never grows unboundedly</span>
 <span class="sd">        and the shape is static).  Reset to zero on every ``push_split``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="LateStartState.inner">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_buffers/index.html#blackjax.adaptation.metric_buffers.LateStartState.inner">[docs]</a>
@@ -1127,7 +1181,7 @@
     <span class="n">n_chains_per_update</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">requires_draws</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetricBuffer</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Unified ring-buffer core for all ring-based policies.</span>
+<span class="w">    </span><span class="sd">"""Unified ring-buffer core for all ring-based policies.</span>
 
 <span class="sd">    ``n_chains_per_update``:</span>
 <span class="sd">      - ``None`` → :func:`accumulating_split_pop_buffer` /</span>
@@ -1135,14 +1189,14 @@
 <span class="sd">      - ``int`` → :func:`ensemble_batch_buffer` (trace-time shape guard</span>
 <span class="sd">        in ``update``: ``batch.shape[0] != n_chains_per_update`` raises</span>
 <span class="sd">        ``ValueError``; fires at JIT trace time, free at runtime)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">requires_draws</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-            <span class="s2">&quot;requires_draws=True (raw-draw ring for the draws-SVD estimator) &quot;</span>
-            <span class="s2">&quot;is not yet implemented.  Set requires_draws=False (the default).&quot;</span>
+            <span class="s2">"requires_draws=True (raw-draw ring for the draws-SVD estimator) "</span>
+            <span class="s2">"is not yet implemented.  Set requires_draws=False (the default)."</span>
         <span class="p">)</span>
     <span class="k">if</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;k must be &gt;= 1, got </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"k must be &gt;= 1, got </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="n">_m2_shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">d</span><span class="p">,)</span> <span class="k">if</span> <span class="n">diagonal</span> <span class="k">else</span> <span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
 
@@ -1160,12 +1214,12 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span>
         <span class="n">state</span><span class="p">:</span> <span class="n">AccumulatingSplitPopState</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">Array</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AccumulatingSplitPopState</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;CGL-merge a new batch into the active block (``state[write_pos]``).</span>
+<span class="w">        </span><span class="sd">"""CGL-merge a new batch into the active block (``state[write_pos]``).</span>
 
 <span class="sd">        All samples in ``batch`` fold into the active block via</span>
 <span class="sd">        :func:`cgl_update_batch`.  For ensemble consumers, ``batch`` is</span>
 <span class="sd">        ``(n_chains, d)`` and all chains are treated as a single temporal</span>
-<span class="sd">        batch — a &quot;split&quot; is a time-range partition, not a chain-subset</span>
+<span class="sd">        batch — a "split" is a time-range partition, not a chain-subset</span>
 <span class="sd">        partition (draw-axis split semantics).</span>
 
 <span class="sd">        Parameters</span>
@@ -1175,16 +1229,16 @@
 <span class="sd">        batch</span>
 <span class="sd">            New draws, shape ``(n_b, d)`` or ``(d,)`` (reshaped to ``(1, d)``</span>
 <span class="sd">            internally).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="n">batch</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">batch</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
 
         <span class="c1"># Trace-time shape guard for ensemble consumers (n_chains_per_update set).</span>
         <span class="k">if</span> <span class="n">n_chains_per_update</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">batch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">n_chains_per_update</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;ensemble_batch_buffer: expected batch.shape[0]=</span><span class="si">{</span><span class="n">n_chains_per_update</span><span class="si">}</span><span class="s2">, &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;got </span><span class="si">{</span><span class="n">batch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">.  Partial batches are not supported -- &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;all n_chains must participate in each update call.&quot;</span>
+                <span class="sa">f</span><span class="s2">"ensemble_batch_buffer: expected batch.shape[0]=</span><span class="si">{</span><span class="n">n_chains_per_update</span><span class="si">}</span><span class="s2">, "</span>
+                <span class="sa">f</span><span class="s2">"got </span><span class="si">{</span><span class="n">batch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">.  Partial batches are not supported -- "</span>
+                <span class="sa">f</span><span class="s2">"all n_chains must participate in each update call."</span>
             <span class="p">)</span>
 
         <span class="n">wp</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">write_pos</span>
@@ -1209,15 +1263,15 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">push_split</span><span class="p">(</span>
         <span class="n">state</span><span class="p">:</span> <span class="n">AccumulatingSplitPopState</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AccumulatingSplitPopState</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Finalise the active block, advance to a fresh slot.</span>
+<span class="w">        </span><span class="sd">"""Finalise the active block, advance to a fresh slot.</span>
 
 <span class="sd">        Advances ``write_pos`` by 1 (mod ``k``), zeroing out the newly</span>
 <span class="sd">        active slot.  This implements the split-granular forgetting:</span>
-<span class="sd">        when the ring wraps, the oldest completed block&#39;s slot is</span>
-<span class="sd">        overwritten (zeroed) — exact &quot;pop oldest split&quot; semantics with O(d²)</span>
+<span class="sd">        when the ring wraps, the oldest completed block's slot is</span>
+<span class="sd">        overwritten (zeroed) — exact "pop oldest split" semantics with O(d²)</span>
 <span class="sd">        memory rather than a raw-draw ring.</span>
 
-<span class="sd">        The split here is a time-range boundary (a &quot;step count&quot; partition).</span>
+<span class="sd">        The split here is a time-range boundary (a "step count" partition).</span>
 <span class="sd">        For ensemble consumers all chains participated in the now-completed</span>
 <span class="sd">        block; the split never partitions chains into subsets.</span>
 
@@ -1231,7 +1285,7 @@
 <span class="sd">          ring pointer and zeroes what was the oldest completed slot — one</span>
 <span class="sd">          split of data is silently lost.  The subsequent get_moments call</span>
 <span class="sd">          returns k-1 retained splits (not the full k-split window).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">old_wp</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">write_pos</span>
         <span class="n">new_wp</span> <span class="o">=</span> <span class="p">(</span><span class="n">old_wp</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">k</span>
 
@@ -1251,34 +1305,34 @@
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_moments</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">AccumulatingSplitPopState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MomentBlock</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;CGL-merge all ``k`` slots (including the active block) into one.</span>
+<span class="w">        </span><span class="sd">"""CGL-merge all ``k`` slots (including the active block) into one.</span>
 
 <span class="sd">        Empty slots (``count=0``) contribute nothing — the CGL merge</span>
 <span class="sd">        formula handles them correctly.  For ``k=1``, uses the direct-slice</span>
 <span class="sd">        short-circuit in :func:`merge_block_ring`.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="n">merge_block_ring</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">counts</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">means</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">m2s</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_support</span><span class="p">(</span>
         <span class="n">state</span><span class="p">:</span> <span class="n">AccumulatingSplitPopState</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return ``(total_count, per_block_counts)``.</span>
+<span class="w">        </span><span class="sd">"""Return ``(total_count, per_block_counts)``.</span>
 
 <span class="sd">        ``total_count`` is the sum of all valid block counts (the merged</span>
 <span class="sd">        effective support).  ``per_block_counts`` is the raw ``(k,)``</span>
 <span class="sd">        counts array including zeros for empty slots.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">total</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">counts</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">total</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">counts</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_diag_reference</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">AccumulatingSplitPopState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Bessel-corrected per-coordinate variance for the step-size proxy.</span>
+<span class="w">        </span><span class="sd">"""Bessel-corrected per-coordinate variance for the step-size proxy.</span>
 
 <span class="sd">        Derived from the merged moments across all blocks; step-size</span>
 <span class="sd">        proxies read this, never the adapted low-rank metric directly.</span>
 <span class="sd">        Returns ones when fewer than 2 samples have been accumulated</span>
 <span class="sd">        (isotropic default — see :func:`diag_from_moment_block`).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="n">diag_from_moment_block</span><span class="p">(</span><span class="n">get_moments</span><span class="p">(</span><span class="n">state</span><span class="p">))</span>
 
     <span class="k">return</span> <span class="n">MetricBuffer</span><span class="p">(</span>
@@ -1299,7 +1353,7 @@
     <span class="n">diagonal</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">requires_draws</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetricBuffer</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Stan-style hard-reset window adaptation buffer.</span>
+<span class="w">    </span><span class="sd">"""Stan-style hard-reset window adaptation buffer.</span>
 
 <span class="sd">    Implemented as :func:`_make_split_pop_fns` with ``k=1``.  With a ring</span>
 <span class="sd">    of size 1, ``push_split`` advances ``write_pos`` from 0 to</span>
@@ -1335,7 +1389,7 @@
 <span class="sd">    MetricBuffer</span>
 <span class="sd">        Named bundle of ``(init, update, push_split, get_moments,</span>
 <span class="sd">        get_support, get_diag_reference)``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">_make_split_pop_fns</span><span class="p">(</span>
         <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="p">,</span>
         <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
@@ -1355,7 +1409,7 @@
     <span class="n">diagonal</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">requires_draws</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetricBuffer</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Rolling-window buffer with exact oldest-split forgetting.</span>
+<span class="w">    </span><span class="sd">"""Rolling-window buffer with exact oldest-split forgetting.</span>
 
 <span class="sd">    Maintains ``k`` CGL-mergeable moment blocks in a ring.  Each call to</span>
 <span class="sd">    ``push_split`` finalises the currently-active block and advances the</span>
@@ -1369,7 +1423,7 @@
 <span class="sd">    the rest of the buffer is retained.  That is exactly what</span>
 <span class="sd">    ``push_split`` does here, at the block-granularity level.</span>
 
-<span class="sd">    **Split semantics**: for this policy a &quot;split&quot; is a time-range</span>
+<span class="sd">    **Split semantics**: for this policy a "split" is a time-range</span>
 <span class="sd">    partition — the caller decides when to call ``push_split`` (e.g., at</span>
 <span class="sd">    each adaptation window boundary).  For ensemble consumers all chains in</span>
 <span class="sd">    each update batch fold into the same active block; use</span>
@@ -1395,7 +1449,7 @@
 <span class="sd">    MetricBuffer</span>
 <span class="sd">        Named bundle of ``(init, update, push_split, get_moments,</span>
 <span class="sd">        get_support, get_diag_reference)``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">_make_split_pop_fns</span><span class="p">(</span>
         <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="p">,</span>
         <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
@@ -1416,17 +1470,17 @@
     <span class="n">diagonal</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">requires_draws</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetricBuffer</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Rolling-window buffer for ensemble (multi-chain) consumers.</span>
+<span class="w">    </span><span class="sd">"""Rolling-window buffer for ensemble (multi-chain) consumers.</span>
 
 <span class="sd">    A specialisation of :func:`accumulating_split_pop_buffer` for</span>
 <span class="sd">    ``(n_chains, d)`` batch inputs, with explicit draw-axis split semantics</span>
 <span class="sd">    and a trace-time shape guard on ``update``.</span>
 
 <span class="sd">    **Ensemble split semantics**: for ``(nc, d)``-block consumers a</span>
-<span class="sd">    &quot;split&quot; is a **draw-axis partition** (step-ranges; all chains fold into</span>
+<span class="sd">    "split" is a **draw-axis partition** (step-ranges; all chains fold into</span>
 <span class="sd">    the active block via CGL merge) — NEVER a chain-subset.  Concretely,</span>
 <span class="sd">    calling ``update(state, batch)`` with ``batch`` shape ``(n_chains, d)``</span>
-<span class="sd">    folds all ``n_chains`` positions into the single active block&#39;s</span>
+<span class="sd">    folds all ``n_chains`` positions into the single active block's</span>
 <span class="sd">    sufficient statistics; calling ``push_split`` advances the ring pointer</span>
 <span class="sd">    to start a new time-range block (all chains still folded together).</span>
 
@@ -1465,9 +1519,9 @@
 <span class="sd">    MetricBuffer</span>
 <span class="sd">        Named bundle of ``(init, update, push_split, get_moments,</span>
 <span class="sd">        get_support, get_diag_reference)``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">n_chains</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;n_chains must be &gt;= 1, got </span><span class="si">{</span><span class="n">n_chains</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"n_chains must be &gt;= 1, got </span><span class="si">{</span><span class="n">n_chains</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">_make_split_pop_fns</span><span class="p">(</span>
         <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="p">,</span>
         <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
@@ -1489,7 +1543,7 @@
     <span class="n">inner_fns</span><span class="p">:</span> <span class="n">MetricBuffer</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">,</span>
     <span class="n">offset_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetricBuffer</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Offset policy: skip the first ``offset_steps`` update calls, then accumulate.</span>
+<span class="w">    </span><span class="sd">"""Offset policy: skip the first ``offset_steps`` update calls, then accumulate.</span>
 
 <span class="sd">    Wraps any of the three ring-based policies (or another ``late_start``)</span>
 <span class="sd">    with a transient-skip period.  The first ``offset_steps`` calls to</span>
@@ -1529,9 +1583,9 @@
 <span class="sd">    -------</span>
 <span class="sd">    MetricBuffer</span>
 <span class="sd">        Named bundle with :class:`LateStartState` as the state type.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">offset_steps</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;offset_steps must be &gt;= 0, got </span><span class="si">{</span><span class="n">offset_steps</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"offset_steps must be &gt;= 0, got </span><span class="si">{</span><span class="n">offset_steps</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="p">(</span>
         <span class="n">inner_init</span><span class="p">,</span>
@@ -1549,12 +1603,12 @@
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">LateStartState</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LateStartState</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update the inner policy, or skip if still in the offset period.</span>
+<span class="w">        </span><span class="sd">"""Update the inner policy, or skip if still in the offset period.</span>
 
 <span class="sd">        During the first ``offset_steps`` calls, ``batch`` is dropped and</span>
 <span class="sd">        ``num_skipped`` increments.  After that, every call delegates to</span>
 <span class="sd">        the inner ``update``.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">still_skipping</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">num_skipped</span> <span class="o">&lt;</span> <span class="n">offset_steps</span>
 
         <span class="n">new_inner</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
@@ -1568,11 +1622,11 @@
         <span class="k">return</span> <span class="n">LateStartState</span><span class="p">(</span><span class="n">inner</span><span class="o">=</span><span class="n">new_inner</span><span class="p">,</span> <span class="n">num_skipped</span><span class="o">=</span><span class="n">new_skipped</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">push_split</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">LateStartState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LateStartState</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Delegate to inner policy and reset the skip counter.</span>
+<span class="w">        </span><span class="sd">"""Delegate to inner policy and reset the skip counter.</span>
 
 <span class="sd">        The skip counter resets to 0 so the new window has a fresh,</span>
 <span class="sd">        independent offset period (not cumulative across windows).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="n">LateStartState</span><span class="p">(</span>
             <span class="n">inner</span><span class="o">=</span><span class="n">inner_push_split</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">inner</span><span class="p">),</span>
             <span class="n">num_skipped</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">num_skipped</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span>
@@ -1653,8 +1707,8 @@ By The Blackjax developers
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
 
   <footer class="bd-footer">
   </footer>

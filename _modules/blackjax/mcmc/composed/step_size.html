@@ -26,21 +26,21 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/styles/sphinx-book-theme.css?v=4418a689" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=e37d73aa" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
     <script src="../../../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
@@ -48,25 +48,32 @@
     <script src="../../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/mcmc/composed/step_size';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g0c69b5d2f" />
+  <meta name="docsearch:version" content="0.1.dev1+g421add75e" />
+  
+    
+    <script src="../../../../_static/searchtools.js"></script>
+    <script src="../../../../_static/language_data.js"></script>
+    <script src="../../../../searchindex.js"></script>
+  
   </head>
-  
-  
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
-
+  <body data-default-mode="">
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -92,7 +99,47 @@
 </div>
 
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
     </header>
   
 
@@ -378,11 +425,18 @@
 
 
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div>
 
 
 <button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
@@ -416,18 +470,18 @@
   <h1>Source code for blackjax.mcmc.composed.step_size</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Copyright 2020- The Blackjax Authors.</span>
 <span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
 <span class="c1"># You may obtain a copy of the License at</span>
 <span class="c1">#</span>
 <span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
 <span class="c1">#</span>
 <span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
-<span class="sd">&quot;&quot;&quot;GIST instance (a): self-tuning step size, autoStep-style.</span>
+<span class="sd">"""GIST instance (a): self-tuning step size, autoStep-style.</span>
 
 <span class="sd">The tuning parameter is ``alpha = (a, b, j)``: ``(a, b)`` are soft</span>
 <span class="sd">acceptance-ratio thresholds freshly drawn every transition from the uniform</span>
@@ -438,26 +492,26 @@
 
 <span class="sd">Because ``p(a, b, j | theta, rho) = Uniform_Delta(a, b) . 1{j = mu(theta, rho,</span>
 <span class="sd">a, b)}`` is a Dirac measure in its ``j``-argument, the GIST tuning-density</span>
-<span class="sd">ratio (eq. 9) collapses to an indicator that the *reverse* selection ``j&#39; =</span>
-<span class="sd">mu(theta&#39;, rho&#39;, a, b)`` (re-run at the proposal, with the *same* ``(a, b)``)</span>
-<span class="sd">matches the forward ``j`` -- the &quot;reversibility check&quot; of</span>
+<span class="sd">ratio (eq. 9) collapses to an indicator that the *reverse* selection ``j' =</span>
+<span class="sd">mu(theta', rho', a, b)`` (re-run at the proposal, with the *same* ``(a, b)``)</span>
+<span class="sd">matches the forward ``j`` -- the "reversibility check" of</span>
 <span class="sd">[autoMALA]/[AutoStep], derived directly from the GIST framework rather than</span>
 <span class="sd">bolted on as a separate correctness patch (section 2.1.3).</span>
 
 <span class="sd">References</span>
 <span class="sd">----------</span>
-<span class="sd">.. [1] Bou-Rabee, Carpenter, Marsden, &quot;GIST: Gibbs self-tuning for locally</span>
-<span class="sd">   adaptive Hamiltonian Monte Carlo&quot;, arXiv:2404.15253, section 2 (mapping</span>
+<span class="sd">.. [1] Bou-Rabee, Carpenter, Marsden, "GIST: Gibbs self-tuning for locally</span>
+<span class="sd">   adaptive Hamiltonian Monte Carlo", arXiv:2404.15253, section 2 (mapping</span>
 <span class="sd">   onto the general kernel).</span>
-<span class="sd">.. [2] Liu, Surjanovic, Biron-Lattes, Bouchard-Cote, Campbell, &quot;AutoStep:</span>
-<span class="sd">   Locally adaptive involutive MCMC&quot;, arXiv:2410.18929, Algorithm 2 (the</span>
+<span class="sd">.. [2] Liu, Surjanovic, Biron-Lattes, Bouchard-Cote, Campbell, "AutoStep:</span>
+<span class="sd">   Locally adaptive involutive MCMC", arXiv:2410.18929, Algorithm 2 (the</span>
 <span class="sd">   symmetric selector, default here).</span>
-<span class="sd">.. [3] Biron-Lattes, Surjanovic, Syed, Campbell, Bouchard-Cote, &quot;autoMALA:</span>
-<span class="sd">   Locally adaptive Metropolis-adjusted Langevin algorithm&quot;,</span>
+<span class="sd">.. [3] Biron-Lattes, Surjanovic, Syed, Campbell, Bouchard-Cote, "autoMALA:</span>
+<span class="sd">   Locally adaptive Metropolis-adjusted Langevin algorithm",</span>
 <span class="sd">   arXiv:2310.16782, Algorithm 2 (the asymmetric selector, ``criterion=</span>
-<span class="sd">   &quot;asymmetric&quot;``, provided for cross-validation against the original paper</span>
+<span class="sd">   "asymmetric"``, provided for cross-validation against the original paper</span>
 <span class="sd">   only -- can get stuck near the mode/in the tails).</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">cast</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
@@ -474,12 +528,12 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;GISTStepSizeInfo&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;StepSizeTuningParameter&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;init&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;step_size_selector&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;as_top_level_api&quot;</span><span class="p">,</span>
+    <span class="s2">"GISTStepSizeInfo"</span><span class="p">,</span>
+    <span class="s2">"StepSizeTuningParameter"</span><span class="p">,</span>
+    <span class="s2">"init"</span><span class="p">,</span>
+    <span class="s2">"step_size_selector"</span><span class="p">,</span>
+    <span class="s2">"build_kernel"</span><span class="p">,</span>
+    <span class="s2">"as_top_level_api"</span><span class="p">,</span>
 <span class="p">]</span>
 
 <div class="viewcode-block" id="init">
@@ -491,7 +545,7 @@
 <div class="viewcode-block" id="StepSizeTuningParameter">
 <a class="viewcode-back" href="../../../../autoapi/blackjax/mcmc/composed/step_size/index.html#blackjax.mcmc.composed.step_size.StepSizeTuningParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">StepSizeTuningParameter</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The GIST tuning parameter ``alpha = (a, b, j)``, section 2.1.1.</span>
+<span class="w">    </span><span class="sd">"""The GIST tuning parameter ``alpha = (a, b, j)``, section 2.1.1.</span>
 
 <span class="sd">    a, b</span>
 <span class="sd">        Soft acceptance-ratio thresholds, freshly drawn ~ Uniform on</span>
@@ -500,12 +554,12 @@
 <span class="sd">        acceptance ratio since ``g = identity`` carries ``(a, b)`` through</span>
 <span class="sd">        the involution unchanged (section 2.1.3) -- any consistent</span>
 <span class="sd">        (deterministic-given-key) way of drawing them would do, but the</span>
-<span class="sd">        uniform-on-the-triangle draw is what the paper&#39;s own ``p(alpha |</span>
+<span class="sd">        uniform-on-the-triangle draw is what the paper's own ``p(alpha |</span>
 <span class="sd">        theta, rho)`` factorization assumes.</span>
 <span class="sd">    step_index</span>
 <span class="sd">        ``j``, the integer log2 step-size index:</span>
 <span class="sd">        ``step_size = initial_step_size * 2**j``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="StepSizeTuningParameter.a">
 <a class="viewcode-back" href="../../../../autoapi/blackjax/mcmc/composed/step_size/index.html#blackjax.mcmc.composed.step_size.StepSizeTuningParameter.a">[docs]</a>
@@ -523,8 +577,8 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_StepSizeExtra</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extra info computed by ``apply_fn``, threaded into</span>
-<span class="sd">    :class:`GISTStepSizeInfo` without recomputation.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Extra info computed by ``apply_fn``, threaded into</span>
+<span class="sd">    :class:`GISTStepSizeInfo` without recomputation."""</span>
 
     <span class="n">num_integration_steps</span><span class="p">:</span> <span class="n">Array</span>
     <span class="n">reverse_step_index</span><span class="p">:</span> <span class="n">Array</span>
@@ -535,17 +589,17 @@
 <div class="viewcode-block" id="GISTStepSizeInfo">
 <a class="viewcode-back" href="../../../../autoapi/blackjax/mcmc/composed/step_size/index.html#blackjax.mcmc.composed.step_size.GISTStepSizeInfo">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">GISTStepSizeInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Additional information for a ``gist_step_size`` transition.</span>
+<span class="w">    </span><span class="sd">"""Additional information for a ``gist_step_size`` transition.</span>
 
 <span class="sd">    momentum, tuning_parameter, is_accepted, is_divergent, acceptance_rate,</span>
 <span class="sd">    energy, num_integration_steps</span>
-<span class="sd">        Same as :class:`~blackjax.mcmc.composed._seam.GISTInfo` (this instance&#39;s Info</span>
+<span class="sd">        Same as :class:`~blackjax.mcmc.composed._seam.GISTInfo` (this instance's Info</span>
 <span class="sd">        extends it with flat, named fields rather than nesting -- matches</span>
 <span class="sd">        the ``NUTSInfo``-extends-``HMCInfo``-fields precedent, not literal</span>
 <span class="sd">        NamedTuple inheritance).</span>
 <span class="sd">    step_index, reverse_step_index</span>
-<span class="sd">        ``j`` (selected forward) and ``j&#39;`` (re-selected at the proposal,</span>
-<span class="sd">        the &quot;reversibility check&quot;, section 2.1.3). ``is_accepted`` is False</span>
+<span class="sd">        ``j`` (selected forward) and ``j'`` (re-selected at the proposal,</span>
+<span class="sd">        the "reversibility check", section 2.1.3). ``is_accepted`` is False</span>
 <span class="sd">        whenever ``reverse_step_index != step_index``, in addition to the</span>
 <span class="sd">        ordinary energy-based rejection path -- both are folded into</span>
 <span class="sd">        ``is_accepted``; these two fields let you tell them apart.</span>
@@ -557,7 +611,7 @@
 <span class="sd">    step_size</span>
 <span class="sd">        The step size ``epsilon = initial_step_size * 2**step_index``</span>
 <span class="sd">        actually used to build the proposal.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="GISTStepSizeInfo.momentum">
 <a class="viewcode-back" href="../../../../autoapi/blackjax/mcmc/composed/step_size/index.html#blackjax.mcmc.composed.step_size.GISTStepSizeInfo.momentum">[docs]</a>
@@ -613,12 +667,12 @@
     <span class="n">num_integration_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">initial_step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">max_search_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
-    <span class="n">criterion</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;symmetric&quot;</span><span class="p">,</span>
+    <span class="n">criterion</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"symmetric"</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the ``mu(state, a, b, logdensity_fn, metric) -&gt; (step_index,</span>
+<span class="w">    </span><span class="sd">"""Build the ``mu(state, a, b, logdensity_fn, metric) -&gt; (step_index,</span>
 <span class="sd">    search_exhausted)`` selector, section 2.1.2.</span>
 
-<span class="sd">    (``logdensity_fn``/``metric`` extend the paper&#39;s ``mu(state, a, b)``</span>
+<span class="sd">    (``logdensity_fn``/``metric`` extend the paper's ``mu(state, a, b)``</span>
 <span class="sd">    shorthand: evaluating ``F(alpha)`` fundamentally requires both, they are</span>
 <span class="sd">    not a free design choice.)</span>
 
@@ -635,20 +689,20 @@
 <span class="sd">    max_search_steps</span>
 <span class="sd">        Cap on doubling/halving iterations.</span>
 <span class="sd">    criterion</span>
-<span class="sd">        ``&quot;symmetric&quot;`` ([AutoStep] Algorithm 2, default -- proven</span>
-<span class="sd">        irreducible and aperiodic) or ``&quot;asymmetric&quot;`` ([autoMALA]&#39;s</span>
+<span class="sd">        ``"symmetric"`` ([AutoStep] Algorithm 2, default -- proven</span>
+<span class="sd">        irreducible and aperiodic) or ``"asymmetric"`` ([autoMALA]'s</span>
 <span class="sd">        original criterion, provided for cross-validation against the</span>
 <span class="sd">        original paper only).</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    The selector ``mu``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">criterion</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;symmetric&quot;</span><span class="p">,</span> <span class="s2">&quot;asymmetric&quot;</span><span class="p">):</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">criterion</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"symmetric"</span><span class="p">,</span> <span class="s2">"asymmetric"</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;criterion must be &#39;symmetric&#39; or &#39;asymmetric&#39;, got &quot;</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">criterion</span><span class="si">!r}</span><span class="s2">&quot;</span>
+            <span class="s2">"criterion must be 'symmetric' or 'asymmetric', got "</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">criterion</span><span class="si">!r}</span><span class="s2">"</span>
         <span class="p">)</span>
-    <span class="n">is_symmetric</span> <span class="o">=</span> <span class="n">criterion</span> <span class="o">==</span> <span class="s2">&quot;symmetric&quot;</span>
+    <span class="n">is_symmetric</span> <span class="o">=</span> <span class="n">criterion</span> <span class="o">==</span> <span class="s2">"symmetric"</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">mu</span><span class="p">(</span>
         <span class="n">state</span><span class="p">:</span> <span class="n">IntegratorState</span><span class="p">,</span>
@@ -675,11 +729,11 @@
             <span class="n">build_trajectory</span> <span class="o">=</span> <span class="n">trajectory</span><span class="o">.</span><span class="n">static_integration</span><span class="p">(</span><span class="n">symplectic_integrator</span><span class="p">)</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">log_acceptance_ratio</span><span class="p">(</span><span class="n">step_size</span><span class="p">):</span>
-<span class="w">            </span><span class="sd">&quot;&quot;&quot;``ell(theta, rho, epsilon)`` -- ``-delta_energy`` at one</span>
-<span class="sd">            trial step size, section 2.1.2. Renamed from the paper&#39;s terse</span>
+<span class="w">            </span><span class="sd">"""``ell(theta, rho, epsilon)`` -- ``-delta_energy`` at one</span>
+<span class="sd">            trial step size, section 2.1.2. Renamed from the paper's terse</span>
 <span class="sd">            ``ell`` to a descriptive name, per the naming-conventions</span>
 <span class="sd">            checklist.</span>
-<span class="sd">            &quot;&quot;&quot;</span>
+<span class="sd">            """</span>
             <span class="n">end_state</span> <span class="o">=</span> <span class="n">build_trajectory</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="p">)</span>
             <span class="n">end_state</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">flip_momentum</span><span class="p">(</span><span class="n">end_state</span><span class="p">)</span>
             <span class="n">initial_energy</span> <span class="o">=</span> <span class="o">-</span><span class="n">state</span><span class="o">.</span><span class="n">logdensity</span> <span class="o">+</span> <span class="n">metric</span><span class="o">.</span><span class="n">kinetic_energy</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">momentum</span><span class="p">)</span>
@@ -731,7 +785,7 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">term_expand</span> <span class="o">=</span> <span class="p">(</span><span class="n">v_next</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">ell</span> <span class="o">&lt;</span> <span class="n">log_b</span><span class="p">)</span>
                 <span class="n">term_shrink</span> <span class="o">=</span> <span class="p">(</span><span class="n">v_next</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">ell</span> <span class="o">&gt;</span> <span class="n">log_a</span><span class="p">)</span>
-            <span class="c1"># At the deciding iteration (n=0), &quot;ell op threshold&quot; can never</span>
+            <span class="c1"># At the deciding iteration (n=0), "ell op threshold" can never</span>
             <span class="c1"># also satisfy the opposite-direction termination test (the two</span>
             <span class="c1"># are complementary comparisons of the same ell against the same</span>
             <span class="c1"># threshold), so `term_expand | term_shrink` is always False</span>
@@ -751,7 +805,7 @@
             <span class="n">cond_fn</span><span class="p">,</span> <span class="n">body_fn</span><span class="p">,</span> <span class="n">init_carry</span>
         <span class="p">)</span>
         <span class="n">search_exhausted</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">terminated_final</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">v_final</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="c1"># &quot;Final halving&quot;: on a successful *expansion*, report one step back</span>
+        <span class="c1"># "Final halving": on a successful *expansion*, report one step back</span>
         <span class="c1"># (section 2.1.2) -- necessary for the reversibility check to ever</span>
         <span class="c1"># pass in the doubling sub-case ([autoMALA] p.4).</span>
         <span class="n">step_index</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">terminated_final</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">v_final</span> <span class="o">==</span> <span class="mi">1</span><span class="p">),</span> <span class="n">j_final</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">j_final</span><span class="p">)</span>
@@ -789,7 +843,7 @@
         <span class="n">proposal_state</span> <span class="o">=</span> <span class="n">build_trajectory</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="p">)</span>
         <span class="n">proposal_state</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">flip_momentum</span><span class="p">(</span><span class="n">proposal_state</span><span class="p">)</span>
 
-        <span class="c1"># Reuse this apply_fn&#39;s own trajectory builder for the reversibility</span>
+        <span class="c1"># Reuse this apply_fn's own trajectory builder for the reversibility</span>
         <span class="c1"># re-check instead of letting the selector build (and re-wrap</span>
         <span class="c1"># `logdensity_fn` in) another one -- see the comment in `mu`.</span>
         <span class="n">reverse_step_index</span><span class="p">,</span> <span class="n">search_exhausted_reverse</span> <span class="o">=</span> <span class="n">selector</span><span class="p">(</span>
@@ -821,10 +875,10 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">build_kernel</span><span class="p">(</span>
     <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">integrators</span><span class="o">.</span><span class="n">velocity_verlet</span><span class="p">,</span>
     <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
-    <span class="n">criterion</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;symmetric&quot;</span><span class="p">,</span>
+    <span class="n">criterion</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"symmetric"</span><span class="p">,</span>
     <span class="n">max_search_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a ``gist_step_size`` kernel.</span>
+<span class="w">    </span><span class="sd">"""Build a ``gist_step_size`` kernel.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -835,7 +889,7 @@
 <span class="sd">        Value of the difference in energy above which we consider that the</span>
 <span class="sd">        transition is divergent.</span>
 <span class="sd">    criterion</span>
-<span class="sd">        ``&quot;symmetric&quot;`` (default) or ``&quot;asymmetric&quot;``, see</span>
+<span class="sd">        ``"symmetric"`` (default) or ``"asymmetric"``, see</span>
 <span class="sd">        :func:`step_size_selector`.</span>
 <span class="sd">    max_search_steps</span>
 <span class="sd">        Cap on doubling/halving iterations (both the forward selection and</span>
@@ -846,10 +900,10 @@
 <span class="sd">    A kernel that takes a rng_key and a Pytree that contains the current</span>
 <span class="sd">    state of the chain and that returns a new state of the chain along with</span>
 <span class="sd">    information about the transition.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">criterion</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;symmetric&quot;</span><span class="p">,</span> <span class="s2">&quot;asymmetric&quot;</span><span class="p">):</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">criterion</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"symmetric"</span><span class="p">,</span> <span class="s2">"asymmetric"</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;criterion must be &#39;symmetric&#39; or &#39;asymmetric&#39;, got &quot;</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">criterion</span><span class="si">!r}</span><span class="s2">&quot;</span>
+            <span class="s2">"criterion must be 'symmetric' or 'asymmetric', got "</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">criterion</span><span class="si">!r}</span><span class="s2">"</span>
         <span class="p">)</span>
     <span class="n">gist_step</span> <span class="o">=</span> <span class="n">seam</span><span class="o">.</span><span class="n">_step</span>
 
@@ -861,7 +915,7 @@
         <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">metrics</span><span class="o">.</span><span class="n">MetricTypes</span><span class="p">,</span>
         <span class="n">num_integration_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">seam</span><span class="o">.</span><span class="n">GISTState</span><span class="p">,</span> <span class="n">GISTStepSizeInfo</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a new sample with the ``gist_step_size`` kernel.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Generate a new sample with the ``gist_step_size`` kernel."""</span>
         <span class="n">selector</span> <span class="o">=</span> <span class="n">step_size_selector</span><span class="p">(</span>
             <span class="n">integrator</span><span class="p">,</span>
             <span class="n">num_integration_steps</span><span class="p">,</span>
@@ -915,12 +969,12 @@
     <span class="n">initial_step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">num_integration_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">criterion</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;symmetric&quot;</span><span class="p">,</span>
+    <span class="n">criterion</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"symmetric"</span><span class="p">,</span>
     <span class="n">max_search_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
     <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">integrators</span><span class="o">.</span><span class="n">velocity_verlet</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;``blackjax.gist_step_size`` -- GIST self-tuning step size (autoStep-style).</span>
+<span class="w">    </span><span class="sd">"""``blackjax.gist_step_size`` -- GIST self-tuning step size (autoStep-style).</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
@@ -955,8 +1009,8 @@
 <span class="sd">        selected step size. Default 1 reproduces the MALA-equivalent</span>
 <span class="sd">        single-leapfrog-step case both source papers analyze.</span>
 <span class="sd">    criterion</span>
-<span class="sd">        ``&quot;symmetric&quot;`` (default, [AutoStep] Algorithm 2 -- proven</span>
-<span class="sd">        irreducible and aperiodic) or ``&quot;asymmetric&quot;`` ([autoMALA]&#39;s</span>
+<span class="sd">        ``"symmetric"`` (default, [AutoStep] Algorithm 2 -- proven</span>
+<span class="sd">        irreducible and aperiodic) or ``"asymmetric"`` ([autoMALA]'s</span>
 <span class="sd">        original criterion -- provided for cross-validation against the</span>
 <span class="sd">        original paper only; can get stuck near the mode/in the tails, see</span>
 <span class="sd">        the module docstring).</span>
@@ -974,7 +1028,7 @@
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    A ``SamplingAlgorithm``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">kernel</span> <span class="o">=</span> <span class="n">build_kernel</span><span class="p">(</span><span class="n">integrator</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">,</span> <span class="n">criterion</span><span class="p">,</span> <span class="n">max_search_steps</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">build_sampling_algorithm</span><span class="p">(</span>
         <span class="n">kernel</span><span class="p">,</span>
@@ -1045,8 +1099,8 @@ By The Blackjax developers
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
 
   <footer class="bd-footer">
   </footer>

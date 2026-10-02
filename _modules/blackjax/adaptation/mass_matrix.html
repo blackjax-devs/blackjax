@@ -26,21 +26,21 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=4418a689" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e37d73aa" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
     <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
@@ -48,25 +48,32 @@
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/adaptation/mass_matrix';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g0c69b5d2f" />
+  <meta name="docsearch:version" content="0.1.dev1+g421add75e" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
   </head>
-  
-  
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
-
+  <body data-default-mode="">
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -92,7 +99,47 @@
 </div>
 
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
     </header>
   
 
@@ -378,11 +425,18 @@
 
 
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div>
 
 
 <button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
@@ -416,24 +470,24 @@
   <h1>Source code for blackjax.adaptation.mass_matrix</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Copyright 2020- The Blackjax Authors.</span>
 <span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
 <span class="c1"># You may obtain a copy of the License at</span>
 <span class="c1">#</span>
 <span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
 <span class="c1">#</span>
 <span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
-<span class="sd">&quot;&quot;&quot;Algorithms to adapt the mass matrix used by algorithms in the Hamiltonian</span>
+<span class="sd">"""Algorithms to adapt the mass matrix used by algorithms in the Hamiltonian</span>
 <span class="sd">Monte Carlo family to the current geometry.</span>
 
 <span class="sd">The Stan Manual :cite:p:`stan_hmc_param` is a very good reference on automatic tuning of</span>
 <span class="sd">parameters used in Hamiltonian Monte Carlo.</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
@@ -447,18 +501,18 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLike</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;WelfordAlgorithmState&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;MassMatrixAdaptationState&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;FisherMassMatrixAdaptationState&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;mass_matrix_adaptation&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;welford_algorithm&quot;</span><span class="p">,</span>
+    <span class="s2">"WelfordAlgorithmState"</span><span class="p">,</span>
+    <span class="s2">"MassMatrixAdaptationState"</span><span class="p">,</span>
+    <span class="s2">"FisherMassMatrixAdaptationState"</span><span class="p">,</span>
+    <span class="s2">"mass_matrix_adaptation"</span><span class="p">,</span>
+    <span class="s2">"welford_algorithm"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
 <div class="viewcode-block" id="WelfordAlgorithmState">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/mass_matrix/index.html#blackjax.adaptation.mass_matrix.WelfordAlgorithmState">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">WelfordAlgorithmState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;State carried through the Welford algorithm.</span>
+<span class="w">    </span><span class="sd">"""State carried through the Welford algorithm.</span>
 
 <span class="sd">    mean</span>
 <span class="sd">        The running sample mean.</span>
@@ -469,7 +523,7 @@
 <span class="sd">        The number of successive states the previous values have been computed on;</span>
 <span class="sd">        also the current number of iterations of the algorithm.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="WelfordAlgorithmState.mean">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/mass_matrix/index.html#blackjax.adaptation.mass_matrix.WelfordAlgorithmState.mean">[docs]</a>
@@ -489,14 +543,14 @@
 <div class="viewcode-block" id="MassMatrixAdaptationState">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/mass_matrix/index.html#blackjax.adaptation.mass_matrix.MassMatrixAdaptationState">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MassMatrixAdaptationState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;State carried through the mass matrix adaptation.</span>
+<span class="w">    </span><span class="sd">"""State carried through the mass matrix adaptation.</span>
 
 <span class="sd">    inverse_mass_matrix</span>
 <span class="sd">        The curent value of the inverse mass matrix.</span>
 <span class="sd">    wc_state</span>
 <span class="sd">        The current state of the Welford Algorithm.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="MassMatrixAdaptationState.inverse_mass_matrix">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/mass_matrix/index.html#blackjax.adaptation.mass_matrix.MassMatrixAdaptationState.inverse_mass_matrix">[docs]</a>
@@ -512,9 +566,9 @@
 <div class="viewcode-block" id="FisherMassMatrixAdaptationState">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/mass_matrix/index.html#blackjax.adaptation.mass_matrix.FisherMassMatrixAdaptationState">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FisherMassMatrixAdaptationState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;State for the Fisher-diagonal mass matrix adaptation.</span>
+<span class="w">    </span><span class="sd">"""State for the Fisher-diagonal mass matrix adaptation.</span>
 
-<span class="sd">    Used when ``diagonal_estimator=&quot;fisher&quot;`` is passed to</span>
+<span class="sd">    Used when ``diagonal_estimator="fisher"`` is passed to</span>
 <span class="sd">    :func:`mass_matrix_adaptation`.  Replaces the single Welford state in</span>
 <span class="sd">    :class:`MassMatrixAdaptationState` with a</span>
 <span class="sd">    :class:`~blackjax.adaptation.metric_buffers._FisherMomentBlock` that</span>
@@ -537,11 +591,11 @@
 <span class="sd">    :func:`~blackjax.adaptation.metric_estimators.fisher_score_diagonal_from_moments`).</span>
 <span class="sd">    This state type accumulates the moments needed to compute those per-window</span>
 <span class="sd">    variances without storing raw draw arrays.  The IMM computation is</span>
-<span class="sd">    deliberately NOT performed inside ``mass_matrix_adaptation``&#39;s ``final()``</span>
+<span class="sd">    deliberately NOT performed inside ``mass_matrix_adaptation``'s ``final()``</span>
 <span class="sd">    — it is composed by the consumer</span>
 <span class="sd">    (:func:`~blackjax.adaptation.metric_recipes._build_fisher_diag_core`)</span>
 <span class="sd">    to avoid a circular import between this module and ``metric_estimators``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="FisherMassMatrixAdaptationState.inverse_mass_matrix">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/mass_matrix/index.html#blackjax.adaptation.mass_matrix.FisherMassMatrixAdaptationState.inverse_mass_matrix">[docs]</a>
@@ -559,9 +613,9 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">mass_matrix_adaptation</span><span class="p">(</span>
     <span class="n">is_diagonal_matrix</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">imm_shrinkage_to_previous</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
-    <span class="n">diagonal_estimator</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;welford&quot;</span><span class="p">,</span>
+    <span class="n">diagonal_estimator</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"welford"</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adapts the values in the mass matrix by computing the covariance</span>
+<span class="w">    </span><span class="sd">"""Adapts the values in the mass matrix by computing the covariance</span>
 <span class="sd">    between parameters.</span>
 
 <span class="sd">    Parameters</span>
@@ -571,15 +625,15 @@
 <span class="sd">        (default), otherwise adaps and returns a dense mass matrix.</span>
 <span class="sd">    diagonal_estimator</span>
 <span class="sd">        Which diagonal-variance estimator to use for the (window-local)</span>
-<span class="sd">        inverse mass matrix.  ``&quot;welford&quot;`` (default) is Stan&#39;s classic</span>
+<span class="sd">        inverse mass matrix.  ``"welford"`` (default) is Stan's classic</span>
 <span class="sd">        online-covariance estimator and reproduces all pre-existing behavior</span>
-<span class="sd">        exactly.  ``&quot;fisher&quot;`` instead uses the Fisher-divergence-minimising</span>
+<span class="sd">        exactly.  ``"fisher"`` instead uses the Fisher-divergence-minimising</span>
 <span class="sd">        diagonal estimator of :cite:p:`seyboldt2026preconditioning` (see</span>
 <span class="sd">        :func:`~blackjax.adaptation.metric_estimators.fisher_score_diagonal`),</span>
 <span class="sd">        which additionally requires the log-density gradient at each</span>
 <span class="sd">        accumulated position (passed to ``update`` as ``grad``).</span>
 
-<span class="sd">        Constraints for ``&quot;fisher&quot;``:</span>
+<span class="sd">        Constraints for ``"fisher"``:</span>
 
 <span class="sd">        * ``is_diagonal_matrix=True`` is required (the Fisher-diagonal</span>
 <span class="sd">          estimator only produces a diagonal metric).</span>
@@ -590,9 +644,9 @@
 <span class="sd">        ``ValueError`` before any JIT tracing.</span>
 <span class="sd">    imm_shrinkage_to_previous</span>
 <span class="sd">        Bayesian pseudo-count controlling shrinkage of the per-window adapted</span>
-<span class="sd">        IMM toward the previous window&#39;s IMM. Interpretable as &quot;the number of</span>
-<span class="sd">        imaginary additional samples in the current window&#39;s accumulator that</span>
-<span class="sd">        have already settled to ``IMM_prev``&#39;s value&quot;. Combined with the</span>
+<span class="sd">        IMM toward the previous window's IMM. Interpretable as "the number of</span>
+<span class="sd">        imaginary additional samples in the current window's accumulator that</span>
+<span class="sd">        have already settled to ``IMM_prev``'s value". Combined with the</span>
 <span class="sd">        existing Stan-pseudo-count 5 (which targets ``1e-3·I``) and the</span>
 <span class="sd">        actual ``count`` samples in the window, the final IMM is the</span>
 <span class="sd">        precision-weighted average:</span>
@@ -608,18 +662,18 @@
 <span class="sd">        :math:`k_\\text{prev}` is this argument.</span>
 
 <span class="sd">        - ``0.0`` (default): Stan-vanilla behavior, no shrinkage to previous.</span>
-<span class="sd">        - ``5``: matches Stan&#39;s existing identity-shrinkage scale; mild,</span>
+<span class="sd">        - ``5``: matches Stan's existing identity-shrinkage scale; mild,</span>
 <span class="sd">          barely-perceptible persistence across windows.</span>
 <span class="sd">        - ``≈ window_size / 4``: ~20% weight on the previous IMM; moderate</span>
 <span class="sd">          persistence.</span>
 <span class="sd">        - ``≈ window_size``: ~50% weight; previous IMM treated as equally</span>
-<span class="sd">          informative as the new window&#39;s data.</span>
+<span class="sd">          informative as the new window's data.</span>
 <span class="sd">        - ``&gt;&gt; window_size``: weight saturates near 100%; Welford effectively</span>
 <span class="sd">          disabled (anti-pattern unless the prior IMM is *much* better than</span>
 <span class="sd">          the chain can produce).</span>
 
 <span class="sd">        Stan-default window sizes range 25 → 500 across Phase II, so the</span>
-<span class="sd">        practical &quot;moderate persistence&quot; band is roughly</span>
+<span class="sd">        practical "moderate persistence" band is roughly</span>
 <span class="sd">        ``5 ≤ k_prev ≤ 50``. Use larger values only when the prior IMM</span>
 <span class="sd">        comes from a high-confidence source (e.g., a converged pre-warmup</span>
 <span class="sd">        Pathfinder/multipathfinder fit on the right model). No upper bound</span>
@@ -636,29 +690,29 @@
 <span class="sd">        A function that computes the inverse mass matrix based on the current</span>
 <span class="sd">        state.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">diagonal_estimator</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;welford&quot;</span><span class="p">,</span> <span class="s2">&quot;fisher&quot;</span><span class="p">):</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">diagonal_estimator</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"welford"</span><span class="p">,</span> <span class="s2">"fisher"</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;diagonal_estimator must be &#39;welford&#39; or &#39;fisher&#39;, &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;got </span><span class="si">{</span><span class="n">diagonal_estimator</span><span class="si">!r}</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">"diagonal_estimator must be 'welford' or 'fisher', "</span>
+            <span class="sa">f</span><span class="s2">"got </span><span class="si">{</span><span class="n">diagonal_estimator</span><span class="si">!r}</span><span class="s2">"</span>
         <span class="p">)</span>
-    <span class="k">if</span> <span class="n">diagonal_estimator</span> <span class="o">==</span> <span class="s2">&quot;fisher&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_diagonal_matrix</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">diagonal_estimator</span> <span class="o">==</span> <span class="s2">"fisher"</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_diagonal_matrix</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;diagonal_estimator=&#39;fisher&#39; requires is_diagonal_matrix=True &quot;</span>
-            <span class="s2">&quot;(the Fisher-divergence estimator only produces a diagonal metric); &quot;</span>
-            <span class="s2">&quot;got is_diagonal_matrix=False&quot;</span>
+            <span class="s2">"diagonal_estimator='fisher' requires is_diagonal_matrix=True "</span>
+            <span class="s2">"(the Fisher-divergence estimator only produces a diagonal metric); "</span>
+            <span class="s2">"got is_diagonal_matrix=False"</span>
         <span class="p">)</span>
     <span class="k">if</span> <span class="n">imm_shrinkage_to_previous</span> <span class="o">&lt;</span> <span class="mf">0.0</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;imm_shrinkage_to_previous must be &gt;= 0.0, &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;got </span><span class="si">{</span><span class="n">imm_shrinkage_to_previous</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">"imm_shrinkage_to_previous must be &gt;= 0.0, "</span>
+            <span class="sa">f</span><span class="s2">"got </span><span class="si">{</span><span class="n">imm_shrinkage_to_previous</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
-    <span class="k">if</span> <span class="n">diagonal_estimator</span> <span class="o">==</span> <span class="s2">&quot;fisher&quot;</span> <span class="ow">and</span> <span class="n">imm_shrinkage_to_previous</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">diagonal_estimator</span> <span class="o">==</span> <span class="s2">"fisher"</span> <span class="ow">and</span> <span class="n">imm_shrinkage_to_previous</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;diagonal_estimator=&#39;fisher&#39; does not support &quot;</span>
-            <span class="s2">&quot;imm_shrinkage_to_previous != 0.0: the Fisher estimator does not &quot;</span>
-            <span class="s2">&quot;blend with the previous window&#39;s IMM or an identity target; &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;got imm_shrinkage_to_previous=</span><span class="si">{</span><span class="n">imm_shrinkage_to_previous</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="s2">"diagonal_estimator='fisher' does not support "</span>
+            <span class="s2">"imm_shrinkage_to_previous != 0.0: the Fisher estimator does not "</span>
+            <span class="s2">"blend with the previous window's IMM or an identity target; "</span>
+            <span class="sa">f</span><span class="s2">"got imm_shrinkage_to_previous=</span><span class="si">{</span><span class="n">imm_shrinkage_to_previous</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
 
     <span class="n">wc_init</span><span class="p">,</span> <span class="n">wc_update</span><span class="p">,</span> <span class="n">wc_final</span> <span class="o">=</span> <span class="n">welford_algorithm</span><span class="p">(</span><span class="n">is_diagonal_matrix</span><span class="p">)</span>
@@ -667,7 +721,7 @@
         <span class="n">n_dims</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">initial_inverse_mass_matrix</span><span class="p">:</span> <span class="n">Array</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MassMatrixAdaptationState</span> <span class="o">|</span> <span class="n">FisherMassMatrixAdaptationState</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the matrix adaptation.</span>
+<span class="w">        </span><span class="sd">"""Initialize the matrix adaptation.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -682,10 +736,10 @@
 <span class="sd">            Welford state is still started fresh so the seed is gradually</span>
 <span class="sd">            overwritten by the empirical covariance as warmup windows proceed.</span>
 <span class="sd">            Shape must match ``is_diagonal_matrix``: 1-D ``(d,)`` for diagonal,</span>
-<span class="sd">            2-D ``(d, d)`` for dense.  Validation is the caller&#39;s</span>
+<span class="sd">            2-D ``(d, d)`` for dense.  Validation is the caller's</span>
 <span class="sd">            responsibility (``window_adaptation`` checks before the JIT path).</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="n">initial_inverse_mass_matrix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">is_diagonal_matrix</span><span class="p">:</span>
                 <span class="n">inverse_mass_matrix</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_dims</span><span class="p">)</span>
@@ -694,7 +748,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">inverse_mass_matrix</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">initial_inverse_mass_matrix</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">diagonal_estimator</span> <span class="o">==</span> <span class="s2">&quot;fisher&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">diagonal_estimator</span> <span class="o">==</span> <span class="s2">"fisher"</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">FisherMassMatrixAdaptationState</span><span class="p">(</span>
                 <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>
                 <span class="n">fisher_block</span><span class="o">=</span><span class="n">_fisher_block_init</span><span class="p">(</span><span class="n">n_dims</span><span class="p">),</span>
@@ -708,7 +762,7 @@
         <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
         <span class="n">grad</span><span class="p">:</span> <span class="n">ArrayLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MassMatrixAdaptationState</span> <span class="o">|</span> <span class="n">FisherMassMatrixAdaptationState</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update the algorithm&#39;s state.</span>
+<span class="w">        </span><span class="sd">"""Update the algorithm's state.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -718,10 +772,10 @@
 <span class="sd">            The current position of the chain.</span>
 <span class="sd">        grad</span>
 <span class="sd">            The log-density gradient at ``position``.  Required when</span>
-<span class="sd">            ``diagonal_estimator=&#39;fisher&#39;`` (ignored and may be ``None``</span>
+<span class="sd">            ``diagonal_estimator='fisher'`` (ignored and may be ``None``</span>
 <span class="sd">            otherwise).</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mm_state</span><span class="p">,</span> <span class="n">FisherMassMatrixAdaptationState</span><span class="p">):</span>
             <span class="n">position_flat</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">flatten_util</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
             <span class="n">grad_flat</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">flatten_util</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">grad</span><span class="p">)</span>
@@ -741,16 +795,16 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">final</span><span class="p">(</span>
         <span class="n">mm_state</span><span class="p">:</span> <span class="n">MassMatrixAdaptationState</span> <span class="o">|</span> <span class="n">FisherMassMatrixAdaptationState</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MassMatrixAdaptationState</span> <span class="o">|</span> <span class="n">FisherMassMatrixAdaptationState</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Final iteration of the mass matrix adaptation.</span>
+<span class="w">        </span><span class="sd">"""Final iteration of the mass matrix adaptation.</span>
 
 <span class="sd">        For the Welford path, computes the regularised inverse mass matrix</span>
-<span class="sd">        from the current window&#39;s accumulated statistics, then resets the</span>
+<span class="sd">        from the current window's accumulated statistics, then resets the</span>
 <span class="sd">        accumulator for the next window.</span>
 
 <span class="sd">        For the Fisher path, resets the :class:`_FisherMomentBlock` accumulator</span>
-<span class="sd">        for the next window and passes the previous window&#39;s IMM through</span>
+<span class="sd">        for the next window and passes the previous window's IMM through</span>
 <span class="sd">        unchanged.  **The caller is responsible for computing the new IMM**</span>
-<span class="sd">        from the block&#39;s accumulated moments before calling ``final()`` — the</span>
+<span class="sd">        from the block's accumulated moments before calling ``final()`` — the</span>
 <span class="sd">        from-moments entry point is</span>
 <span class="sd">        :func:`~blackjax.adaptation.metric_estimators.fisher_score_diagonal_from_moments`.</span>
 <span class="sd">        This separation avoids a circular import</span>
@@ -761,14 +815,14 @@
 <span class="sd">        path.</span>
 
 <span class="sd">        **Welford path**: the IMM is regularized as a convex combination of</span>
-<span class="sd">        this window&#39;s empirical covariance (weight: ``count / denom``), the</span>
-<span class="sd">        previous window&#39;s IMM (weight: ``imm_shrinkage_to_previous / denom``),</span>
+<span class="sd">        this window's empirical covariance (weight: ``count / denom``), the</span>
+<span class="sd">        previous window's IMM (weight: ``imm_shrinkage_to_previous / denom``),</span>
 <span class="sd">        and a small identity matrix (weight: ``5 / denom``), where</span>
 <span class="sd">        ``denom = count + 5 + imm_shrinkage_to_previous``.  When</span>
 <span class="sd">        ``imm_shrinkage_to_previous=0.0`` (default) this reduces to the</span>
 <span class="sd">        standard Stan formula.</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mm_state</span><span class="p">,</span> <span class="n">FisherMassMatrixAdaptationState</span><span class="p">):</span>
             <span class="c1"># Reset the block for the next window; pass the existing IMM through</span>
             <span class="c1"># unchanged (the consumer — metric_recipes._build_fisher_diag_core.final —</span>
@@ -813,14 +867,14 @@
 <div class="viewcode-block" id="welford_algorithm">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/mass_matrix/index.html#blackjax.adaptation.mass_matrix.welford_algorithm">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">welford_algorithm</span><span class="p">(</span><span class="n">is_diagonal_matrix</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Welford&#39;s online estimator of covariance.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Welford's online estimator of covariance.</span>
 
 <span class="sd">    It is possible to compute the variance of a population of values in an</span>
 <span class="sd">    on-line fashion to avoid storing intermediate results. The naive recurrence</span>
 <span class="sd">    relations between the sample mean and variance at a step and the next are</span>
 <span class="sd">    however not numerically stable.</span>
 
-<span class="sd">    Welford&#39;s algorithm uses the sum of square of differences</span>
+<span class="sd">    Welford's algorithm uses the sum of square of differences</span>
 <span class="sd">    :math:`M_{2,n} = \sum_{i=1}^n \left(x_i-\overline{x_n}\right)^2`</span>
 <span class="sd">    for updating where :math:`x_n` is the current mean and the following</span>
 <span class="sd">    recurrence relationships</span>
@@ -836,10 +890,10 @@
 <span class="sd">    It might seem pedantic to separate the Welford algorithm from mass adaptation,</span>
 <span class="sd">    but this covariance estimator is used in other parts of the library.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="n">n_dims</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WelfordAlgorithmState</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the covariance estimation.</span>
+<span class="w">        </span><span class="sd">"""Initialize the covariance estimation.</span>
 
 <span class="sd">        When the matrix is diagonal it is sufficient to work with an array that contains</span>
 <span class="sd">        the diagonal value. Otherwise we need to work with the matrix in full.</span>
@@ -850,7 +904,7 @@
 <span class="sd">            The number of dimensions of the problem, which corresponds to the size</span>
 <span class="sd">            of the corresponding square mass matrix.</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">sample_size</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">mean</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_dims</span><span class="p">,))</span>
         <span class="k">if</span> <span class="n">is_diagonal_matrix</span><span class="p">:</span>
@@ -862,7 +916,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span>
         <span class="n">wa_state</span><span class="p">:</span> <span class="n">WelfordAlgorithmState</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">ArrayLike</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WelfordAlgorithmState</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update the M2 matrix using the new value.</span>
+<span class="w">        </span><span class="sd">"""Update the M2 matrix using the new value.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -871,7 +925,7 @@
 <span class="sd">        value: Array, shape (1,)</span>
 <span class="sd">            The new sample (typically position of the chain) used to update m2</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">mean</span><span class="p">,</span> <span class="n">m2</span><span class="p">,</span> <span class="n">sample_size</span> <span class="o">=</span> <span class="n">wa_state</span>
         <span class="n">sample_size</span> <span class="o">=</span> <span class="n">sample_size</span> <span class="o">+</span> <span class="mi">1</span>
 
@@ -956,8 +1010,8 @@ By The Blackjax developers
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
 
   <footer class="bd-footer">
   </footer>

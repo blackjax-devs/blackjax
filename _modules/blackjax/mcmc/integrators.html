@@ -26,21 +26,21 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=4418a689" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e37d73aa" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
     <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
@@ -48,25 +48,32 @@
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/mcmc/integrators';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g0c69b5d2f" />
+  <meta name="docsearch:version" content="0.1.dev1+g421add75e" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
   </head>
-  
-  
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
-
+  <body data-default-mode="">
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -92,7 +99,47 @@
 </div>
 
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
     </header>
   
 
@@ -378,11 +425,18 @@
 
 
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div>
 
 
 <button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
@@ -416,18 +470,18 @@
   <h1>Source code for blackjax.mcmc.integrators</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Copyright 2020- The Blackjax Authors.</span>
 <span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
 <span class="c1"># You may obtain a copy of the License at</span>
 <span class="c1">#</span>
 <span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
 <span class="c1">#</span>
 <span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
-<span class="sd">&quot;&quot;&quot;Symplectic, time-reversible, integrators for Hamiltonian trajectories.&quot;&quot;&quot;</span>
+<span class="sd">"""Symplectic, time-reversible, integrators for Hamiltonian trajectories."""</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">TypeAlias</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
@@ -443,25 +497,25 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArrayTree</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;mclachlan&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;omelyan&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;velocity_verlet&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;yoshida&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;with_isokinetic_maruyama&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;isokinetic_velocity_verlet&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;isokinetic_mclachlan&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;isokinetic_omelyan&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;isokinetic_yoshida&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;implicit_midpoint&quot;</span><span class="p">,</span>
+    <span class="s2">"mclachlan"</span><span class="p">,</span>
+    <span class="s2">"omelyan"</span><span class="p">,</span>
+    <span class="s2">"velocity_verlet"</span><span class="p">,</span>
+    <span class="s2">"yoshida"</span><span class="p">,</span>
+    <span class="s2">"with_isokinetic_maruyama"</span><span class="p">,</span>
+    <span class="s2">"isokinetic_velocity_verlet"</span><span class="p">,</span>
+    <span class="s2">"isokinetic_mclachlan"</span><span class="p">,</span>
+    <span class="s2">"isokinetic_omelyan"</span><span class="p">,</span>
+    <span class="s2">"isokinetic_yoshida"</span><span class="p">,</span>
+    <span class="s2">"implicit_midpoint"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">IntegratorState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;State of the trajectory integration.</span>
+<span class="w">    </span><span class="sd">"""State of the trajectory integration.</span>
 
 <span class="sd">    We keep the gradient of the logdensity function (negative potential energy)</span>
 <span class="sd">    to speedup computations.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">position</span><span class="p">:</span> <span class="n">ArrayTree</span>
     <span class="n">momentum</span><span class="p">:</span> <span class="n">ArrayTree</span>
@@ -481,7 +535,7 @@
     <span class="n">coefficients</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
     <span class="n">format_output_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generalized numerical integrator for solving ODEs.</span>
+<span class="w">    </span><span class="sd">"""Generalized numerical integrator for solving ODEs.</span>
 
 <span class="sd">    The generalized integrator performs numerical integration of a ODE system by</span>
 <span class="sd">    alernating between stage 1 and stage 2 updates.</span>
@@ -515,7 +569,7 @@
 <span class="sd">    -------</span>
 <span class="sd">    integrator</span>
 <span class="sd">        Integrator function.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">one_step</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">IntegratorState</span><span class="p">,</span> <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
         <span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">logdensity_grad</span> <span class="o">=</span> <span class="n">state</span>
@@ -569,7 +623,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">new_integrator_state</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create an IntegratorState from a position and momentum.</span>
+<span class="w">    </span><span class="sd">"""Create an IntegratorState from a position and momentum.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -583,13 +637,13 @@
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    An IntegratorState with position, momentum, logdensity, and logdensity_grad.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">value_and_grad</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">)(</span><span class="n">position</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">IntegratorState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">euclidean_position_update_fn</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the position update operator for Euclidean HMC.</span>
+<span class="w">    </span><span class="sd">"""Build the position update operator for Euclidean HMC.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -601,7 +655,7 @@
 <span class="sd">    An ``update`` function with signature</span>
 <span class="sd">    ``(position, kinetic_grad, step_size, coef, auxiliary_info) -&gt;</span>
 <span class="sd">    (new_position, logdensity, logdensity_grad, None)``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">logdensity_and_grad_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">value_and_grad</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span>
@@ -624,7 +678,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">euclidean_momentum_update_fn</span><span class="p">(</span><span class="n">kinetic_energy_fn</span><span class="p">:</span> <span class="n">KineticEnergy</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the momentum update operator for Euclidean HMC.</span>
+<span class="w">    </span><span class="sd">"""Build the momentum update operator for Euclidean HMC.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -636,7 +690,7 @@
 <span class="sd">    An ``update`` function with signature</span>
 <span class="sd">    ``(momentum, logdensity_grad, step_size, coef, auxiliary_info, is_last_call) -&gt;</span>
 <span class="sd">    (new_momentum, kinetic_grad, None)``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">kinetic_energy_grad_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">kinetic_energy_fn</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span>
@@ -670,7 +724,7 @@
     <span class="n">position_update_info</span><span class="p">,</span>
     <span class="n">momentum_update_info</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Format the output of a Euclidean integrator step into an IntegratorState.</span>
+<span class="w">    </span><span class="sd">"""Format the output of a Euclidean integrator step into an IntegratorState.</span>
 
 <span class="sd">    Discards auxiliary integration info not needed for Euclidean dynamics.</span>
 
@@ -678,13 +732,13 @@
 <span class="sd">    -------</span>
 <span class="sd">    An IntegratorState with the updated position, momentum, logdensity, and</span>
 <span class="sd">    logdensity_grad.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">del</span> <span class="n">kinetic_grad</span><span class="p">,</span> <span class="n">position_update_info</span><span class="p">,</span> <span class="n">momentum_update_info</span>
     <span class="k">return</span> <span class="n">IntegratorState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">generate_euclidean_integrator</span><span class="p">(</span><span class="n">coefficients</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate symplectic integrator for solving a Hamiltonian system.</span>
+<span class="w">    </span><span class="sd">"""Generate symplectic integrator for solving a Hamiltonian system.</span>
 
 <span class="sd">    The resulting integrator is volume-preserving and preserves the symplectic</span>
 <span class="sd">    structure of phase space.</span>
@@ -698,7 +752,7 @@
 <span class="sd">    -------</span>
 <span class="sd">    A factory function ``euclidean_integrator(logdensity_fn, kinetic_energy_fn)``</span>
 <span class="sd">    that returns a one-step integrator ``(state, step_size) -&gt; new_state``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">euclidean_integrator</span><span class="p">(</span>
         <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">kinetic_energy_fn</span><span class="p">:</span> <span class="n">KineticEnergy</span>
@@ -716,7 +770,7 @@
     <span class="k">return</span> <span class="n">euclidean_integrator</span>
 
 
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="sd">The velocity Verlet (or Verlet-Störmer) integrator.</span>
 
 <span class="sd">The velocity Verlet is a two-stage palindromic integrator :cite:p:`bou2018geometric`</span>
@@ -733,14 +787,14 @@
 <span class="sd">By choosing the velocity verlet we avoid two computations of the gradient</span>
 <span class="sd">of the kinetic energy. We are trading accuracy in exchange, and it is not</span>
 <span class="sd">clear whether this is the right tradeoff.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="n">velocity_verlet_coefficients</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]</span>
 <div class="viewcode-block" id="velocity_verlet">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.velocity_verlet">[docs]</a>
 <span class="n">velocity_verlet</span> <span class="o">=</span> <span class="n">generate_euclidean_integrator</span><span class="p">(</span><span class="n">velocity_verlet_coefficients</span><span class="p">)</span></div>
 
 
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="sd">Two-stage palindromic symplectic integrator derived in :cite:p:`blanes2014numerical`.</span>
 
 <span class="sd">The integrator is of the form (b1, a1, b2, a1, b1). The choice of the parameters</span>
@@ -750,7 +804,7 @@
 <span class="sd">is more focused on stability and derives different values.</span>
 
 <span class="sd">Also known as the minimal norm integrator.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="n">b1</span> <span class="o">=</span> <span class="mf">0.1931833275037836</span>
 <span class="n">a1</span> <span class="o">=</span> <span class="mf">0.5</span>
 <span class="n">b2</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">b1</span>
@@ -760,7 +814,7 @@
 <span class="n">mclachlan</span> <span class="o">=</span> <span class="n">generate_euclidean_integrator</span><span class="p">(</span><span class="n">mclachlan_coefficients</span><span class="p">)</span></div>
 
 
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="sd">Three stages palindromic symplectic integrator derived in :cite:p:`mclachlan1995numerical`</span>
 
 <span class="sd">The integrator is of the form (b1, a1, b2, a2, b2, a1, b1). The choice of</span>
@@ -768,7 +822,7 @@
 <span class="sd">stability of the method with respect to the value of `step_size`. The</span>
 <span class="sd">values used here are the ones derived in :cite:p:`mclachlan1995numerical` which</span>
 <span class="sd">guarantees a stability interval length approximately equal to 4.67.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="n">b1</span> <span class="o">=</span> <span class="mf">0.11888010966548</span>
 <span class="n">a1</span> <span class="o">=</span> <span class="mf">0.29619504261126</span>
 <span class="n">b2</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">-</span> <span class="n">b1</span>
@@ -779,11 +833,11 @@
 <span class="n">yoshida</span> <span class="o">=</span> <span class="n">generate_euclidean_integrator</span><span class="p">(</span><span class="n">yoshida_coefficients</span><span class="p">)</span></div>
 
 
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="sd">Eleven-stage palindromic symplectic integrator derived in :cite:p:`omelyan2003symplectic`.</span>
 
 <span class="sd">Popular in LQCD, see also :cite:p:`takaishi2006testing`.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="n">b1</span> <span class="o">=</span> <span class="mf">0.08398315262876693</span>
 <span class="n">a1</span> <span class="o">=</span> <span class="mf">0.2539785108410595</span>
 <span class="n">b2</span> <span class="o">=</span> <span class="mf">0.6822365335719091</span>
@@ -804,7 +858,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">esh_dynamics_momentum_update_one_step</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the ESH dynamics momentum update operator.</span>
+<span class="w">    </span><span class="sd">"""Build the ESH dynamics momentum update operator.</span>
 
 <span class="sd">    Supports both diagonal and Low-Rank + Diagonal (LRD) preconditioning.</span>
 
@@ -841,7 +895,7 @@
 <span class="sd">    ``(momentum, logdensity_grad, step_size, coef,</span>
 <span class="sd">    previous_kinetic_energy_change, is_last_call) -&gt;</span>
 <span class="sd">    (new_momentum, kinetic_grad, kinetic_energy_change)``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">LowRankInverseMassMatrix</span><span class="p">):</span>
         <span class="n">sigma</span> <span class="o">=</span> <span class="n">inverse_mass_matrix</span><span class="o">.</span><span class="n">sigma</span>
         <span class="n">U</span> <span class="o">=</span> <span class="n">inverse_mass_matrix</span><span class="o">.</span><span class="n">U</span>
@@ -870,12 +924,12 @@
         <span class="n">previous_kinetic_energy_change</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">is_last_call</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Momentum update based on Esh dynamics.</span>
+<span class="w">        </span><span class="sd">"""Momentum update based on Esh dynamics.</span>
 
 <span class="sd">        The momentum updating map of the esh dynamics as derived in :cite:p:`steeg2021hamiltonian`</span>
 <span class="sd">        There are no exponentials e^delta, which prevents overflows when the gradient norm</span>
 <span class="sd">        is large.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">del</span> <span class="n">is_last_call</span>
 
         <span class="n">flatten_grads</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">logdensity_grad</span><span class="p">)</span>
@@ -921,13 +975,13 @@
     <span class="n">position_update_info</span><span class="p">,</span>
     <span class="n">momentum_update_info</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Format the output of an isokinetic integrator step.</span>
+<span class="w">    </span><span class="sd">"""Format the output of an isokinetic integrator step.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    A tuple of ``(IntegratorState, momentum_update_info)`` where</span>
 <span class="sd">    ``momentum_update_info`` carries the accumulated kinetic energy change.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">del</span> <span class="n">kinetic_grad</span><span class="p">,</span> <span class="n">position_update_info</span>
     <span class="k">return</span> <span class="p">(</span>
         <span class="n">IntegratorState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">),</span>
@@ -936,7 +990,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">generate_isokinetic_integrator</span><span class="p">(</span><span class="n">coefficients</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate an isokinetic (ESH-dynamics) integrator.</span>
+<span class="w">    </span><span class="sd">"""Generate an isokinetic (ESH-dynamics) integrator.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -948,7 +1002,7 @@
 <span class="sd">    A factory function ``isokinetic_integrator(logdensity_fn, inverse_mass_matrix)``</span>
 <span class="sd">    that returns a one-step integrator</span>
 <span class="sd">    ``(state, step_size) -&gt; (new_state, kinetic_energy_change)``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">isokinetic_integrator</span><span class="p">(</span>
         <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">ArrayTree</span> <span class="o">=</span> <span class="mf">1.0</span>
@@ -986,7 +1040,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">partially_refresh_momentum</span><span class="p">(</span><span class="n">momentum</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">L</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adds a small noise to momentum and normalizes.</span>
+<span class="w">    </span><span class="sd">"""Adds a small noise to momentum and normalizes.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1002,7 +1056,7 @@
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    momentum with random change in angle</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">m</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">momentum</span><span class="p">)</span>
     <span class="n">dim</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -1073,7 +1127,7 @@
     <span class="n">max_iters</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
     <span class="n">norm_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ArrayTree</span><span class="p">],</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)),</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ArrayTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">FixedPointIterationInfo</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Solve for x = func(x) using a fixed point iteration&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Solve for x = func(x) using a fixed point iteration"""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_norm</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">xp</span><span class="p">:</span> <span class="n">ArrayTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">norm_fn</span><span class="p">(</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">subtract</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">xp</span><span class="p">))[</span><span class="mi">0</span><span class="p">])</span>
@@ -1110,7 +1164,7 @@
     <span class="n">solver</span><span class="p">:</span> <span class="n">FixedPointSolver</span> <span class="o">=</span> <span class="n">solve_fixed_point_iteration</span><span class="p">,</span>
     <span class="o">**</span><span class="n">solver_kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Integrator</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The implicit midpoint integrator with support for non-stationary kinetic energy</span>
+<span class="w">    </span><span class="sd">"""The implicit midpoint integrator with support for non-stationary kinetic energy</span>
 
 <span class="sd">    This is an integrator based on :cite:t:`brofos2021evaluating`, which provides</span>
 <span class="sd">    support for kinetic energies that depend on position. This integrator requires that</span>
@@ -1119,7 +1173,7 @@
 <span class="sd">    The ``solver`` parameter allows overloading of the fixed point solver. By default, a</span>
 <span class="sd">    simple fixed point iteration is used, but more advanced solvers could be implemented</span>
 <span class="sd">    in the future.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">logdensity_and_grad_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">value_and_grad</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">)</span>
     <span class="n">kinetic_energy_grad_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span>
         <span class="k">lambda</span> <span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="n">kinetic_energy_fn</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">position</span><span class="o">=</span><span class="n">q</span><span class="p">),</span> <span class="n">argnums</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
@@ -1222,8 +1276,8 @@ By The Blackjax developers
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
 
   <footer class="bd-footer">
   </footer>

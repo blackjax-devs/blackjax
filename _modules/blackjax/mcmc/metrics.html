@@ -26,21 +26,21 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=4418a689" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e37d73aa" />
   
   <!-- So that users can add custom icons -->
-  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
     <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
@@ -48,25 +48,32 @@
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/mcmc/metrics';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g0c69b5d2f" />
+  <meta name="docsearch:version" content="0.1.dev1+g421add75e" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
   </head>
-  
-  
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
-
+  <body data-default-mode="">
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -92,7 +99,47 @@
 </div>
 
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
     </header>
   
 
@@ -378,11 +425,18 @@
 
 
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div>
 
 
 <button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
@@ -416,18 +470,18 @@
   <h1>Source code for blackjax.mcmc.metrics</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Copyright 2020- The Blackjax Authors.</span>
 <span class="c1">#</span>
-<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
 <span class="c1"># You may obtain a copy of the License at</span>
 <span class="c1">#</span>
 <span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
 <span class="c1">#</span>
 <span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
-<span class="sa">r</span><span class="sd">&quot;&quot;&quot;Metric space in which the Hamiltonian dynamic is embedded.</span>
+<span class="sa">r</span><span class="sd">"""Metric space in which the Hamiltonian dynamic is embedded.</span>
 
 <span class="sd">An important particular case (and the most used in practice) of metric for the</span>
 <span class="sd">position space in the Euclidean metric. It is defined by a definite positive</span>
@@ -443,7 +497,7 @@
 
 <span class="sd">We can also generate a relativistic dynamic :cite:p:`lu2017relativistic`.</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">TypeAlias</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
@@ -454,12 +508,12 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">generate_gaussian_noise</span><span class="p">,</span> <span class="n">linear_map</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;LowRankInverseMassMatrix&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;default_metric&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;gaussian_euclidean&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;gaussian_euclidean_low_rank&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;gaussian_riemannian&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;lbfgs_inverse_hessian_to_low_rank_metric&quot;</span><span class="p">,</span>
+    <span class="s2">"LowRankInverseMassMatrix"</span><span class="p">,</span>
+    <span class="s2">"default_metric"</span><span class="p">,</span>
+    <span class="s2">"gaussian_euclidean"</span><span class="p">,</span>
+    <span class="s2">"gaussian_euclidean_low_rank"</span><span class="p">,</span>
+    <span class="s2">"gaussian_riemannian"</span><span class="p">,</span>
+    <span class="s2">"lbfgs_inverse_hessian_to_low_rank_metric"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -504,7 +558,7 @@
 <div class="viewcode-block" id="LowRankInverseMassMatrix">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/metrics/index.html#blackjax.mcmc.metrics.LowRankInverseMassMatrix">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LowRankInverseMassMatrix</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pure-array description of a low-rank inverse mass matrix.</span>
+<span class="w">    </span><span class="sd">"""Pure-array description of a low-rank inverse mass matrix.</span>
 
 <span class="sd">    The inverse mass matrix has the form</span>
 
@@ -534,7 +588,7 @@
 <span class="sd">        Shape ``(d, k)``. Matrix with orthonormal columns.</span>
 <span class="sd">    lam</span>
 <span class="sd">        Shape ``(k,)``. Positive eigenvalues.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="LowRankInverseMassMatrix.sigma">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/metrics/index.html#blackjax.mcmc.metrics.LowRankInverseMassMatrix.sigma">[docs]</a>
@@ -557,7 +611,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_low_rank_matvec</span><span class="p">(</span><span class="n">y</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">U</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">eigenvalue_scales</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Apply the rank-k operator :math:`(I + U(\operatorname{diag}(s) - I)U^\top)` to ``y``.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Apply the rank-k operator :math:`(I + U(\operatorname{diag}(s) - I)U^\top)` to ``y``.</span>
 
 <span class="sd">    This is the shared algebraic primitive underlying all low-rank metric</span>
 <span class="sd">    operations in BlackJAX.  For orthonormal</span>
@@ -577,7 +631,7 @@
 <span class="sd">    - :math:`s = \lambda` — inverse mass matrix application (momentum → velocity),</span>
 <span class="sd">      as used in kinetic energy and the U-turn check.</span>
 <span class="sd">    - :math:`s = \sqrt{\lambda}` — square-root factor :math:`A^* = I+U(\sqrt\Lambda-I)U^\top`,</span>
-<span class="sd">      used in momentum sampling and the ESH integrator&#39;s ``forward_L`` / ``adjoint_L``</span>
+<span class="sd">      used in momentum sampling and the ESH integrator's ``forward_L`` / ``adjoint_L``</span>
 <span class="sd">      operators (:func:`~blackjax.mcmc.integrators.esh_dynamics_momentum_update_one_step`).</span>
 <span class="sd">    - :math:`s = 1/\sqrt{\lambda}` — inverse square-root factor :math:`B = I+U(\Lambda^{-1/2}-I)U^\top`,</span>
 <span class="sd">      used in the mass-matrix square root for momentum sampling.</span>
@@ -601,14 +655,14 @@
 <span class="sd">    --------</span>
 <span class="sd">    gaussian_euclidean_low_rank : Full low-rank Euclidean metric built from this primitive.</span>
 <span class="sd">    lbfgs_inverse_hessian_to_low_rank_metric : Adapter producing a compatible representation.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">y</span> <span class="o">+</span> <span class="n">U</span> <span class="o">@</span> <span class="p">((</span><span class="n">eigenvalue_scales</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">U</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">y</span><span class="p">))</span>
 
 
 <div class="viewcode-block" id="default_metric">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/metrics/index.html#blackjax.mcmc.metrics.default_metric">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">default_metric</span><span class="p">(</span><span class="n">metric</span><span class="p">:</span> <span class="n">MetricTypes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Metric</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert an input metric into a ``Metric`` object following sensible default rules.</span>
+<span class="w">    </span><span class="sd">"""Convert an input metric into a ``Metric`` object following sensible default rules.</span>
 
 <span class="sd">    The metric can be specified in four different ways:</span>
 
@@ -627,7 +681,7 @@
 <span class="sd">    -------</span>
 <span class="sd">    A ``Metric`` object with ``sample_momentum``, ``kinetic_energy``,</span>
 <span class="sd">    ``check_turning``, and ``scale`` fields.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="c1"># LowRankInverseMassMatrix must be checked before Metric because both are</span>
     <span class="c1"># NamedTuples; isinstance(metric, Metric) on a LowRankInverseMassMatrix is</span>
     <span class="c1"># already False (distinct types), but listing the low-rank case first keeps</span>
@@ -643,7 +697,7 @@
     <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">metric</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">gaussian_riemannian</span><span class="p">(</span><span class="n">metric</span><span class="p">)</span>
 
-    <span class="c1"># If we make it here then the argument should be an array, and we&#39;ll assume</span>
+    <span class="c1"># If we make it here then the argument should be an array, and we'll assume</span>
     <span class="c1"># that it specifies a static inverse mass matrix.</span>
     <span class="k">return</span> <span class="n">gaussian_euclidean</span><span class="p">(</span><span class="n">metric</span><span class="p">)</span></div>
 
@@ -654,7 +708,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">gaussian_euclidean</span><span class="p">(</span>
     <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Metric</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Hamiltonian dynamic on euclidean manifold with normally-distributed momentum</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Hamiltonian dynamic on euclidean manifold with normally-distributed momentum</span>
 <span class="sd">    :cite:p:`betancourt2013general`.</span>
 
 <span class="sd">    The gaussian euclidean metric is a euclidean metric further characterized</span>
@@ -669,7 +723,7 @@
 <span class="sd">        or dense mass matrix. The inverse mass matrix is multiplied to a</span>
 <span class="sd">        flattened version of the Pytree in which the chain position is stored</span>
 <span class="sd">        (the current value of the random variables). The order of the variables</span>
-<span class="sd">        should thus match JAX&#39;s tree flattening order, and more specifically</span>
+<span class="sd">        should thus match JAX's tree flattening order, and more specifically</span>
 <span class="sd">        that of `ravel_pytree`.</span>
 <span class="sd">        In particular, JAX sorts dictionaries by key when flattening them. The</span>
 <span class="sd">        value of each variables will appear in the flattened Pytree following</span>
@@ -685,7 +739,7 @@
 <span class="sd">        A function that determines whether a trajectory is turning back on</span>
 <span class="sd">        itself given the values of the momentum along the trajectory.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">mass_matrix_sqrt</span><span class="p">,</span> <span class="n">inv_mass_matrix_sqrt</span><span class="p">,</span> <span class="n">diag</span> <span class="o">=</span> <span class="n">_format_covariance</span><span class="p">(</span>
         <span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">is_inv</span><span class="o">=</span><span class="kc">True</span>
     <span class="p">)</span>
@@ -709,7 +763,7 @@
         <span class="n">position_left</span><span class="p">:</span> <span class="n">ArrayLikeTree</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">position_right</span><span class="p">:</span> <span class="n">ArrayLikeTree</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generalized U-turn criterion :cite:p:`betancourt2013generalizing,nuts_uturn`.</span>
+<span class="w">        </span><span class="sd">"""Generalized U-turn criterion :cite:p:`betancourt2013generalizing,nuts_uturn`.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -720,7 +774,7 @@
 <span class="sd">        momentum_sum</span>
 <span class="sd">            Sum of the momenta along the trajectory.</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">del</span> <span class="n">position_left</span><span class="p">,</span> <span class="n">position_right</span>
 
         <span class="n">m_left</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">momentum_left</span><span class="p">)</span>
@@ -743,7 +797,7 @@
         <span class="n">inv</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
         <span class="n">trans</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayLikeTree</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Scale elements by the mass matrix.</span>
+<span class="w">        </span><span class="sd">"""Scale elements by the mass matrix.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -761,7 +815,7 @@
 <span class="sd">        -------</span>
 <span class="sd">        scaled_elements</span>
 <span class="sd">            The scaled elements.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
 
         <span class="n">ravelled_element</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
 
@@ -787,7 +841,7 @@
     <span class="n">U</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
     <span class="n">lam</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Metric</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Euclidean metric with low-rank-modified mass matrix :cite:p:`seyboldt2026preconditioning`.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Euclidean metric with low-rank-modified mass matrix :cite:p:`seyboldt2026preconditioning`.</span>
 
 <span class="sd">    The inverse mass matrix has the form</span>
 
@@ -818,7 +872,7 @@
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    A ``Metric`` object whose operations all run in :math:`O(dk)`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">inv_sigma</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">sigma</span>  <span class="c1"># (d,)</span>
     <span class="n">sqrt_lam</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">lam</span><span class="p">)</span>  <span class="c1"># (k,)</span>
     <span class="n">inv_sqrt_lam</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">sqrt_lam</span>  <span class="c1"># (k,)</span>
@@ -871,7 +925,7 @@
         <span class="n">inv</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
         <span class="n">trans</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayLikeTree</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Scale an element by the (inverse) (transposed) square-root mass matrix.</span>
+<span class="w">        </span><span class="sd">"""Scale an element by the (inverse) (transposed) square-root mass matrix.</span>
 
 <span class="sd">        M = D^{-1} C D^{-1} where C = I+U(Λ^{-1}-I)U^T and D = diag(σ).</span>
 <span class="sd">        The (non-symmetric) left square root is M^{1/2} = D^{-1} B where</span>
@@ -881,7 +935,7 @@
 <span class="sd">        * ``inv=False, trans=True`` :  (M^{1/2})^T = B D^{-1}</span>
 <span class="sd">        * ``inv=True,  trans=False``:  M^{-1/2}   = D A^{*}  where A^{*} = I+U(√Λ-I)U^T</span>
 <span class="sd">        * ``inv=True,  trans=True`` :  (M^{-1/2})^T = A^{*} D</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">del</span> <span class="n">position</span>
         <span class="n">e</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
 
@@ -909,7 +963,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">gaussian_riemannian</span><span class="p">(</span>
     <span class="n">mass_matrix_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Metric</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Hamiltonian dynamic on Riemannian manifold with normally-distributed momentum.</span>
+<span class="w">    </span><span class="sd">"""Hamiltonian dynamic on Riemannian manifold with normally-distributed momentum.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -921,7 +975,7 @@
 <span class="sd">    -------</span>
 <span class="sd">    A ``Metric`` object with ``sample_momentum``, ``kinetic_energy``,</span>
 <span class="sd">    ``check_turning``, and ``scale`` fields.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">momentum_generator</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayLikeTree</span><span class="p">:</span>
         <span class="n">mass_matrix</span> <span class="o">=</span> <span class="n">mass_matrix_fn</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
@@ -934,9 +988,9 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Numeric</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">position</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;A Riemannian kinetic energy function must be called with the &quot;</span>
-                <span class="s2">&quot;position specified; make sure to use a Riemannian-capable &quot;</span>
-                <span class="s2">&quot;integrator like `implicit_midpoint`.&quot;</span>
+                <span class="s2">"A Riemannian kinetic energy function must be called with the "</span>
+                <span class="s2">"position specified; make sure to use a Riemannian-capable "</span>
+                <span class="s2">"integrator like `implicit_midpoint`."</span>
             <span class="p">)</span>
 
         <span class="n">momentum</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">momentum</span><span class="p">)</span>
@@ -956,10 +1010,10 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">del</span> <span class="n">momentum_left</span><span class="p">,</span> <span class="n">momentum_right</span><span class="p">,</span> <span class="n">momentum_sum</span><span class="p">,</span> <span class="n">position_left</span><span class="p">,</span> <span class="n">position_right</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-            <span class="s2">&quot;NUTS sampling is not yet implemented for Riemannian manifolds&quot;</span>
+            <span class="s2">"NUTS sampling is not yet implemented for Riemannian manifolds"</span>
         <span class="p">)</span>
 
-        <span class="c1"># Here&#39;s a possible implementation of this function, but the NUTS</span>
+        <span class="c1"># Here's a possible implementation of this function, but the NUTS</span>
         <span class="c1"># proposal will require some refactoring to work properly, since we need</span>
         <span class="c1"># to be able to access the coordinates at the left and right endpoints</span>
         <span class="c1"># to compute the mass matrix at those points.</span>
@@ -986,7 +1040,7 @@
         <span class="n">inv</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
         <span class="n">trans</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayLikeTree</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Scale elements by the mass matrix.</span>
+<span class="w">        </span><span class="sd">"""Scale elements by the mass matrix.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -997,7 +1051,7 @@
 <span class="sd">        -------</span>
 <span class="sd">        scaled_elements</span>
 <span class="sd">            The scaled elements.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">mass_matrix</span> <span class="o">=</span> <span class="n">mass_matrix_fn</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
         <span class="n">mass_matrix_sqrt</span><span class="p">,</span> <span class="n">inv_mass_matrix_sqrt</span><span class="p">,</span> <span class="n">diag</span> <span class="o">=</span> <span class="n">_format_covariance</span><span class="p">(</span>
             <span class="n">mass_matrix</span><span class="p">,</span> <span class="n">is_inv</span><span class="o">=</span><span class="kc">False</span>
@@ -1026,7 +1080,7 @@
     <span class="n">beta</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
     <span class="n">gamma</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LowRankInverseMassMatrix</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Convert an L-BFGS factored inverse-Hessian to a :class:`LowRankInverseMassMatrix`.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Convert an L-BFGS factored inverse-Hessian to a :class:`LowRankInverseMassMatrix`.</span>
 
 <span class="sd">    The L-BFGS inverse Hessian is stored in the factored form</span>
 
@@ -1069,8 +1123,8 @@
 <span class="sd">    representation (HMC, MCLMC, etc.).</span>
 
 <span class="sd">    .. note::</span>
-<span class="sd">        This function is a **pure adapter** — it does not alter Pathfinder&#39;s</span>
-<span class="sd">        internal sampling path.  Wiring this adapter into Pathfinder&#39;s own</span>
+<span class="sd">        This function is a **pure adapter** — it does not alter Pathfinder's</span>
+<span class="sd">        internal sampling path.  Wiring this adapter into Pathfinder's own</span>
 <span class="sd">        sampling path is deliberate follow-up work; for now it ships as an</span>
 <span class="sd">        adapter with parity tests only.</span>
 
@@ -1108,7 +1162,7 @@
 <span class="sd">    --------</span>
 <span class="sd">    LowRankInverseMassMatrix : Target representation consumed by :func:`gaussian_euclidean_low_rank`.</span>
 <span class="sd">    gaussian_euclidean_low_rank : Full metric protocol built from the representation.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">sigma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span>  <span class="c1"># (d,)</span>
     <span class="n">inv_sigma</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">sigma</span>  <span class="c1"># (d,)</span>
 
@@ -1127,7 +1181,7 @@
 
     <span class="c1"># Thin QR: B̃ = Q R,  Q (d, r) orthonormal,  R (r, 2m),  r = min(d, 2m).</span>
     <span class="c1"># C := B̃ Γ B̃ᵀ = Q (R Γ Rᵀ) Qᵀ so eigenvalues(C) = eigenvalues(R Γ Rᵀ).</span>
-    <span class="n">Q</span><span class="p">,</span> <span class="n">R</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">qr</span><span class="p">(</span><span class="n">B_tilde</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;reduced&quot;</span><span class="p">)</span>  <span class="c1"># Q: (d, r), R: (r, k)</span>
+    <span class="n">Q</span><span class="p">,</span> <span class="n">R</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">qr</span><span class="p">(</span><span class="n">B_tilde</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"reduced"</span><span class="p">)</span>  <span class="c1"># Q: (d, r), R: (r, k)</span>
     <span class="n">M_inner</span> <span class="o">=</span> <span class="n">R</span> <span class="o">@</span> <span class="n">gamma</span> <span class="o">@</span> <span class="n">R</span><span class="o">.</span><span class="n">T</span>  <span class="c1"># (r, r), symmetric</span>
     <span class="n">eigvals</span><span class="p">,</span> <span class="n">V</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="n">M_inner</span><span class="p">)</span>  <span class="c1"># eigvals: (r,), V: (r, r)</span>
 
@@ -1166,8 +1220,8 @@
 
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;The mass matrix has the wrong number of dimensions:&quot;</span>
-            <span class="sa">f</span><span class="s2">&quot; expected 1 or 2, got </span><span class="si">{</span><span class="n">jnp</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">cov</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="s2">"The mass matrix has the wrong number of dimensions:"</span>
+            <span class="sa">f</span><span class="s2">" expected 1 or 2, got </span><span class="si">{</span><span class="n">jnp</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">cov</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">cov_sqrt</span><span class="p">,</span> <span class="n">inv_cov_sqrt</span><span class="p">,</span> <span class="n">diag</span>
 
@@ -1239,8 +1293,8 @@ By The Blackjax developers
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
 
   <footer class="bd-footer">
   </footer>

@@ -27,21 +27,21 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=4418a689" />
     <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=e37d73aa" />
   
   <!-- So that users can add custom icons -->
-  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
     <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
@@ -50,26 +50,33 @@
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'developer/new_algorithm_guide';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="prev" title="BlackJAX Design Principles" href="design_principles.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g0c69b5d2f" />
+  <meta name="docsearch:version" content="0.1.dev1+g421add75e" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
   </head>
-  
-  
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
-
+  <body data-default-mode="">
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -95,7 +102,51 @@
 </div>
 
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
     </header>
   
 
@@ -379,11 +430,18 @@
 
 
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div>
 
 
 <button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
@@ -411,7 +469,7 @@
                 <h2> Contents </h2>
             </div>
             <nav aria-label="Page">
-                <ul class="visible nav section-nav flex-column">
+                <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#orientation-core-implementation">1. Orientation: Core Implementation</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sampling-algorithms">1.1 Sampling Algorithms</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#approximate-inference-algorithms">1.2 Approximate Inference Algorithms</a></li>
@@ -530,7 +588,7 @@ algorithm to an existing file.</p>
 <section id="adding-an-mcmc-sampler">
 <h2>3. Adding an MCMC Sampler<a class="headerlink" href="#adding-an-mcmc-sampler" title="Link to this heading">#</a></h2>
 <p>Every MCMC module must export exactly four public names (listed in <code class="docutils literal notranslate"><span class="pre">__all__</span></code>):</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;MyState&quot;</span><span class="p">,</span> <span class="s2">&quot;MyInfo&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;as_top_level_api&quot;</span><span class="p">]</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"MyState"</span><span class="p">,</span> <span class="s2">"MyInfo"</span><span class="p">,</span> <span class="s2">"init"</span><span class="p">,</span> <span class="s2">"build_kernel"</span><span class="p">,</span> <span class="s2">"as_top_level_api"</span><span class="p">]</span>
 </pre></div>
 </div>
 <section id="state-and-info-namedtuples">
@@ -539,26 +597,26 @@ algorithm to an existing file.</p>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayTree</span>
 
 <span class="k">class</span><span class="w"> </span><span class="nc">MyState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;State of My Sampler.</span>
+<span class="w">    </span><span class="sd">"""State of My Sampler.</span>
 
 <span class="sd">    position</span>
 <span class="sd">        Current position of the chain.</span>
 <span class="sd">    logdensity</span>
 <span class="sd">        Log-density at the current position.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">position</span><span class="p">:</span> <span class="n">ArrayTree</span>
     <span class="n">logdensity</span><span class="p">:</span> <span class="nb">float</span>
     <span class="c1"># add any extra fields the kernel needs to carry forward</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">MyInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transition information returned by My Sampler.</span>
+<span class="w">    </span><span class="sd">"""Transition information returned by My Sampler.</span>
 
 <span class="sd">    acceptance_rate</span>
 <span class="sd">        Metropolis–Hastings acceptance probability.</span>
 <span class="sd">    is_accepted</span>
 <span class="sd">        Whether the proposal was accepted.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">acceptance_rate</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">is_accepted</span><span class="p">:</span> <span class="nb">bool</span>
 </pre></div>
@@ -595,14 +653,14 @@ arguments to <code class="docutils literal notranslate"><span class="pre">init</
 <h3>3.3 <code class="docutils literal notranslate"><span class="pre">build_kernel</span></code><a class="headerlink" href="#build-kernel" title="Link to this heading">#</a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">build_kernel</span><span class="p">(</span>
     <span class="c1"># Algorithm-level configuration (integrator, threshold, …) goes here.</span>
-    <span class="c1"># Captured by closure; does NOT appear in the inner kernel&#39;s signature.</span>
+    <span class="c1"># Captured by closure; does NOT appear in the inner kernel's signature.</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build My Sampler kernel.</span>
+<span class="w">    </span><span class="sd">"""Build My Sampler kernel.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    A kernel ``(rng_key, state, logdensity_fn, *params) -&gt; (MyState, MyInfo)``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span>
         <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
@@ -610,7 +668,7 @@ arguments to <code class="docutils literal notranslate"><span class="pre">init</
         <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>  <span class="c1"># per-step parameters follow logdensity_fn</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">MyState</span><span class="p">,</span> <span class="n">MyInfo</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a new sample.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Generate a new sample."""</span>
         <span class="c1"># Split rng_key for each independent random operation.</span>
         <span class="c1"># Implement your proposal, energy evaluation, and accept/reject here.</span>
         <span class="c1"># See blackjax/mcmc/mala.py (simple) or nuts.py (complex) for reference.</span>
@@ -639,7 +697,7 @@ Keep the inner <code class="docutils literal notranslate"><span class="pre">kern
     <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;My Sampler — user-facing convenience wrapper.</span>
+<span class="w">    </span><span class="sd">"""My Sampler — user-facing convenience wrapper.</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
@@ -660,7 +718,7 @@ Keep the inner <code class="docutils literal notranslate"><span class="pre">kern
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    A ``SamplingAlgorithm``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">kernel</span> <span class="o">=</span> <span class="n">build_kernel</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">build_sampling_algorithm</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span>
                                     <span class="n">kernel_args</span><span class="o">=</span><span class="p">(</span><span class="n">step_size</span><span class="p">,))</span>
@@ -674,7 +732,7 @@ Keep the inner <code class="docutils literal notranslate"><span class="pre">kern
 <section id="adding-a-variational-inference-algorithm">
 <h2>4. Adding a Variational Inference Algorithm<a class="headerlink" href="#adding-a-variational-inference-algorithm" title="Link to this heading">#</a></h2>
 <p>VI modules export:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;MyVIState&quot;</span><span class="p">,</span> <span class="s2">&quot;MyVIInfo&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;step&quot;</span><span class="p">,</span> <span class="s2">&quot;sample&quot;</span><span class="p">,</span> <span class="s2">&quot;as_top_level_api&quot;</span><span class="p">]</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"MyVIState"</span><span class="p">,</span> <span class="s2">"MyVIInfo"</span><span class="p">,</span> <span class="s2">"init"</span><span class="p">,</span> <span class="s2">"step"</span><span class="p">,</span> <span class="s2">"sample"</span><span class="p">,</span> <span class="s2">"as_top_level_api"</span><span class="p">]</span>
 </pre></div>
 </div>
 <p>The pattern mirrors the MCMC case but uses <code class="docutils literal notranslate"><span class="pre">VIAlgorithm</span></code> (a NamedTuple of <code class="docutils literal notranslate"><span class="pre">init</span></code>,
@@ -794,7 +852,7 @@ seeded from today’s date so tests are deterministic and don’t clash.</p></li
 
     <span class="nd">@chex</span><span class="o">.</span><span class="n">assert_max_traces</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_jit_and_no_recompile</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The kernel must not retrace on the second call.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""The kernel must not retrace on the second call."""</span>
         <span class="n">sampler</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">my_sampler</span><span class="p">(</span><span class="n">std_normal_logdensity</span><span class="p">,</span> <span class="n">step_size</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
         <span class="n">state</span> <span class="o">=</span> <span class="n">sampler</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
         <span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">sampler</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
@@ -802,7 +860,7 @@ seeded from today’s date so tests are deterministic and don’t clash.</p></li
         <span class="n">state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">next_key</span><span class="p">(),</span> <span class="n">state</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">test_convergence_1d_gaussian</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Samples must have mean ≈ 0 and std ≈ 1 for a 1-D standard normal.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Samples must have mean ≈ 0 and std ≈ 1 for a 1-D standard normal."""</span>
         <span class="n">sampler</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">my_sampler</span><span class="p">(</span><span class="n">std_normal_logdensity</span><span class="p">,</span> <span class="n">step_size</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
         <span class="n">state</span> <span class="o">=</span> <span class="n">sampler</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">]))</span>
 
@@ -818,12 +876,12 @@ seeded from today’s date so tests are deterministic and don’t clash.</p></li
         <span class="bp">self</span><span class="o">.</span><span class="n">assertAllClose</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">samples</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">test_pytree_position</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The kernel must work with dict / nested PyTree positions.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""The kernel must work with dict / nested PyTree positions."""</span>
         <span class="k">def</span><span class="w"> </span><span class="nf">logdensity</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-            <span class="k">return</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;a&quot;</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;b&quot;</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+            <span class="k">return</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s2">"a"</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s2">"b"</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
 
         <span class="n">sampler</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">my_sampler</span><span class="p">(</span><span class="n">logdensity</span><span class="p">,</span> <span class="n">step_size</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
-        <span class="n">state</span> <span class="o">=</span> <span class="n">sampler</span><span class="o">.</span><span class="n">init</span><span class="p">({</span><span class="s2">&quot;a&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">3</span><span class="p">)})</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">sampler</span><span class="o">.</span><span class="n">init</span><span class="p">({</span><span class="s2">"a"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">3</span><span class="p">)})</span>
         <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">sampler</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">next_key</span><span class="p">(),</span> <span class="n">state</span><span class="p">)</span>
         <span class="n">chex</span><span class="o">.</span><span class="n">assert_trees_all_equal_shapes</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">new_state</span><span class="p">)</span>
 </pre></div>
@@ -832,11 +890,11 @@ seeded from today’s date so tests are deterministic and don’t clash.</p></li
 <code class="docutils literal notranslate"><span class="pre">regression_test_cases</span></code> list so your algorithm participates in the shared
 accuracy regression suite:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-    <span class="s2">&quot;algorithm&quot;</span><span class="p">:</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">my_sampler</span><span class="p">,</span>
-    <span class="s2">&quot;initial_position&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;log_scale&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;coefs&quot;</span><span class="p">:</span> <span class="mf">4.0</span><span class="p">},</span>
-    <span class="s2">&quot;parameters&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;step_size&quot;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">},</span>
-    <span class="s2">&quot;num_warmup_steps&quot;</span><span class="p">:</span> <span class="mi">1_000</span><span class="p">,</span>
-    <span class="s2">&quot;num_sampling_steps&quot;</span><span class="p">:</span> <span class="mi">3_000</span><span class="p">,</span>
+    <span class="s2">"algorithm"</span><span class="p">:</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">my_sampler</span><span class="p">,</span>
+    <span class="s2">"initial_position"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"log_scale"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">"coefs"</span><span class="p">:</span> <span class="mf">4.0</span><span class="p">},</span>
+    <span class="s2">"parameters"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"step_size"</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">},</span>
+    <span class="s2">"num_warmup_steps"</span><span class="p">:</span> <span class="mi">1_000</span><span class="p">,</span>
+    <span class="s2">"num_sampling_steps"</span><span class="p">:</span> <span class="mi">3_000</span><span class="p">,</span>
 <span class="p">},</span>
 </pre></div>
 </div>
@@ -976,7 +1034,7 @@ types break generic adaptation wrappers and make testing harder.</p>
     <i class="fa-solid fa-list"></i> Contents
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
-    <ul class="visible nav section-nav flex-column">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#orientation-core-implementation">1. Orientation: Core Implementation</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sampling-algorithms">1.1 Sampling Algorithms</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#approximate-inference-algorithms">1.2 Approximate Inference Algorithms</a></li>
@@ -1060,8 +1118,8 @@ By The Blackjax developers
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
 
   <footer class="bd-footer">
   </footer>
