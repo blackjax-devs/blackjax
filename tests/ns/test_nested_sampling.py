@@ -6,6 +6,7 @@ import chex
 import jax
 import jax.numpy as jnp
 import jax.scipy.stats as stats
+import pytest
 from absl.testing import absltest, parameterized
 
 from blackjax.mcmc import random_walk
@@ -21,6 +22,34 @@ def gaussian_logprior(x):
 def gaussian_loglikelihood(x):
     """Gaussian likelihood with offset"""
     return stats.norm.logpdf(x - 1.0).sum()
+
+
+@pytest.mark.parametrize("accepted", [False, True])
+def test_replacement_birth_contour(accepted):
+    """A replacement is born at the current contour even if every move rejects."""
+    particles = base.StateWithLogLikelihood(
+        position=jnp.array([[0.0], [1.0]]),
+        logdensity=jnp.zeros(2),
+        loglikelihood=jnp.array([0.0, 1.0]),
+        loglikelihood_birth=jnp.full(2, -jnp.inf),
+    )
+
+    def constrained_step(key, particle, loglikelihood_0):
+        del key
+        if accepted:
+            particle = particle._replace(loglikelihood_birth=loglikelihood_0)
+        return particle, jnp.asarray(accepted)
+
+    update = from_mcmc.update_with_mcmc_take_last(constrained_step, 2, 1)
+    kernel = base.build_kernel(functools.partial(base.delete_fn, num_delete=1), update)
+    state, dead = jax.jit(kernel)(jax.random.key(0), base.NSState(particles))
+    chex.assert_trees_all_equal(
+        state.particles.loglikelihood_birth, jnp.array([0.0, -jnp.inf])
+    )
+    final = utils.finalise(state, [dead], update_info=False)
+    chex.assert_trees_all_equal(
+        utils.compute_num_live(final), jnp.array([2.0, 2.0, 1.0])
+    )
 
 
 def make_init_state_fn(logprior_fn, loglikelihood_fn):

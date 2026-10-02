@@ -105,7 +105,13 @@ def update_with_mcmc_take_last(
             return final_state, infos
 
         sample_keys = random.split(sample_key, num_delete)
-        return jax.vmap(mcmc_kernel)(sample_keys, start_state)
+        new_particles, infos = jax.vmap(mcmc_kernel)(sample_keys, start_state)
+        new_particles = new_particles._replace(
+            loglikelihood_birth=jnp.full_like(
+                new_particles.loglikelihood_birth, loglikelihood_0
+            )
+        )
+        return new_particles, infos
 
     return update_function
 
