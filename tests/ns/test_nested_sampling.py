@@ -23,6 +23,72 @@ def gaussian_loglikelihood(x):
     return stats.norm.logpdf(x - 1.0).sum()
 
 
+class TestReplacementBirthContour(parameterized.TestCase):
+    @parameterized.parameters((False, 2, 1), (True, 2, 1), (False, 6, 3))
+    def test_replacement_birth_contour(self, accepted, num_live, num_delete):
+        """A replacement is born at the contour even if every move rejects."""
+        particles = base.StateWithLogLikelihood(
+            position=jnp.arange(num_live, dtype=float)[:, None],
+            logdensity=jnp.zeros(num_live),
+            loglikelihood=jnp.arange(num_live, dtype=float),
+            loglikelihood_birth=jnp.full(num_live, -jnp.inf),
+        )
+
+        def constrained_step(key, particle, loglikelihood_0):
+            del key
+            if accepted:
+                particle = particle._replace(loglikelihood_birth=loglikelihood_0)
+            return particle, jnp.asarray(accepted)
+
+        update = from_mcmc.update_with_mcmc_take_last(constrained_step, 2, num_delete)
+        kernel = base.build_kernel(
+            functools.partial(base.delete_fn, num_delete=num_delete), update
+        )
+        state, dead = jax.jit(kernel)(jax.random.key(0), base.NSState(particles))
+        expected_births = jnp.concatenate(
+            (
+                jnp.full(num_delete, float(num_delete - 1)),
+                jnp.full(num_live - num_delete, -jnp.inf),
+            )
+        )
+        chex.assert_trees_all_equal(
+            state.particles.loglikelihood_birth, expected_births
+        )
+        final = utils.finalise(state, [dead], update_info=False)
+        expected_counts = [2, 2, 1] if num_delete == 1 else [6, 5, 4, 6, 5, 4, 3, 2, 1]
+        chex.assert_trees_all_equal(
+            utils.compute_num_live(final), jnp.array(expected_counts, dtype=float)
+        )
+
+    def test_slice_replacement_birth_contour(self):
+        """The real slice path stamps births when shrinkage is exhausted."""
+        algorithm = nss.as_top_level_api(
+            lambda x: -(x**2).sum(),
+            lambda x: x.sum(),
+            num_inner_steps=2,
+            num_delete=3,
+            max_steps=0,
+            max_shrinkage=0,
+            update_strategy=from_mcmc.update_with_mcmc_take_last,
+        )
+        state = algorithm.init(jnp.arange(6, dtype=float)[:, None], jax.random.key(0))
+        state = state._replace(
+            particles=state.particles._replace(
+                loglikelihood_birth=jnp.full(6, -jnp.inf)
+            )
+        )
+        state, info = jax.jit(algorithm.step)(jax.random.key(1), state)
+        chex.assert_trees_all_equal(
+            state.particles.loglikelihood_birth,
+            jnp.array([2.0, 2.0, 2.0, -jnp.inf, -jnp.inf, -jnp.inf]),
+        )
+        final = utils.finalise(state, [info], update_info=False)
+        chex.assert_trees_all_equal(
+            utils.compute_num_live(final),
+            jnp.array([6.0, 5.0, 4.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0]),
+        )
+
+
 def make_init_state_fn(logprior_fn, loglikelihood_fn):
     """Helper to create init_state_fn from logprior and loglikelihood functions."""
     return functools.partial(
