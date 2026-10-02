@@ -327,10 +327,14 @@ class EagerScanJitBoundaryTest(chex.TestCase):
         )
 
         def call():
+            # num_steps=100 (not 10): num_steps_3 = round(100*0.1) = 10 >= 2,
+            # so stage 3 (make_adaptation_L) actually fires -- at num_steps=10
+            # num_steps_3 == 1 skips it entirely (`if num_steps3 >= 2`), which
+            # would leave its scan untested.
             return blackjax.mclmc_find_L_and_step_size(
                 mclmc_kernel=kernel,
                 logdensity_fn=logdensity_fn,
-                num_steps=10,
+                num_steps=100,
                 state=state,
                 rng_key=tune_key,
             )
@@ -338,11 +342,11 @@ class EagerScanJitBoundaryTest(chex.TestCase):
         jaxpr = jax.make_jaxpr(call)()
         self.assertTrue(
             _has_jit_wrapped_loop(jaxpr),
-            "mclmc_find_L_and_step_size's internal lax.scan (run_steps) "
-            "must stay wrapped in jax.jit "
-            "(blackjax/adaptation/mclmc_adaptation.py) -- un-jitted "
-            "lax.scan dispatch is ~2-3x slower per call on jax>=0.11 "
-            "(jax-ml/jax#37465).",
+            "mclmc_find_L_and_step_size's internal lax.scan calls "
+            "(run_steps and make_adaptation_L's stage 3) must stay wrapped "
+            "in jax.jit (blackjax/adaptation/mclmc_adaptation.py) -- "
+            "un-jitted lax.scan dispatch is ~2-3x slower per call on "
+            "jax>=0.11 (jax-ml/jax#37465).",
         )
 
 

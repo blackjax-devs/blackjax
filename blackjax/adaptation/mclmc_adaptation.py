@@ -393,14 +393,19 @@ def make_adaptation_L(kernel, logdensity_fn, frac, l_factor):
 
             return next_state, next_state.position
 
-        state, samples = jax.lax.scan(
-            f=step,
-            init=state,
-            xs=adaptation_L_keys,
-        )
+        # Wrap the scan and the effective_sample_size call it feeds in one
+        # explicit jit -- see run_steps above (and blackjax/util.py) for
+        # why: un-jitted lax.scan dispatch on CPU is ~2-3x slower per call
+        # on jax>=0.11 (jax-ml/jax#37465). `step`/`kernel`/`logdensity_fn`
+        # stay ordinary Python closures.
+        @jax.jit
+        def _run(state, keys):
+            state, samples = jax.lax.scan(f=step, init=state, xs=keys)
+            flat_samples = jax.vmap(lambda x: ravel_pytree(x)[0])(samples)
+            ess = effective_sample_size(flat_samples[None, ...])
+            return state, ess
 
-        flat_samples = jax.vmap(lambda x: ravel_pytree(x)[0])(samples)
-        ess = effective_sample_size(flat_samples[None, ...])
+        state, ess = _run(state, adaptation_L_keys)
 
         return state, params._replace(
             L=l_factor * params.step_size * jnp.mean(num_steps_3 / ess)
