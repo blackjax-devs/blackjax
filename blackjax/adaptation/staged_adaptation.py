@@ -37,6 +37,7 @@ Notes
 """
 import inspect
 import warnings
+from functools import partial
 from typing import Any, Callable, NamedTuple
 
 import jax
@@ -982,10 +983,8 @@ def staged_adaptation(
             start_state = (init_state, init_adaptation_state)
             keys = jax.random.split(rng_key, num_steps)
             schedule = _eff_schedule_fn(num_steps)
-            last_state, info = jax.lax.scan(
-                one_step,
-                start_state,
-                (jnp.arange(num_steps), keys, schedule),
+            last_state, info = jax.jit(partial(jax.lax.scan, one_step))(
+                start_state, (jnp.arange(num_steps), keys, schedule)
             )
 
             last_chain_state, last_warmup_state, *_ = last_state
@@ -1073,10 +1072,8 @@ def staged_adaptation(
             start_state = (init_states, init_adaptation_state)
             keys = jax.random.split(rng_key, num_steps)
             schedule = _eff_schedule_fn(num_steps)
-            last_state, info = jax.lax.scan(
-                one_step_mc,
-                start_state,
-                (jnp.arange(num_steps), keys, schedule),
+            last_state, info = jax.jit(partial(jax.lax.scan, one_step_mc))(
+                start_state, (jnp.arange(num_steps), keys, schedule)
             )
 
             last_chain_state, last_warmup_state, *_ = last_state

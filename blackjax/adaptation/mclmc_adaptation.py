@@ -13,6 +13,7 @@
 # limitations under the License.
 """Algorithms to adapt the MCLMC kernel parameters, namely step size and L."""
 
+from functools import partial
 from typing import NamedTuple
 
 import jax
@@ -302,15 +303,14 @@ def make_L_step_size_adaptation(
 
     def run_steps(xs, state, params):
         """Run adaptation steps via scan; return (final_carry, per_step_div_flags)."""
-        carry, div_flags = jax.lax.scan(
-            step,
-            init=(
+        carry, div_flags = jax.jit(partial(jax.lax.scan, step))(
+            (
                 state,
                 params,
                 (0.0, 0.0, jnp.inf),
                 (0.0, jnp.array([jnp.zeros(dim), jnp.zeros(dim)])),
             ),
-            xs=xs,
+            xs,
         )
         return carry, div_flags
 
@@ -383,11 +383,7 @@ def make_adaptation_L(kernel, logdensity_fn, frac, l_factor):
 
             return next_state, next_state.position
 
-        state, samples = jax.lax.scan(
-            f=step,
-            init=state,
-            xs=adaptation_L_keys,
-        )
+        state, samples = jax.jit(partial(jax.lax.scan, step))(state, adaptation_L_keys)
 
         flat_samples = jax.vmap(lambda x: ravel_pytree(x)[0])(samples)
         ess = effective_sample_size(flat_samples[None, ...])

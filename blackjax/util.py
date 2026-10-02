@@ -207,8 +207,10 @@ def run_inference_algorithm(
         state, info = inference_algorithm.step(rng_key, state)
         return state, transform(state, info)
 
-    xs = jnp.arange(num_steps), keys
-    final_state, history = lax.scan(one_step, initial_state, xs)
+    # jit the loop: eager lax.scan dispatch is slow on CPU (jax-ml/jax#37465)
+    final_state, history = jit(partial(lax.scan, one_step))(
+        initial_state, (jnp.arange(num_steps), keys)
+    )
 
     return final_state, history
 

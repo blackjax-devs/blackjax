@@ -30,6 +30,8 @@ Coverage:
   (reset + accumulating) vs frozen inline references on an anisotropic target
   (``recompute_every ∈ {1, 5, 25}``, ``atol=0.0``).
 """
+from functools import partial
+
 import jax
 import jax.flatten_util as fu
 import jax.numpy as jnp
@@ -1491,10 +1493,9 @@ def _reference_run_reset(rng_key, position, num_steps, n_dims, logdensity_fn=Non
         0,
     )
     keys = jax.random.split(rng_key, num_steps)
-    last_state, info = jax.lax.scan(
-        one_step,
-        (init_state, init_adaptation_state),
-        (jnp.arange(num_steps), keys, schedule),
+    # jitted to match the engine's dispatch (float reassociation)
+    last_state, info = jax.jit(partial(jax.lax.scan, one_step))(
+        (init_state, init_adaptation_state), (jnp.arange(num_steps), keys, schedule)
     )
     _, last_warmup_state, *_ = last_state
     step_size = jnp.exp(last_warmup_state.ss_state.log_step_size_avg)
@@ -1843,10 +1844,9 @@ def _reference_run_accumulating(
         0,
     )
     keys = jax.random.split(rng_key, num_steps)
-    last_state, info = jax.lax.scan(
-        one_step,
-        (init_state, init_adaptation_state),
-        (jnp.arange(num_steps), keys, schedule),
+    # jitted to match the engine's dispatch (float reassociation)
+    last_state, info = jax.jit(partial(jax.lax.scan, one_step))(
+        (init_state, init_adaptation_state), (jnp.arange(num_steps), keys, schedule)
     )
     _, last_warmup_state, *_ = last_state
     step_size = jnp.exp(last_warmup_state.ss_state.log_step_size_avg)
