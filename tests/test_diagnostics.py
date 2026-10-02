@@ -402,7 +402,9 @@ class EssTailTest(chex.TestCase):
         samples = np.array(self._iid_normal())
         bj = float(diagnostics.ess_tail(jnp.asarray(samples)))
         idata = az.convert_to_dataset({"x": samples})
-        az_val = float(np.asarray(az.ess(idata, method="tail")["x"]).ravel()[0])
+        az_val = float(
+            np.asarray(az.ess(idata, method="tail", prob=(0.05, 0.95))["x"]).ravel()[0]
+        )
         rel = abs(bj - az_val) / max(abs(az_val), 1.0)
         assert rel < 0.10, (
             f"ess_tail normal: blackjax={round(bj, 2)}"
@@ -414,7 +416,9 @@ class EssTailTest(chex.TestCase):
         samples = np.array(jax.random.t(self.rng, df=3.0, shape=(_NCHAINS, _NSAMPLES)))
         bj = float(diagnostics.ess_tail(jnp.asarray(samples)))
         idata = az.convert_to_dataset({"x": samples})
-        az_val = float(np.asarray(az.ess(idata, method="tail")["x"]).ravel()[0])
+        az_val = float(
+            np.asarray(az.ess(idata, method="tail", prob=(0.05, 0.95))["x"]).ravel()[0]
+        )
         rel = abs(bj - az_val) / max(abs(az_val), 1.0)
         assert rel < 0.10, (
             f"ess_tail t(3): blackjax={round(bj, 2)}"
@@ -422,8 +426,9 @@ class EssTailTest(chex.TestCase):
         )
 
     def test_prob_param_default_matches_arviz(self):
-        # Default prob=0.90 gives (0.05, 0.95) quantiles — same as az.ess(method="tail").
-        # Verify bit-match (within floating-point rounding) on normal and t(3) data.
+        # Default prob=0.90 gives (0.05, 0.95) quantiles.
+        # arviz>=1.0 changed its default tail probabilities, so we explicitly pass prob=(0.05, 0.95)
+        # to match blackjax's default. Verify bit-match (within floating-point rounding) on normal and t(3) data.
         az = pytest.importorskip("arviz")
         for dist_name, samples in [
             ("normal", np.array(self._iid_normal())),
@@ -434,7 +439,11 @@ class EssTailTest(chex.TestCase):
         ]:
             bj = float(diagnostics.ess_tail(jnp.asarray(samples)))
             idata = az.convert_to_dataset({"x": samples})
-            az_val = float(np.asarray(az.ess(idata, method="tail")["x"]).ravel()[0])
+            az_val = float(
+                np.asarray(
+                    az.ess(idata, method="tail", prob=(0.05, 0.95))["x"]
+                ).ravel()[0]
+            )
             rel = abs(bj - az_val) / max(abs(az_val), 1.0)
             assert rel < 0.01, (
                 f"ess_tail default prob=0.90 ({dist_name}): "
