@@ -25,6 +25,24 @@ from tests.fixtures import BlackJAXTest, std_normal_logdensity
 class PathfinderApproximateTest(BlackJAXTest):
     """Tests for the `approximate` function."""
 
+    def test_batched_elbo_matches_vectorized_path(self):
+        """Chunking both maps preserves the optimization path and PRNG keys."""
+        position = {"x": jnp.array([1.5, -0.7])}
+
+        def logdensity(x):
+            return -jnp.sum(x["x"] ** 2 / 2 + x["x"] ** 4 / 20)
+
+        key = self.next_key()
+        kwargs = dict(num_samples=7, maxiter=4, maxcor=3)
+        expected = approximate(key, logdensity, position, **kwargs)
+        actual = jax.jit(
+            lambda k, x: approximate(k, logdensity, x, batch_size=2, **kwargs)
+        )(key, position)
+        for reference, result in zip(
+            jax.tree.leaves(expected), jax.tree.leaves(actual)
+        ):
+            np.testing.assert_allclose(result, reference, rtol=1e-5, atol=1e-6)
+
     def test_returns_pathfinder_state_and_info(self):
         """approximate returns (PathfinderState, PathfinderInfo)."""
         ndim = 2
