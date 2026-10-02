@@ -105,7 +105,13 @@ def update_with_mcmc_take_last(
             return final_state, infos
 
         sample_keys = random.split(sample_key, num_delete)
-        return jax.vmap(mcmc_kernel)(sample_keys, start_state)
+        new_particles, infos = jax.vmap(mcmc_kernel)(sample_keys, start_state)
+        new_particles = new_particles._replace(
+            loglikelihood_birth=jnp.full_like(
+                new_particles.loglikelihood_birth, loglikelihood_0
+            )
+        )
+        return new_particles, infos
 
     return update_function
 
@@ -207,8 +213,12 @@ def build_kernel(
         structure and dtypes match ``state.particles``, since they are written
         back by index, and each must satisfy ``loglikelihood >
         loglikelihood_0`` with ``loglikelihood_birth`` set to
-        ``loglikelihood_0``. Driving the particles with ``constrained_step_fn``
-        gives the last two properties for free. ``update_info`` is passed
+        ``loglikelihood_0``. The constrained step preserves the likelihood
+        constraint on rejection when its start point is a strict survivor;
+        the fallback when no strict survivor exists does not guarantee this.
+        :func:`update_with_mcmc_take_last` sets ``loglikelihood_birth`` to
+        ``loglikelihood_0`` on its output, including rejected chains. Custom
+        update strategies must also set the output birth contour. ``update_info`` is passed
         through to ``NSInfo.update_info`` unchanged and may be any pytree.
 
     Returns

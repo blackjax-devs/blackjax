@@ -342,6 +342,14 @@ def pathfinder_adaptation(
 
     Notes
     -----
+    **Memory use:** The inverse mass matrix is dense in every dispatch below,
+    requiring :math:`O(d^2)` storage for ``d`` parameters. This also applies to
+    single-path adaptation: the L-BFGS history does not make the returned
+    inverse mass matrix diagonal or low-rank. For high-dimensional problems
+    where a dense metric is too expensive, consider :func:`window_adaptation`
+    with ``is_mass_matrix_diagonal=True`` instead. This changes the warmup
+    algorithm; ``pathfinder_adaptation`` has no diagonal-metric option.
+
     **Dispatch table** --- the ``(num_chains, effective_n_paths)`` combination
     selects the internal code path:
 
