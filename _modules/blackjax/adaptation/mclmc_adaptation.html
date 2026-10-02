@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g351bb9a14" />
+  <meta name="docsearch:version" content="0.1.dev1+g0c69b5d2f" />
   </head>
   
   
@@ -429,6 +429,7 @@
 <span class="c1"># limitations under the License.</span>
 <span class="sd">&quot;&quot;&quot;Algorithms to adapt the MCLMC kernel parameters, namely step size and L.&quot;&quot;&quot;</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NamedTuple</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
@@ -735,15 +736,14 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">run_steps</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Run adaptation steps via scan; return (final_carry, per_step_div_flags).&quot;&quot;&quot;</span>
-        <span class="n">carry</span><span class="p">,</span> <span class="n">div_flags</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
-            <span class="n">step</span><span class="p">,</span>
-            <span class="n">init</span><span class="o">=</span><span class="p">(</span>
+        <span class="n">carry</span><span class="p">,</span> <span class="n">div_flags</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">,</span> <span class="n">step</span><span class="p">))(</span>
+            <span class="p">(</span>
                 <span class="n">state</span><span class="p">,</span>
                 <span class="n">params</span><span class="p">,</span>
                 <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">),</span>
                 <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">dim</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">dim</span><span class="p">)])),</span>
             <span class="p">),</span>
-            <span class="n">xs</span><span class="o">=</span><span class="n">xs</span><span class="p">,</span>
+            <span class="n">xs</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">carry</span><span class="p">,</span> <span class="n">div_flags</span>
 
@@ -819,11 +819,7 @@
 
             <span class="k">return</span> <span class="n">next_state</span><span class="p">,</span> <span class="n">next_state</span><span class="o">.</span><span class="n">position</span>
 
-        <span class="n">state</span><span class="p">,</span> <span class="n">samples</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
-            <span class="n">f</span><span class="o">=</span><span class="n">step</span><span class="p">,</span>
-            <span class="n">init</span><span class="o">=</span><span class="n">state</span><span class="p">,</span>
-            <span class="n">xs</span><span class="o">=</span><span class="n">adaptation_L_keys</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="n">state</span><span class="p">,</span> <span class="n">samples</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">,</span> <span class="n">step</span><span class="p">))(</span><span class="n">state</span><span class="p">,</span> <span class="n">adaptation_L_keys</span><span class="p">)</span>
 
         <span class="n">flat_samples</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">])(</span><span class="n">samples</span><span class="p">)</span>
         <span class="n">ess</span> <span class="o">=</span> <span class="n">effective_sample_size</span><span class="p">(</span><span class="n">flat_samples</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span>
