@@ -839,15 +839,15 @@ class CoupledHMCContractTest(BlackJAXTest):
     def test_certain_acceptance_accepts_at_both_uniform_endpoints(self, uniform):
         """``p_accept == 1`` accepts for every admissible uniform in [0, 1).
 
-        Pinned at a stationary point (position = momentum = 0, energy
-        difference exactly 0.0); a small step size alone left ~1e-16 sign
-        noise that failed 128/200 seeded days.
+        A fixed nonstationary leapfrog step decreases the Hamiltonian by
+        0.060546875, giving a resolvable margin for certain acceptance.
+        The analytic endpoint also detects a kernel that skips integration.
         """
         with _x64():
             if uniform is None:
                 uniform = float(jnp.nextafter(jnp.float64(1.0), jnp.float64(0.0)))
             mass = jnp.ones((_DIM,), jnp.float64)
-            position = jnp.zeros((_DIM,), jnp.float64)
+            position = jnp.full((_DIM,), 2.0, jnp.float64)
             state = HMCState(
                 position,
                 _standard_normal_logdensity(position),
@@ -856,18 +856,16 @@ class CoupledHMCContractTest(BlackJAXTest):
             _, step = coupled_hmc._build_prescribed_marginal(
                 _standard_normal_logdensity,
                 mass,
-                1e-8,
-                2,
+                0.5,
+                1,
                 integrators.velocity_verlet,
                 1000.0,
             )
-            noise = jnp.zeros((_DIM,), jnp.float64)  # see docstring
-            _, info = step(state, noise, jnp.asarray(uniform, jnp.float64))
-            self.assertEqual(
-                float(info.acceptance_rate),
-                1.0,
-                "p_accept must be bit-exact 1.0 at a stationary point, not merely close",
-            )
+            noise = jnp.full((_DIM,), 0.25, jnp.float64)
+            new_state, info = step(state, noise, jnp.asarray(uniform, jnp.float64))
+            np.testing.assert_allclose(info.acceptance_rate, 1.0, rtol=0, atol=1e-14)
+            np.testing.assert_allclose(new_state.position, 1.875, rtol=0, atol=1e-14)
+            self.assertLess(float(info.energy), 8.125)
             self.assertTrue(bool(info.is_accepted))
 
     def test_certain_rejection_rejects_at_the_zero_uniform(self):
