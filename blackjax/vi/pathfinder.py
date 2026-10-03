@@ -104,7 +104,8 @@ def approximate(
         ``jax.lax.map`` to trade parallelism for lower intermediate memory;
         ``0`` (the default) keeps fully vectorized evaluation. This must be
         static when using ``jax.jit``. Sampling and the dense inverse-Hessian
-        representation are unchanged.
+        representation are unchanged. Memory savings are not guaranteed when
+        path length and ELBO sample count differ substantially.
     maxiter
         Maximum number of iterations of the L-BFGS algorithm.
     maxcor

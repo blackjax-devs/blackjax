@@ -43,6 +43,38 @@ class PathfinderApproximateTest(BlackJAXTest):
         ):
             np.testing.assert_allclose(result, reference, rtol=1e-5, atol=1e-6)
 
+    def test_both_elbo_axes_are_chunked_through_top_level_api(self):
+        """Both maps add scans, and the top-level init forwards batch_size."""
+        from jax.extend import core
+
+        import blackjax
+
+        def count_scans(value):
+            if isinstance(value, core.Jaxpr):
+                return sum(
+                    (eq.primitive.name == "scan") + count_scans(eq.params)
+                    for eq in value.eqns
+                )
+            if isinstance(value, core.ClosedJaxpr):
+                return count_scans(value.jaxpr)
+            if isinstance(value, dict):
+                return sum(count_scans(x) for x in value.values())
+            if isinstance(value, (tuple, list)):
+                return sum(count_scans(x) for x in value)
+            return 0
+
+        key = self.next_key()
+        position = jnp.array([1.5, -0.7])
+        algo = blackjax.pathfinder(std_normal_logdensity)
+        kwargs = dict(num_samples=6, maxiter=3, maxcor=3)
+        default = jax.make_jaxpr(lambda k, x: algo.init(k, x, **kwargs))(key, position)
+        chunked = jax.make_jaxpr(lambda k, x: algo.init(k, x, batch_size=2, **kwargs))(
+            key, position
+        )
+        # The optimizer has its own scans in both graphs. Each chunked ELBO
+        # axis must add a scan beyond those, so dropping either map fails.
+        self.assertEqual(count_scans(chunked), count_scans(default) + 2)
+
     def test_returns_pathfinder_state_and_info(self):
         """approximate returns (PathfinderState, PathfinderInfo)."""
         ndim = 2
