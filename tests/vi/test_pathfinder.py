@@ -25,6 +25,56 @@ from tests.fixtures import BlackJAXTest, std_normal_logdensity
 class PathfinderApproximateTest(BlackJAXTest):
     """Tests for the `approximate` function."""
 
+    def test_batched_elbo_matches_vectorized_path(self):
+        """Chunking both maps preserves the optimization path and PRNG keys."""
+        position = {"x": jnp.array([1.5, -0.7])}
+
+        def logdensity(x):
+            return -jnp.sum(x["x"] ** 2 / 2 + x["x"] ** 4 / 20)
+
+        key = self.next_key()
+        kwargs = dict(num_samples=7, maxiter=4, maxcor=3)
+        expected = approximate(key, logdensity, position, **kwargs)
+        actual = jax.jit(
+            lambda k, x: approximate(k, logdensity, x, batch_size=2, **kwargs)
+        )(key, position)
+        for reference, result in zip(
+            jax.tree.leaves(expected), jax.tree.leaves(actual)
+        ):
+            np.testing.assert_allclose(result, reference, rtol=1e-5, atol=1e-6)
+
+    def test_both_elbo_axes_are_chunked_through_top_level_api(self):
+        """Both maps add scans, and the top-level init forwards batch_size."""
+        from jax.extend import core
+
+        import blackjax
+
+        def count_scans(value):
+            if isinstance(value, core.Jaxpr):
+                return sum(
+                    (eq.primitive.name == "scan") + count_scans(eq.params)
+                    for eq in value.eqns
+                )
+            if isinstance(value, core.ClosedJaxpr):
+                return count_scans(value.jaxpr)
+            if isinstance(value, dict):
+                return sum(count_scans(x) for x in value.values())
+            if isinstance(value, (tuple, list)):
+                return sum(count_scans(x) for x in value)
+            return 0
+
+        key = self.next_key()
+        position = jnp.array([1.5, -0.7])
+        algo = blackjax.pathfinder(std_normal_logdensity)
+        kwargs = dict(num_samples=6, maxiter=3, maxcor=3)
+        default = jax.make_jaxpr(lambda k, x: algo.init(k, x, **kwargs))(key, position)
+        chunked = jax.make_jaxpr(lambda k, x: algo.init(k, x, batch_size=2, **kwargs))(
+            key, position
+        )
+        # The optimizer has its own scans in both graphs. Each chunked ELBO
+        # axis must add a scan beyond those, so dropping either map fails.
+        self.assertEqual(count_scans(chunked), count_scans(default) + 2)
+
     def test_returns_pathfinder_state_and_info(self):
         """approximate returns (PathfinderState, PathfinderInfo)."""
         ndim = 2
