@@ -113,3 +113,59 @@ def test_linear_kernel_matches_stein_feature_norm():
         jnp.asarray(samples), lambda x: -x, lambda x, y: 1 + jnp.dot(x, y)
     )
     np.testing.assert_allclose(result, expected, rtol=2e-6)
+
+
+def test_u_statistic_matches_off_diagonal_reference():
+    samples = np.array([[-1.0, 0.5], [0.25, -0.75], [1.5, 2.0]])
+    n, d = samples.shape
+    total = rbf_reference(samples, -samples, 1.0) * n**2
+    diagonal = np.sum(samples**2) + 2 * d * n
+    expected = (total - diagonal) / (n * (n - 1))
+    result = kernelized_stein_discrepancy(
+        samples, lambda x: -x, rbf_kernel, statistic="u"
+    )
+    np.testing.assert_allclose(result, expected, rtol=2e-6, atol=2e-6)
+
+
+def test_imq_statistical_behavior():
+    from blackjax.diagnostics import imq_kernel
+
+    # Fixed common draws isolate location/scale changes rather than comparing
+    # independent Monte Carlo noise. This is not a general convergence test.
+    samples = jax.random.normal(jax.random.key(42), (400, 4))
+    evaluate = jax.jit(
+        lambda x: kernelized_stein_discrepancy(
+            x, lambda y: -y, imq_kernel, statistic="u"
+        )
+    )
+    exact = evaluate(samples)
+    assert abs(exact) < 0.02
+    assert evaluate(samples + 1.5) > exact + 0.1
+    assert evaluate(samples * 0.5) > exact + 0.1
+
+
+def test_sequential_rows_and_imq_formula():
+    from blackjax.diagnostics import imq_kernel
+
+    x, y = jnp.array([1.0, 2.0]), jnp.array([-1.0, 1.0])
+    np.testing.assert_allclose(imq_kernel(x, y), 6**-0.5)
+    samples = jnp.zeros((3, 2))
+    jaxpr = jax.make_jaxpr(
+        lambda x: kernelized_stein_discrepancy(x, lambda y: -y, imq_kernel)
+    )(samples)
+    assert any(e.primitive.name == "scan" for e in jaxpr.jaxpr.eqns)
+
+
+@pytest.mark.parametrize(
+    "samples,statistic,message",
+    [
+        ({"x": jnp.ones((2, 1))}, "v", "ravel"),
+        (jnp.ones((1, 2)), "u", "two samples"),
+        (jnp.ones((2, 2)), "invalid", "statistic"),
+    ],
+)
+def test_statistic_and_pytree_contract(samples, statistic, message):
+    with pytest.raises(ValueError, match=message):
+        kernelized_stein_discrepancy(
+            samples, lambda x: -x, rbf_kernel, statistic=statistic
+        )

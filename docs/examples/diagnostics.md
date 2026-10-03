@@ -143,34 +143,45 @@ print(f"Pareto k statistic: {pareto_k}")
 
 ## Kernelized Stein discrepancy
 
-When the target score (gradient of its log density) is available, KSD measures
-distributional discrepancy rather than mixing between chains. The normalizing
-constant cancels from the score. See [Liu, Lee and Jordan (2016)](https://proceedings.mlr.press/v48/liub16.html)
-and [Chwialkowski, Strathmann and Gretton (2016)](https://proceedings.mlr.press/v48/chwialkowski16.html).
+KSD uses the target score (gradient of its log density), so its normalizing
+constant is not needed :cite:p:`liu2016kernelized`. It complements R-hat rather
+than replacing it. Use approximately independent draws (for example, thinned
+chain draws). Autocorrelation can inflate it, and even IMQ KSD can fail to reveal
+an unvisited mode. A small value alone does not certify convergence.
 
-`blackjax.diagnostics.kernelized_stein_discrepancy` returns the **squared KSD
-V-statistic**, including diagonal pairs. It does not return a p-value or provide
-an automatic stopping rule. Its value depends on the selected kernel and
-bandwidth; the kernel must satisfy the target's Stein boundary conditions.
+`blackjax.diagnostics.kernelized_stein_discrepancy` returns **squared KSD**.
+`statistic="v"` includes diagonal pairs and has a sample-dependent bias of order
+`1/n`, even for exact draws. `statistic="u"` excludes the diagonal; it can be
+negative. Neither option returns a calibrated p-value or automatic stopping rule.
+Compare values only with attention to the kernel, sample count and dependence.
 
-The pairwise calculation is quadratic in sample count. Here we use a subset
-from each chain and pool the chain and draw dimensions explicitly:
+A Gaussian RBF kernel is not suitable for detecting non-convergence in dimension
+three or higher. Here we use the inverse multiquadric (IMQ) kernel with `c=1` and
+`beta=-0.5`. IMQ convergence guarantees require suitable target conditions;
+heavy-tailed targets with bounded scores remain a known gap
+:cite:p:`gorham2017kernels`. A positive semidefinite kernel by itself is not enough
+to identify distributions; integral strict positive definiteness and the target's
+Stein boundary conditions are additional requirements.
+
+Rows are processed sequentially, with vectorized columns. Pairwise work is
+quadratic in sample count, and mixed Hessians have `d²` entries; temporary
+pairwise storage scales as `O(n*d²)`. Flatten PyTree positions explicitly with
+`jax.flatten_util.ravel_pytree` before stacking. This example pools a thinned
+subset from each chain:
 
 ```{code-cell} ipython3
 import functools
-from blackjax.vi.svgd import rbf_kernel
+from blackjax.diagnostics import imq_kernel
 
 ksd_samples = states.position[:, ::20, :].reshape(-1, 1)
-ksd_kernel = functools.partial(rbf_kernel, length_scale=2.0)
 ksd_squared = jax.jit(functools.partial(
     blackjax.diagnostics.kernelized_stein_discrepancy,
     grad_logdensity_fn=jax.grad(logdensity_fn),
-    kernel=ksd_kernel,
+    kernel=imq_kernel,
+    statistic="u",
 ))(ksd_samples)
-print(f"Squared KSD V-statistic: {ksd_squared}")
+print(f"Squared KSD U-statistic: {ksd_squared}")
 ```
 
-BlackJAX's RBF kernel uses `exp(-||x-y||² / length_scale)`, so this example's
-`length_scale=2.0` corresponds to a unit bandwidth in the usual
-`exp(-||x-y||² / (2 h²))` convention. No bandwidth is chosen automatically.
-A small empirical value alone does not certify that a chain has converged.
+This printed value is illustrative, not evidence of convergence. Even exact iid
+samples give a range of empirical values; no null calibration is performed here.
