@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """MCMC diagnostics."""
-from typing import NamedTuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -22,6 +22,7 @@ from scipy.fftpack import next_fast_len  # type: ignore
 from blackjax.types import Array, ArrayLike
 
 __all__ = [
+    "kernelized_stein_discrepancy",
     "potential_scale_reduction",
     "effective_sample_size",
     "rhat",
@@ -34,6 +35,70 @@ __all__ = [
     "divergence_concentration_from_counts",
     "format_divergence_warning",
 ]
+
+
+def kernelized_stein_discrepancy(
+    samples: ArrayLike, grad_logdensity_fn: Callable, kernel: Callable
+) -> Array:
+    """Estimate the squared kernelized Stein discrepancy with a V-statistic.
+
+    Parameters
+    ----------
+    samples
+        Floating-point array of shape ``(num_samples, num_dimensions)``. Chain
+        dimensions must be pooled explicitly before calling this function.
+    grad_logdensity_fn
+        Target score function, mapping one sample vector to the gradient of its
+        log density with the same shape. For example, ``jax.grad(logdensity_fn)``.
+        The normalizing constant is not required.
+    kernel
+        Scalar-valued, twice differentiable positive semidefinite kernel taking two
+        sample vectors. Bind kernel parameters such as bandwidth with
+        ``functools.partial``. The kernel must satisfy the target's Stein boundary
+        conditions; choosing an appropriate kernel is the caller's responsibility.
+
+    Returns
+    -------
+    The mean Stein-kernel value over all ordered sample pairs, including the
+    diagonal. This is the biased V-statistic estimate of *squared* KSD, not its
+    square root, an unbiased U-statistic, or a calibrated p-value. A small value
+    alone does not certify convergence.
+
+    Notes
+    -----
+    Uses the score/kernel derivative expression in Theorem 3.6 of Liu, Lee and
+    Jordan (2016), https://proceedings.mlr.press/v48/liub16.html. The pairwise
+    calculation has quadratic cost in the number of samples and constructs
+    mixed kernel Hessians of shape ``(num_dimensions, num_dimensions)``.
+    The supplied functions must support JAX differentiation and transformations.
+    The V-statistic is nonnegative in exact arithmetic; floating-point rounding
+    can produce a small negative result, which is returned without clipping.
+    """
+    samples = jnp.asarray(samples)
+    if samples.ndim != 2 or min(samples.shape) == 0:
+        raise ValueError("samples must have nonempty sample and dimension axes")
+    if not jnp.issubdtype(samples.dtype, jnp.floating):
+        raise ValueError("samples must have a floating-point dtype")
+    scores = jax.vmap(grad_logdensity_fn)(samples)
+    if scores.shape != samples.shape:
+        raise ValueError("grad_logdensity_fn must return a vector matching each sample")
+    kernel_value_and_grad = jax.value_and_grad(kernel, argnums=(0, 1))
+    mixed_derivative = jax.jacfwd(jax.grad(kernel, argnums=0), argnums=1)
+
+    def stein_kernel(x, y, score_x, score_y):
+        value, (grad_x, grad_y) = kernel_value_and_grad(x, y)
+        return (
+            value * jnp.dot(score_x, score_y)
+            + jnp.dot(score_x, grad_y)
+            + jnp.dot(grad_x, score_y)
+            + jnp.trace(mixed_derivative(x, y))
+        )
+
+    pair_values = jax.vmap(
+        jax.vmap(stein_kernel, in_axes=(None, 0, None, 0)),
+        in_axes=(0, None, 0, None),
+    )(samples, samples, scores, scores)
+    return jnp.mean(pair_values)
 
 
 def potential_scale_reduction(

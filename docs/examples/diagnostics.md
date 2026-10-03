@@ -139,3 +139,38 @@ log_weights, pareto_k = blackjax.diagnostics.psis_weights(log_ratios)
 print(f"Pareto k statistic: {pareto_k}")
 # A value of k < 0.7 is generally considered a good approximation.
 ```
+
+
+## Kernelized Stein discrepancy
+
+When the target score (gradient of its log density) is available, KSD measures
+distributional discrepancy rather than mixing between chains. The normalizing
+constant cancels from the score. See [Liu, Lee and Jordan (2016)](https://proceedings.mlr.press/v48/liub16.html)
+and [Chwialkowski, Strathmann and Gretton (2016)](https://proceedings.mlr.press/v48/chwialkowski16.html).
+
+`blackjax.diagnostics.kernelized_stein_discrepancy` returns the **squared KSD
+V-statistic**, including diagonal pairs. It does not return a p-value or provide
+an automatic stopping rule. Its value depends on the selected kernel and
+bandwidth; the kernel must satisfy the target's Stein boundary conditions.
+
+The pairwise calculation is quadratic in sample count. Here we use a subset
+from each chain and pool the chain and draw dimensions explicitly:
+
+```{code-cell} ipython3
+import functools
+from blackjax.vi.svgd import rbf_kernel
+
+ksd_samples = states.position[:, ::20, :].reshape(-1, 1)
+ksd_kernel = functools.partial(rbf_kernel, length_scale=2.0)
+ksd_squared = jax.jit(functools.partial(
+    blackjax.diagnostics.kernelized_stein_discrepancy,
+    grad_logdensity_fn=jax.grad(logdensity_fn),
+    kernel=ksd_kernel,
+))(ksd_samples)
+print(f"Squared KSD V-statistic: {ksd_squared}")
+```
+
+BlackJAX's RBF kernel uses `exp(-||x-y||² / length_scale)`, so this example's
+`length_scale=2.0` corresponds to a unit bandwidth in the usual
+`exp(-||x-y||² / (2 h²))` convention. No bandwidth is chosen automatically.
+A small empirical value alone does not certify that a chain has converged.
