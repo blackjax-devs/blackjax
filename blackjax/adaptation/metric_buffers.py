@@ -200,7 +200,9 @@ class MomentBlock(NamedTuple):
     partner when one block is empty.
     """
 
-    count: Array  # ()
+    # `count` shadows tuple.count (Callable[[Any], int]); mypy's typeshed
+    # stub for tuple has no way to express a NamedTuple field overriding it.
+    count: Array  # type: ignore[assignment]  # ()
     mean: Array  # (d,)
     m2: Array  # (d, d) or (d,)
 
@@ -243,7 +245,8 @@ class _FisherMomentBlock(NamedTuple):
     See :func:`_fisher_block_init`, :func:`_fisher_block_update_one`.
     """
 
-    count: Array  # ()  ambient float dtype
+    # `count` shadows tuple.count (Callable[[Any], int]); see _MomentBlock.
+    count: Array  # type: ignore[assignment]  # ()  ambient float dtype
     mean_x: Array  # (d,)
     m2_x: Array  # (d,)  diagonal, sum of squared deviations
     mean_g: Array  # (d,)
