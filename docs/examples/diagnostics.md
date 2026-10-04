@@ -165,9 +165,8 @@ Stein boundary conditions are additional requirements.
 
 Rows are processed sequentially, with vectorized columns. Pairwise work is
 quadratic in sample count, and mixed Hessians have `d²` entries; temporary
-pairwise storage scales as `O(n*d²)`. Flatten PyTree positions explicitly with
-`jax.flatten_util.ravel_pytree` before stacking. This example pools a thinned
-subset from each chain:
+pairwise storage scales as `O(n*d²)`. This example pools a thinned subset from
+each chain:
 
 ```{code-cell} ipython3
 import functools
