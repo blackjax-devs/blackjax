@@ -15,7 +15,7 @@ from blackjax.adaptation.base import AdaptationResults, return_all_adapt_info
 from blackjax.adaptation.mass_matrix import welford_algorithm
 from blackjax.adaptation.metric_buffers import MomentBlock, cgl_update_batch
 from blackjax.base import AdaptationAlgorithm
-from blackjax.types import Array, ArrayLikeTree, PRNGKey
+from blackjax.types import Array, ArrayLikeTree, Numeric, PRNGKey
 from blackjax.util import pytree_size
 
 # optimal tuning for HMC, see https://arxiv.org/abs/1001.4460
@@ -51,7 +51,7 @@ class ChEESAdaptationState(NamedTuple):
 
     step_size: float
     log_step_size_moving_average: float
-    trajectory_length: float
+    trajectory_length: Numeric
     log_trajectory_length_moving_average: float
     da_state: dual_averaging.DualAveragingState
     optim_state: optax.OptState
@@ -975,6 +975,12 @@ def chees_adaptation(
         # disabled (mass_matrix_estimation=None OR _length_floor=False) --
         # see `enable_length_floor`'s derivation above.
         if enable_length_floor:
+            # enable_length_floor = estimate_mass_matrix and _length_floor, so
+            # estimate_mass_matrix is True here and these were never set to
+            # None above.
+            assert last_mm_accum is not None
+            assert last_cov_accum is not None
+            assert last_eig_state is not None
             final_engaged = last_mm_accum.sample_size >= mm_engagement_threshold
             final_eig_state = _recompute_eig_state(
                 last_cov_accum,

@@ -24,7 +24,7 @@ from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.mcmc.adjusted_mclmc import rescale
 from blackjax.mcmc.hmc import HMCInfo, HMCState, hmc_proposal
 from blackjax.mcmc.hmc import build_kernel as build_static_hmc_kernel
-from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, Numeric, PRNGKey
 
 __all__ = [
     "DynamicHMCState",
@@ -53,13 +53,21 @@ class DynamicHMCState(NamedTuple):
 def init(
     position: ArrayLikeTree,
     logdensity_fn: Callable,
-    random_generator_arg: Array,
+    random_generator_arg: Numeric,
 ):
     logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
     # position is stored unconverted, like hmc.HMCState: adjusted_mclmc_dynamic
     # re-feeds DynamicHMCState.position straight into an IntegratorState.
+    # random_generator_arg is accepted as a plain int Halton-sequence index
+    # too (chees_adaptation seeds it with a literal 0), but the field stays
+    # Array: every downstream consumer (halton_sequence, trajectory_length)
+    # calls .dtype on it, which a bare Python int would not survive at
+    # runtime any more than it does today.
     return DynamicHMCState(
-        cast(ArrayTree, position), logdensity, logdensity_grad, random_generator_arg
+        cast(ArrayTree, position),
+        logdensity,
+        logdensity_grad,
+        cast(Array, random_generator_arg),
     )
 
 
