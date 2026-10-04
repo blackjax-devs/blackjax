@@ -108,15 +108,15 @@ class SMCEffectiveSampleSizeTest(chex.TestCase):
         np.testing.assert_allclose(ess_val, target_ess * N, atol=1e-1, rtol=1e-2)
 
     @chex.all_variants(with_pmap=False)
-    def test_ess_solver_asymmetric_loglikelihood_issue_914(self):
-        """Regression test for the sign bug in #914.
+    def test_ess_solver_asymmetric_loglikelihood(self):
+        """The ESS solver's bisection sign must track the correct search direction.
 
         With a Cauchy prior and a sharply concentrated Gaussian likelihood
         centred away from 0, the prior-IS estimator already achieves an ESS
         well above the target with ``delta=1.0`` (one-step IS suffices, no
         tempering needed). The bisection must therefore return
-        ``delta = max_delta = 1.0``. Before the #914 fix, the wrong sign
-        made the bisection report ``delta ~ 5e-8``, which caused
+        ``delta = max_delta = 1.0``. A wrong sign in the bisection direction
+        would instead report ``delta ~ 5e-8``, which causes
         ``adaptive_tempered_smc`` to stall at ``lambda ~ 0``.
 
         We choose ``max_delta = 1.0`` so the boundary case ``delta == 1.0``
