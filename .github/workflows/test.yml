@@ -20,7 +20,10 @@ jobs:
       with:
         python-version: 3.13
     - name: Set up the dev environment (mypy runs in it, not in an isolated hook env)
-      run: uv sync --group dev
+      # --extra progress: blackjax.progress_bar imports jaxtap behind a
+      # try/except ImportError, but mypy still needs it installed to resolve
+      # the import statically (matches the test job's own sync below).
+      run: uv sync --group dev --extra progress
     - uses: pre-commit/action@v3.0.0
 
   test:
