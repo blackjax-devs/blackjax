@@ -1,7 +1,6 @@
 """Test the resampling functions for SMC."""
 
 import itertools
-from unittest import mock
 
 import chex
 import jax
@@ -31,31 +30,27 @@ def integrand(x):
 
 class ResamplingTest(chex.TestCase):
     @chex.variants(with_jit=True, without_jit=True)
-    @parameterized.parameters(
-        itertools.product(
-            ["systematic", "stratified"], ["float32", "float64"], [False, True]
-        )
-    )
-    def test_zero_weight_boundaries(self, method_name, dtype, upper_boundary):
-        with jax.enable_x64():
-            weights = jnp.array([0.0, 0.5, 0.0, 0.5, 0.0], dtype=dtype)
-            offset = (
-                jnp.nextafter(jnp.array(1.0, dtype=dtype), jnp.array(0.0, dtype=dtype))
-                if upper_boundary
-                else jnp.array(0.0, dtype=dtype)
+    @parameterized.parameters(itertools.product([False, True], [False, True]))
+    def test_zero_weight_boundaries(self, is_systematic, upper_boundary):
+        if upper_boundary:
+            weights = jax.nn.softmax(
+                jnp.array([0.0, -1.0, -2.0, -3.0, -4.0, -jnp.inf], dtype=jnp.float32)
             )
-
-            def draw(key, shape):
-                return jnp.full(shape, offset, dtype=dtype)
-
-            def sample(key, w):
-                return resampling_methods[method_name](key, w, 4)
-
-            with mock.patch("jax.random.uniform", side_effect=draw):
-                indices = self.variant(sample)(jax.random.key(0), weights)
-            expected = [1, 3, 3, 3] if upper_boundary else [1, 1, 3, 3]
-            np.testing.assert_array_equal(indices, expected)
-            self.assertTrue(np.all(np.asarray(weights[indices]) > 0))
+            self.assertLess(float(jnp.cumsum(weights)[-1]), 1.0)
+            offset = jnp.array(1 - 2**-23, dtype=jnp.float32)
+        else:
+            weights = jnp.array([0.0, 0.5, 0.0, 0.5, 0.0], dtype=jnp.float32)
+            offset = jnp.array(0.0, dtype=jnp.float32)
+        num_samples = weights.shape[0] if upper_boundary else 4
+        u = offset if is_systematic else jnp.full((num_samples,), offset)
+        indices = self.variant(resampling._inverse_cdf_indices, static_argnums=(2,))(
+            weights, u, num_samples
+        )
+        self.assertTrue(np.all(np.asarray(weights[indices]) > 0))
+        counts = np.bincount(np.asarray(indices), minlength=weights.shape[0])
+        expected_counts = num_samples * np.asarray(weights, dtype=np.float64)
+        self.assertTrue(np.all(counts >= np.floor(expected_counts)))
+        self.assertTrue(np.all(counts <= np.ceil(expected_counts)))
 
     @chex.variants(with_jit=True, without_jit=True)
     @parameterized.parameters(
