@@ -82,7 +82,7 @@ Functions
 Module Contents
 ---------------
 
-.. py:function:: normal(sigma: blackjax.types.Array) -> Callable
+.. py:function:: normal(sigma: blackjax.types.Array) -> collections.abc.Callable
 
    Normal Random Walk proposal.
 
@@ -157,7 +157,7 @@ Module Contents
              * *information about the transition.*
 
 
-.. py:function:: normal_random_walk(logdensity_fn: Callable, sigma)
+.. py:function:: normal_random_walk(logdensity_fn: collections.abc.Callable, sigma)
 
    :param logdensity_fn: The log density probability density function from which we wish to sample.
    :param sigma: The value of the covariance matrix of the gaussian proposal distribution.
@@ -165,7 +165,7 @@ Module Contents
    :rtype: A ``SamplingAlgorithm``.
 
 
-.. py:function:: additive_step_random_walk(logdensity_fn: Callable, random_step: Callable) -> blackjax.base.SamplingAlgorithm
+.. py:function:: additive_step_random_walk(logdensity_fn: collections.abc.Callable, random_step: collections.abc.Callable) -> blackjax.base.SamplingAlgorithm
 
    Implements the user interface for the Additive Step RMH
 
@@ -196,7 +196,7 @@ Module Contents
    :rtype: A ``SamplingAlgorithm``.
 
 
-.. py:function:: build_irmh() -> Callable
+.. py:function:: build_irmh() -> collections.abc.Callable
 
    Build an Independent Random Walk Rosenbluth-Metropolis-Hastings kernel. This implies
    that the proposal distribution does not depend on the particle being mutated :cite:p:`wang2022exact`.
@@ -206,7 +206,7 @@ Module Contents
              * *information about the transition.*
 
 
-.. py:function:: irmh_as_top_level_api(logdensity_fn: Callable, proposal_distribution: Callable, proposal_logdensity_fn: Callable | None = None) -> blackjax.base.SamplingAlgorithm
+.. py:function:: irmh_as_top_level_api(logdensity_fn: collections.abc.Callable, proposal_distribution: collections.abc.Callable, proposal_logdensity_fn: collections.abc.Callable | None = None) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the independent RMH.
 
@@ -246,7 +246,7 @@ Module Contents
              * *information about the transition.*
 
 
-.. py:function:: rmh_as_top_level_api(logdensity_fn: Callable, proposal_generator: Callable[[blackjax.types.PRNGKey, blackjax.types.ArrayLikeTree], blackjax.types.ArrayTree], proposal_logdensity_fn: Callable[[blackjax.types.ArrayLikeTree], blackjax.types.ArrayTree] | None = None) -> blackjax.base.SamplingAlgorithm
+.. py:function:: rmh_as_top_level_api(logdensity_fn: collections.abc.Callable, proposal_generator: collections.abc.Callable[[blackjax.types.PRNGKey, blackjax.types.ArrayLikeTree], blackjax.types.ArrayTree], proposal_logdensity_fn: collections.abc.Callable[[blackjax.types.ArrayLikeTree], blackjax.types.ArrayTree] | None = None) -> blackjax.base.SamplingAlgorithm
 
    Implements the user interface for the RMH.
 
@@ -277,7 +277,7 @@ Module Contents
    :rtype: A ``SamplingAlgorithm``.
 
 
-.. py:function:: build_rmh_transition_energy(proposal_logdensity_fn: Callable | None) -> Callable
+.. py:function:: build_rmh_transition_energy(proposal_logdensity_fn: collections.abc.Callable | None) -> collections.abc.Callable
 
    Build the transition energy function for the Random Walk Metropolis-Hastings kernel.
 
@@ -292,7 +292,7 @@ Module Contents
    :rtype: A callable ``(prev_state, new_state) -> transition_energy``.
 
 
-.. py:function:: rmh_proposal(logdensity_fn: Callable, transition_distribution: Callable, compute_acceptance_ratio: Callable, sample_proposal: Callable = proposal.static_binomial_sampling) -> Callable
+.. py:function:: rmh_proposal(logdensity_fn: collections.abc.Callable, transition_distribution: collections.abc.Callable, compute_acceptance_ratio: collections.abc.Callable, sample_proposal: collections.abc.Callable = proposal.static_binomial_sampling) -> collections.abc.Callable
 
    Build a Random Walk Metropolis-Hastings proposal generator.
 

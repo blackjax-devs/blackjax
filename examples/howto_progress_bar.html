@@ -57,7 +57,7 @@
     <link rel="prev" title="Sample with multiple chains in parallel" href="howto_sample_multiple_chains.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g50818d9c4" />
+  <meta name="docsearch:version" content="0.1.dev1+g02681f020" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -563,10 +563,10 @@
 <div class="cell_output docutils container">
 <div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
 <span class="ne">ModuleNotFoundError</span><span class="g g-Whitespace">                       </span>Traceback (most recent call last)
-<span class="nn">File ~/work/blackjax/blackjax/blackjax/progress_bar.py:302,</span> in <span class="ni">progress_bar</span><span class="nt">(label, print_rate, output_file)</span>
-<span class="g g-Whitespace">    </span><span class="mi">301</span> <span class="k">try</span><span class="p">:</span>
-<span class="ne">--&gt; </span><span class="mi">302</span>     <span class="kn">import</span><span class="w"> </span><span class="nn">jaxtap</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tap</span>
-<span class="g g-Whitespace">    </span><span class="mi">303</span> <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+<span class="nn">File ~/work/blackjax/blackjax/blackjax/progress_bar.py:303,</span> in <span class="ni">progress_bar</span><span class="nt">(label, print_rate, output_file)</span>
+<span class="g g-Whitespace">    </span><span class="mi">302</span> <span class="k">try</span><span class="p">:</span>
+<span class="ne">--&gt; </span><span class="mi">303</span>     <span class="kn">import</span><span class="w"> </span><span class="nn">jaxtap</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tap</span>
+<span class="g g-Whitespace">    </span><span class="mi">304</span> <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
 
 <span class="ne">ModuleNotFoundError</span>: No module named 'jaxtap'
 
@@ -580,22 +580,22 @@
 <span class="ne">----&gt; </span><span class="mi">4</span> <span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">"NUTS warmup"</span><span class="p">):</span>
 <span class="g g-Whitespace">      </span><span class="mi">5</span>     <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">),</span> <span class="n">_</span> <span class="o">=</span> <span class="n">warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">k_warm</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">DIM</span><span class="p">),</span> <span class="n">num_steps</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
 
-<span class="nn">File /usr/lib/python3.12/contextlib.py:137,</span> in <span class="ni">_GeneratorContextManager.__enter__</span><span class="nt">(self)</span>
-<span class="g g-Whitespace">    </span><span class="mi">135</span> <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwds</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">func</span>
-<span class="g g-Whitespace">    </span><span class="mi">136</span> <span class="k">try</span><span class="p">:</span>
-<span class="ne">--&gt; </span><span class="mi">137</span>     <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gen</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">138</span> <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
-<span class="g g-Whitespace">    </span><span class="mi">139</span>     <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"generator didn't yield"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
+<span class="nn">File ~/.local/share/uv/python/cpython-3.13.16-linux-x86_64-gnu/lib/python3.13/contextlib.py:141,</span> in <span class="ni">_GeneratorContextManager.__enter__</span><span class="nt">(self)</span>
+<span class="g g-Whitespace">    </span><span class="mi">139</span> <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwds</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">func</span>
+<span class="g g-Whitespace">    </span><span class="mi">140</span> <span class="k">try</span><span class="p">:</span>
+<span class="ne">--&gt; </span><span class="mi">141</span>     <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gen</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">142</span> <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+<span class="g g-Whitespace">    </span><span class="mi">143</span>     <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"generator didn't yield"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
 
-<span class="nn">File ~/work/blackjax/blackjax/blackjax/progress_bar.py:304,</span> in <span class="ni">progress_bar</span><span class="nt">(label, print_rate, output_file)</span>
-<span class="g g-Whitespace">    </span><span class="mi">302</span>     <span class="kn">import</span><span class="w"> </span><span class="nn">jaxtap</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tap</span>
-<span class="g g-Whitespace">    </span><span class="mi">303</span> <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-<span class="ne">--&gt; </span><span class="mi">304</span>     <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">305</span>         <span class="s2">"blackjax.progress_bar requires the 'progress' optional extra. "</span>
-<span class="g g-Whitespace">    </span><span class="mi">306</span>         <span class="s2">"Install it with:  pip install 'blackjax[progress]'"</span>
-<span class="g g-Whitespace">    </span><span class="mi">307</span>     <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
-<span class="g g-Whitespace">    </span><span class="mi">309</span> <span class="n">state</span> <span class="o">=</span> <span class="n">ProgressState</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">print_rate</span><span class="o">=</span><span class="n">print_rate</span><span class="p">,</span> <span class="n">output_file</span><span class="o">=</span><span class="n">output_file</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">311</span> <span class="k">def</span><span class="w"> </span><span class="nf">_on_step</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
+<span class="nn">File ~/work/blackjax/blackjax/blackjax/progress_bar.py:305,</span> in <span class="ni">progress_bar</span><span class="nt">(label, print_rate, output_file)</span>
+<span class="g g-Whitespace">    </span><span class="mi">303</span>     <span class="kn">import</span><span class="w"> </span><span class="nn">jaxtap</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tap</span>
+<span class="g g-Whitespace">    </span><span class="mi">304</span> <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+<span class="ne">--&gt; </span><span class="mi">305</span>     <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+<span class="g g-Whitespace">    </span><span class="mi">306</span>         <span class="s2">"blackjax.progress_bar requires the 'progress' optional extra. "</span>
+<span class="g g-Whitespace">    </span><span class="mi">307</span>         <span class="s2">"Install it with:  pip install 'blackjax[progress]'"</span>
+<span class="g g-Whitespace">    </span><span class="mi">308</span>     <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+<span class="g g-Whitespace">    </span><span class="mi">310</span> <span class="n">state</span> <span class="o">=</span> <span class="n">ProgressState</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">print_rate</span><span class="o">=</span><span class="n">print_rate</span><span class="p">,</span> <span class="n">output_file</span><span class="o">=</span><span class="n">output_file</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">312</span> <span class="k">def</span><span class="w"> </span><span class="nf">_on_step</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
 
 <span class="ne">ImportError</span>: blackjax.progress_bar requires the 'progress' optional extra. Install it with:  pip install 'blackjax[progress]'
 </pre></div>

@@ -35,7 +35,7 @@ Functions
 Module Contents
 ---------------
 
-.. py:function:: covariance_proposal(init_state_fn: Callable, loglikelihood_0: blackjax.types.Array, cov: blackjax.types.Array | None = None, *, covariance_factor: blackjax.types.Array | None = None) -> Callable
+.. py:function:: covariance_proposal(init_state_fn: collections.abc.Callable, loglikelihood_0: blackjax.types.Array, cov: blackjax.types.Array | None = None, *, covariance_factor: blackjax.types.Array | None = None) -> collections.abc.Callable
 
    Proposal generator for nested slice sampling.
 
@@ -60,7 +60,7 @@ Module Contents
    :rtype: A proposal generator consumed by the univariate slice kernel.
 
 
-.. py:function:: coordinate_proposal(init_state_fn: Callable, loglikelihood_0: blackjax.types.Array, i: blackjax.types.Array, width: blackjax.types.Array) -> Callable
+.. py:function:: coordinate_proposal(init_state_fn: collections.abc.Callable, loglikelihood_0: blackjax.types.Array, i: blackjax.types.Array, width: blackjax.types.Array) -> collections.abc.Callable
 
    Per-axis proposal generator for nested slice-within-Gibbs (SwiG).
 
@@ -110,7 +110,7 @@ Module Contents
    :func:`swig_as_top_level_api`, mirroring :func:`live_covariance_factor`.
 
 
-.. py:function:: slice_constrained_step(init_state_fn: Callable, slice_kernel: Callable, proposal: Callable) -> Callable
+.. py:function:: slice_constrained_step(init_state_fn: collections.abc.Callable, slice_kernel: collections.abc.Callable, proposal: collections.abc.Callable) -> collections.abc.Callable
 
    The slice-family constrained inner step for nested sampling.
 
@@ -122,7 +122,7 @@ Module Contents
    :func:`~blackjax.ns.from_mcmc.build_kernel`.
 
 
-.. py:function:: build_kernel(init_state_fn: Callable, num_inner_steps: int, num_delete: int = 1, max_steps: int = 10, max_shrinkage: int = 100, proposal: Callable = covariance_proposal, inner_kernel_params: Callable | None = None, update_strategy: Callable = update_with_mcmc_take_last) -> Callable
+.. py:function:: build_kernel(init_state_fn: collections.abc.Callable, num_inner_steps: int, num_delete: int = 1, max_steps: int = 10, max_shrinkage: int = 100, proposal: collections.abc.Callable = covariance_proposal, inner_kernel_params: collections.abc.Callable | None = None, update_strategy: collections.abc.Callable = update_with_mcmc_take_last) -> collections.abc.Callable
 
    Build the Nested Slice Sampling kernel.
 
@@ -149,7 +149,7 @@ Module Contents
    :rtype: A kernel ``kernel(rng_key, state)`` that returns ``(new_state, info)``.
 
 
-.. py:function:: coordinate_constrained_step(init_state_fn: Callable, slice_kernel: Callable, proposal: Callable = coordinate_proposal, coordinate_order: Callable = random_order) -> Callable
+.. py:function:: coordinate_constrained_step(init_state_fn: collections.abc.Callable, slice_kernel: collections.abc.Callable, proposal: collections.abc.Callable = coordinate_proposal, coordinate_order: collections.abc.Callable = random_order) -> collections.abc.Callable
 
    The coordinate-sweep constrained inner step for nested sampling (SwiG).
 
@@ -164,7 +164,7 @@ Module Contents
    :func:`~blackjax.ns.from_mcmc.build_kernel` exactly like the hit-and-run step.
 
 
-.. py:function:: build_swig_kernel(init_state_fn: Callable, num_inner_steps: int, num_delete: int = 1, max_steps: int = 10, max_shrinkage: int = 100, proposal: Callable = coordinate_proposal, coordinate_order: Callable = random_order, inner_kernel_params: Callable = live_widths, update_strategy: Callable = update_with_mcmc_take_last) -> Callable
+.. py:function:: build_swig_kernel(init_state_fn: collections.abc.Callable, num_inner_steps: int, num_delete: int = 1, max_steps: int = 10, max_shrinkage: int = 100, proposal: collections.abc.Callable = coordinate_proposal, coordinate_order: collections.abc.Callable = random_order, inner_kernel_params: collections.abc.Callable = live_widths, update_strategy: collections.abc.Callable = update_with_mcmc_take_last) -> collections.abc.Callable
 
    Build the Nested Slice-within-Gibbs (SwiG) kernel.
 
@@ -200,7 +200,7 @@ Module Contents
    :rtype: A kernel ``kernel(rng_key, state)`` that returns ``(new_state, info)``.
 
 
-.. py:function:: as_top_level_api(logprior_fn: Callable, loglikelihood_fn: Callable, num_inner_steps: int, num_delete: int = 1, max_steps: int = 10, max_shrinkage: int = 100, proposal: Callable = covariance_proposal, inner_kernel_params: Callable | None = None, update_strategy: Callable = update_with_mcmc_take_last) -> blackjax.SamplingAlgorithm
+.. py:function:: as_top_level_api(logprior_fn: collections.abc.Callable, loglikelihood_fn: collections.abc.Callable, num_inner_steps: int, num_delete: int = 1, max_steps: int = 10, max_shrinkage: int = 100, proposal: collections.abc.Callable = covariance_proposal, inner_kernel_params: collections.abc.Callable | None = None, update_strategy: collections.abc.Callable = update_with_mcmc_take_last) -> blackjax.SamplingAlgorithm
 
    Creates a Nested Slice Sampling (NSS) algorithm, ``blackjax.nss``.
 
@@ -249,7 +249,7 @@ Module Contents
    live set.
 
 
-.. py:function:: swig_as_top_level_api(logprior_fn: Callable, loglikelihood_fn: Callable, num_inner_steps: int, num_delete: int = 1, max_steps: int = 10, max_shrinkage: int = 100, proposal: Callable = coordinate_proposal, coordinate_order: Callable = random_order, inner_kernel_params: Callable = live_widths, update_strategy: Callable = update_with_mcmc_take_last) -> blackjax.SamplingAlgorithm
+.. py:function:: swig_as_top_level_api(logprior_fn: collections.abc.Callable, loglikelihood_fn: collections.abc.Callable, num_inner_steps: int, num_delete: int = 1, max_steps: int = 10, max_shrinkage: int = 100, proposal: collections.abc.Callable = coordinate_proposal, coordinate_order: collections.abc.Callable = random_order, inner_kernel_params: collections.abc.Callable = live_widths, update_strategy: collections.abc.Callable = update_with_mcmc_take_last) -> blackjax.SamplingAlgorithm
 
    Creates a Nested Slice-within-Gibbs (SwiG) sampling algorithm, ``blackjax.nsswig``.
 

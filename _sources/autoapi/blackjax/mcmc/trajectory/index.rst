@@ -109,7 +109,7 @@ Module Contents
              * to the rightmost state of ``right_trajectory``.
 
 
-.. py:function:: static_integration(integrator: Callable, direction: int = 1) -> Callable
+.. py:function:: static_integration(integrator: collections.abc.Callable, direction: int = 1) -> collections.abc.Callable
 
    Generate a trajectory by integrating several times in one direction.
 
@@ -120,7 +120,7 @@ Module Contents
              * *that returns the final IntegratorState after all steps.*
 
 
-.. py:function:: static_progressive_integration(integrator: Callable, kinetic_energy: Callable, num_integration_steps: int, divergence_threshold: float) -> Callable
+.. py:function:: static_progressive_integration(integrator: collections.abc.Callable, kinetic_energy: collections.abc.Callable, num_integration_steps: int, divergence_threshold: float) -> collections.abc.Callable
 
    Generate a trajectory by integrating a fixed number of steps and
    progressively sampling proposals using multinomial weighting.
@@ -161,7 +161,7 @@ Module Contents
       :type:  NamedTuple
 
 
-.. py:function:: dynamic_progressive_integration(integrator: Callable, kinetic_energy: Callable, update_termination_state: Callable, is_criterion_met: Callable, divergence_threshold: float)
+.. py:function:: dynamic_progressive_integration(integrator: collections.abc.Callable, kinetic_energy: collections.abc.Callable, update_termination_state: collections.abc.Callable, is_criterion_met: collections.abc.Callable, divergence_threshold: float)
 
    Integrate a trajectory and update the proposal sequentially in one direction
    until the termination criterion is met.
@@ -176,7 +176,7 @@ Module Contents
    :rtype: An ``integrate(rng_key, state, direction, termination_state, max_num_steps, step_size, initial_energy)`` function returning ``(proposal, new_trajectory, termination_state, is_diverging, has_terminated)``.
 
 
-.. py:function:: dynamic_recursive_integration(integrator: Callable, kinetic_energy: Callable, uturn_check_fn: Callable, divergence_threshold: float, use_robust_uturn_check: bool = False)
+.. py:function:: dynamic_recursive_integration(integrator: collections.abc.Callable, kinetic_energy: collections.abc.Callable, uturn_check_fn: collections.abc.Callable, divergence_threshold: float, use_robust_uturn_check: bool = False)
 
    Integrate a trajectory and update the proposal recursively in Python
    until the termination criterion is met.
@@ -218,7 +218,7 @@ Module Contents
       :type:  NamedTuple
 
 
-.. py:function:: dynamic_multiplicative_expansion(trajectory_integrator: Callable, uturn_check_fn: Callable, max_num_expansions: int = 10, rate: int = 2) -> Callable
+.. py:function:: dynamic_multiplicative_expansion(trajectory_integrator: collections.abc.Callable, uturn_check_fn: collections.abc.Callable, max_num_expansions: int = 10, rate: int = 2) -> collections.abc.Callable
 
    Sample a trajectory and update the proposal sequentially
    until the termination criterion is met.

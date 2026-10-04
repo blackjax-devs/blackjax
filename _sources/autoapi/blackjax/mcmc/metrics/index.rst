@@ -172,7 +172,7 @@ Module Contents
    :rtype: A ``Metric`` object whose operations all run in :math:`O(dk)`.
 
 
-.. py:function:: gaussian_riemannian(mass_matrix_fn: Callable) -> Metric
+.. py:function:: gaussian_riemannian(mass_matrix_fn: collections.abc.Callable) -> Metric
 
    Hamiltonian dynamic on Riemannian manifold with normally-distributed momentum.
 

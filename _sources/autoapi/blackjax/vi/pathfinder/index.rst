@@ -73,7 +73,7 @@ Module Contents
       :type:  blackjax.types.Array
 
 
-.. py:function:: approximate(rng_key: blackjax.types.PRNGKey, logdensity_fn: Callable, initial_position: blackjax.types.ArrayLikeTree, num_samples: int = 200, *, batch_size: int = 0, maxiter=30, maxcor=10, maxls=1000, gtol=1e-08, ftol=1e-05, **lbfgs_kwargs) -> tuple[PathfinderState, PathfinderInfo]
+.. py:function:: approximate(rng_key: blackjax.types.PRNGKey, logdensity_fn: collections.abc.Callable, initial_position: blackjax.types.ArrayLikeTree, num_samples: int = 200, *, batch_size: int = 0, maxiter=30, maxcor=10, maxls=1000, gtol=1e-08, ftol=1e-05, **lbfgs_kwargs) -> tuple[PathfinderState, PathfinderInfo]
 
    Pathfinder variational inference algorithm.
 
@@ -121,7 +121,7 @@ Module Contents
    :rtype: Samples drawn from the approximate Pathfinder distribution
 
 
-.. py:function:: as_top_level_api(logdensity_fn: Callable) -> blackjax.base.VIAlgorithm
+.. py:function:: as_top_level_api(logdensity_fn: collections.abc.Callable) -> blackjax.base.VIAlgorithm
 
    Implements the (basic) user interface for the pathfinder kernel.
 

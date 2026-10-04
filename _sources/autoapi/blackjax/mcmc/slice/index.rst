@@ -142,12 +142,12 @@ Module Contents
       :type:  blackjax.types.ArrayTree
 
 
-.. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: Callable) -> SliceState
+.. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: collections.abc.Callable) -> SliceState
 
    Create an initial state from a position and log-density function.
 
 
-.. py:function:: stepping_out(rng_key: blackjax.types.PRNGKey, in_slice: Callable, width: float, max_expansions: int) -> tuple[blackjax.types.Array, blackjax.types.Array, blackjax.types.Array, AcceptFn]
+.. py:function:: stepping_out(rng_key: blackjax.types.PRNGKey, in_slice: collections.abc.Callable, width: float, max_expansions: int) -> tuple[blackjax.types.Array, blackjax.types.Array, blackjax.types.Array, AcceptFn]
 
    Neal (2003) Fig. 3 stepping-out interval, in t-space (x0 at t=0).
 
@@ -160,7 +160,7 @@ Module Contents
              * *endpoints, the number of expansions, and the acceptance test.*
 
 
-.. py:function:: doubling(rng_key: blackjax.types.PRNGKey, in_slice: Callable, width: float, max_expansions: int) -> tuple[blackjax.types.Array, blackjax.types.Array, blackjax.types.Array, AcceptFn]
+.. py:function:: doubling(rng_key: blackjax.types.PRNGKey, in_slice: collections.abc.Callable, width: float, max_expansions: int) -> tuple[blackjax.types.Array, blackjax.types.Array, blackjax.types.Array, AcceptFn]
 
    Neal (2003) Fig. 4 doubling interval, vectorized, in t-space.
 
@@ -174,7 +174,7 @@ Module Contents
              * *endpoints, the number of expansions, and the acceptance test.*
 
 
-.. py:function:: build_kernel(interval: Callable = doubling, max_expansions: int = 10, max_shrinkage: int = 100) -> Callable
+.. py:function:: build_kernel(interval: collections.abc.Callable = doubling, max_expansions: int = 10, max_shrinkage: int = 100) -> collections.abc.Callable
 
    Build a slice kernel driven by a proposal generator.
 
@@ -208,7 +208,7 @@ Module Contents
    Sweep the coordinates in fixed natural order ``0, 1, ..., d - 1``.
 
 
-.. py:function:: coordinate_proposal(rng_key: blackjax.types.PRNGKey, position: blackjax.types.ArrayLikeTree, logdensity_fn: Callable, i: int) -> Callable
+.. py:function:: coordinate_proposal(rng_key: blackjax.types.PRNGKey, position: blackjax.types.ArrayLikeTree, logdensity_fn: collections.abc.Callable, i: int) -> collections.abc.Callable
 
    Default per-axis proposal for the coordinate sweep.
 
@@ -223,7 +223,7 @@ Module Contents
    built-in constraint argument.
 
 
-.. py:function:: build_coordinate_kernel(interval: Callable = doubling, axis_proposal: Callable = coordinate_proposal, coordinate_order: Callable = random_order, initial_widths: float | blackjax.types.Array = 1.0, max_expansions: int = 10, max_shrinkage: int = 100) -> Callable
+.. py:function:: build_coordinate_kernel(interval: collections.abc.Callable = doubling, axis_proposal: collections.abc.Callable = coordinate_proposal, coordinate_order: collections.abc.Callable = random_order, initial_widths: float | blackjax.types.Array = 1.0, max_expansions: int = 10, max_shrinkage: int = 100) -> collections.abc.Callable
 
    Build a coordinate-wise (slice-within-Gibbs) kernel.
 
@@ -250,7 +250,7 @@ Module Contents
    to ``1.0`` (uniformly random unit directions).
 
 
-.. py:function:: direction_proposal(scale: float | blackjax.types.Array = 1.0) -> Callable
+.. py:function:: direction_proposal(scale: float | blackjax.types.Array = 1.0) -> collections.abc.Callable
 
    Proposal-generator factory: slice along a random ``scale``-shaped direction.
 
@@ -259,7 +259,7 @@ Module Contents
    ``slice_sampling(logp, proposal_generator=direction_proposal(scale))``.
 
 
-.. py:function:: as_top_level_api(logdensity_fn: Callable, *, proposal_generator: Callable = direction_proposal(), width: float = 1.0, interval: Callable = doubling, max_expansions: int = 10, max_shrinkage: int = 100) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logdensity_fn: collections.abc.Callable, *, proposal_generator: collections.abc.Callable = direction_proposal(), width: float = 1.0, interval: collections.abc.Callable = doubling, max_expansions: int = 10, max_shrinkage: int = 100) -> blackjax.base.SamplingAlgorithm
 
    Multivariate slice sampler, ``blackjax.slice_sampling``.
 
@@ -295,7 +295,7 @@ Module Contents
    :rtype: A ``SamplingAlgorithm``.
 
 
-.. py:function:: coordinate_slice(logdensity_fn: Callable, *, max_expansions: int = 10, initial_widths: float | blackjax.types.Array = 1.0, interval: Callable = doubling, coordinate_order: Callable = random_order, axis_proposal: Callable = coordinate_proposal, max_shrinkage: int = 100) -> blackjax.base.SamplingAlgorithm
+.. py:function:: coordinate_slice(logdensity_fn: collections.abc.Callable, *, max_expansions: int = 10, initial_widths: float | blackjax.types.Array = 1.0, interval: collections.abc.Callable = doubling, coordinate_order: collections.abc.Callable = random_order, axis_proposal: collections.abc.Callable = coordinate_proposal, max_shrinkage: int = 100) -> blackjax.base.SamplingAlgorithm
 
    Coordinate-wise (slice-within-Gibbs) slice sampler.
 

@@ -113,7 +113,7 @@ Module Contents
                                 is seeded automatically from the ``rng_key`` passed to ``.init``.
 
 
-.. py:function:: build_kernel(integrator: Callable = integrators.velocity_verlet, divergence_threshold: float = 1000, next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1], integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10), build_proposal: Callable = hmc.hmc_proposal) -> Callable
+.. py:function:: build_kernel(integrator: collections.abc.Callable = integrators.velocity_verlet, divergence_threshold: float = 1000, next_random_arg_fn: collections.abc.Callable = lambda key: jax.random.split(key)[1], integration_steps_fn: collections.abc.Callable = lambda key: jax.random.randint(key, (), 1, 10), build_proposal: collections.abc.Callable = hmc.hmc_proposal) -> collections.abc.Callable
 
    Build the Laplace dynamic HMC kernel.
 
@@ -132,7 +132,7 @@ Module Contents
              * ``(rng_key, state, laplace, step_size, inverse_mass_matrix) -> (LaplaceDynamicHMCState, LaplaceHMCInfo)``.
 
 
-.. py:function:: as_top_level_api(log_joint_fn: Callable, theta_init: blackjax.types.ArrayLikeTree, step_size: float, inverse_mass_matrix: blackjax.mcmc.metrics.MetricTypes, *, divergence_threshold: int = 1000, integrator: Callable = integrators.velocity_verlet, next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1], integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10), integration_steps_params: tuple = (), build_proposal: Callable = hmc.hmc_proposal, **optimizer_kwargs) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(log_joint_fn: collections.abc.Callable, theta_init: blackjax.types.ArrayLikeTree, step_size: float, inverse_mass_matrix: blackjax.mcmc.metrics.MetricTypes, *, divergence_threshold: int = 1000, integrator: collections.abc.Callable = integrators.velocity_verlet, next_random_arg_fn: collections.abc.Callable = lambda key: jax.random.split(key)[1], integration_steps_fn: collections.abc.Callable = lambda key: jax.random.randint(key, (), 1, 10), integration_steps_params: tuple = (), build_proposal: collections.abc.Callable = hmc.hmc_proposal, **optimizer_kwargs) -> blackjax.base.SamplingAlgorithm
 
    Dynamic HMC on the Laplace-approximated marginal log-density.
 

@@ -76,7 +76,7 @@ Module Contents
 
 .. py:function:: with_isokinetic_maruyama(integrator)
 
-.. py:function:: implicit_midpoint(logdensity_fn: Callable, kinetic_energy_fn: blackjax.mcmc.metrics.KineticEnergy, *, solver: FixedPointSolver = solve_fixed_point_iteration, **solver_kwargs: Any) -> Integrator
+.. py:function:: implicit_midpoint(logdensity_fn: collections.abc.Callable, kinetic_energy_fn: blackjax.mcmc.metrics.KineticEnergy, *, solver: FixedPointSolver = solve_fixed_point_iteration, **solver_kwargs: Any) -> Integrator
 
    The implicit midpoint integrator with support for non-stationary kinetic energy
 

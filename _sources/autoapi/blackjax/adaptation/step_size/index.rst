@@ -74,7 +74,7 @@ Module Contents
       :type:  float
 
 
-.. py:function:: dual_averaging_adaptation(target: float, t0: int = 10, gamma: float = 0.05, kappa: float = 0.75) -> tuple[Callable, Callable, Callable]
+.. py:function:: dual_averaging_adaptation(target: float, t0: int = 10, gamma: float = 0.05, kappa: float = 0.75) -> tuple[collections.abc.Callable, collections.abc.Callable, collections.abc.Callable]
 
    Tune the step size in order to achieve a desired target acceptance rate.
 
@@ -117,7 +117,7 @@ Module Contents
              * *update* -- A function that updates the state of the dual averaging scheme.
 
 
-.. py:function:: find_reasonable_step_size(rng_key: blackjax.types.PRNGKey, kernel_generator: Callable[[float], Callable], reference_state: blackjax.mcmc.hmc.HMCState, initial_step_size: float, target_accept: float = 0.65) -> float
+.. py:function:: find_reasonable_step_size(rng_key: blackjax.types.PRNGKey, kernel_generator: collections.abc.Callable[[float], collections.abc.Callable], reference_state: blackjax.mcmc.hmc.HMCState, initial_step_size: float, target_accept: float = 0.65) -> float
 
    Find a reasonable initial step size during warmup.
 

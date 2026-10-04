@@ -75,7 +75,7 @@ Module Contents
 
 .. py:function:: safe_energy_diff(initial_energy: float, new_energy: float) -> float
 
-.. py:function:: proposal_generator(energy_fn: Callable) -> tuple[Callable, Callable]
+.. py:function:: proposal_generator(energy_fn: collections.abc.Callable) -> tuple[collections.abc.Callable, collections.abc.Callable]
 
    :param energy_fn: A function that computes the energy associated to a given state
 
@@ -94,7 +94,7 @@ Module Contents
 
 
 
-.. py:function:: compute_asymmetric_acceptance_ratio(transition_energy_fn: Callable) -> Callable
+.. py:function:: compute_asymmetric_acceptance_ratio(transition_energy_fn: collections.abc.Callable) -> collections.abc.Callable
 
    Generate a meta function to compute the transition between two states.
 

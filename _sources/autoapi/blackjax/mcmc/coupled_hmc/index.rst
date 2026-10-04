@@ -185,7 +185,7 @@ Module Contents
        definite, or the integration settings are not positive and finite.
 
 
-.. py:function:: init(position: blackjax.base.Position, logdensity_fn: Sequence[Callable]) -> CoupledHMCState
+.. py:function:: init(position: blackjax.base.Position, logdensity_fn: collections.abc.Sequence[collections.abc.Callable]) -> CoupledHMCState
 
    Initialize a coupled pair from explicit position and log-density pairs.
 
@@ -196,7 +196,7 @@ Module Contents
                          two may target different distributions.
 
 
-.. py:function:: build_kernel(integrator: Callable = integrators.velocity_verlet, divergence_threshold: float = 1000, *, coupling: str = 'synchronous', direction_fn: Callable | None = None)
+.. py:function:: build_kernel(integrator: collections.abc.Callable = integrators.velocity_verlet, divergence_threshold: float = 1000, *, coupling: str = 'synchronous', direction_fn: collections.abc.Callable | None = None)
 
    Build a coupled HMC kernel.
 
@@ -228,7 +228,7 @@ Module Contents
              * ``(first, second)`` pair.
 
 
-.. py:function:: as_top_level_api(logdensity_fn: Sequence[Callable], step_size: Sequence[float], inverse_mass_matrix: Sequence[blackjax.mcmc.metrics.MetricTypes], num_integration_steps: Sequence[int], *, coupling: str = 'synchronous', direction_fn: Callable | None = None, integrator: Callable = integrators.velocity_verlet, divergence_threshold: float = 1000) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logdensity_fn: collections.abc.Sequence[collections.abc.Callable], step_size: collections.abc.Sequence[float], inverse_mass_matrix: collections.abc.Sequence[blackjax.mcmc.metrics.MetricTypes], num_integration_steps: collections.abc.Sequence[int], *, coupling: str = 'synchronous', direction_fn: collections.abc.Callable | None = None, integrator: collections.abc.Callable = integrators.velocity_verlet, divergence_threshold: float = 1000) -> blackjax.base.SamplingAlgorithm
 
    Build a ``SamplingAlgorithm`` for a coupled HMC pair.
 

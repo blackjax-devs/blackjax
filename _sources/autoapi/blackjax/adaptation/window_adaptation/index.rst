@@ -47,7 +47,7 @@ Module Contents
 
 .. py:data:: WindowAdaptationState
 
-.. py:function:: base(is_mass_matrix_diagonal: bool, target_acceptance_rate: float = 0.8, initial_inverse_mass_matrix: blackjax.types.Array | None = None, imm_shrinkage_to_previous: float = 0.0) -> tuple[Callable, Callable, Callable]
+.. py:function:: base(is_mass_matrix_diagonal: bool, target_acceptance_rate: float = 0.8, initial_inverse_mass_matrix: blackjax.types.Array | None = None, imm_shrinkage_to_previous: float = 0.0) -> tuple[collections.abc.Callable, collections.abc.Callable, collections.abc.Callable]
 
    Warmup scheme for sampling procedures based on euclidean manifold HMC.
    The schedule and algorithms used match Stan's :cite:p:`stan_hmc_param` as closely as possible.
@@ -102,7 +102,7 @@ Module Contents
                :func:`blackjax.staged_adaptation` for custom metric recipes.
 
 
-.. py:function:: window_adaptation(algorithm, logdensity_fn: Callable, is_mass_matrix_diagonal: bool = True, initial_inverse_mass_matrix: blackjax.types.Array | None = None, imm_shrinkage_to_previous: float = 0.0, initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, adaptation_info_fn: Callable = return_all_adapt_info, integrator=mcmc.integrators.velocity_verlet, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
+.. py:function:: window_adaptation(algorithm, logdensity_fn: collections.abc.Callable, is_mass_matrix_diagonal: bool = True, initial_inverse_mass_matrix: blackjax.types.Array | None = None, imm_shrinkage_to_previous: float = 0.0, initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, adaptation_info_fn: collections.abc.Callable = return_all_adapt_info, integrator=mcmc.integrators.velocity_verlet, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
 
    Adapt the value of the inverse mass matrix and step size parameters of
    algorithms in the HMC fmaily. See Blackjax.hmc_family

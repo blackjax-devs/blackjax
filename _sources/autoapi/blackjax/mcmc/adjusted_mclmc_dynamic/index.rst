@@ -22,7 +22,7 @@ Functions
 Module Contents
 ---------------
 
-.. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: Callable, random_generator_arg: blackjax.types.Array) -> blackjax.mcmc.dynamic_hmc.DynamicHMCState
+.. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: collections.abc.Callable, random_generator_arg: blackjax.types.Array) -> blackjax.mcmc.dynamic_hmc.DynamicHMCState
 
    Create an initial state for the dynamic MHMCHMC kernel.
 
@@ -34,7 +34,7 @@ Module Contents
    :rtype: The initial DynamicHMCState.
 
 
-.. py:function:: build_kernel(integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10), integrator: Callable = integrators.isokinetic_mclachlan, divergence_threshold: float = 1000, next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1])
+.. py:function:: build_kernel(integration_steps_fn: collections.abc.Callable = lambda key: jax.random.randint(key, (), 1, 10), integrator: collections.abc.Callable = integrators.isokinetic_mclachlan, divergence_threshold: float = 1000, next_random_arg_fn: collections.abc.Callable = lambda key: jax.random.split(key)[1])
 
    Build a Dynamic MHMCHMC kernel where the number of integration steps is chosen randomly.
 
@@ -53,7 +53,7 @@ Module Contents
              * *information about the transition.*
 
 
-.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float, L_proposal_factor: float = jnp.inf, inverse_mass_matrix=1.0, *, divergence_threshold: int = 1000, integrator: Callable = integrators.isokinetic_mclachlan, next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1], integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10), integration_steps_params: tuple = ()) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logdensity_fn: collections.abc.Callable, step_size: float, L_proposal_factor: float = jnp.inf, inverse_mass_matrix=1.0, *, divergence_threshold: int = 1000, integrator: collections.abc.Callable = integrators.isokinetic_mclachlan, next_random_arg_fn: collections.abc.Callable = lambda key: jax.random.split(key)[1], integration_steps_fn: collections.abc.Callable = lambda key: jax.random.randint(key, (), 1, 10), integration_steps_params: tuple = ()) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the dynamic MHMCHMC kernel.
 

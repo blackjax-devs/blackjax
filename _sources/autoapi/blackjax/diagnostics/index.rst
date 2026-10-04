@@ -459,7 +459,7 @@ Module Contents
    conditions; see :cite:p:`gorham2017kernels`.
 
 
-.. py:function:: kernelized_stein_discrepancy(samples: blackjax.types.ArrayLikeTree, grad_logdensity_fn: Callable, kernel: Callable, *, statistic: str = 'v') -> blackjax.types.Array
+.. py:function:: kernelized_stein_discrepancy(samples: blackjax.types.ArrayLikeTree, grad_logdensity_fn: collections.abc.Callable, kernel: collections.abc.Callable, *, statistic: str = 'v') -> blackjax.types.Array
 
    Estimate squared kernelized Stein discrepancy with a V- or U-statistic.
 

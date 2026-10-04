@@ -53,7 +53,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g50818d9c4" />
+  <meta name="docsearch:version" content="0.1.dev1+g02681f020" />
   
     
     <script src="../../../_static/searchtools.js"></script>
@@ -470,8 +470,9 @@
   <h1>Source code for blackjax.adaptation.chees_adaptation</h1><div class="highlight"><pre>
 <span></span><span class="sd">"""Public API for ChEES-HMC"""</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NamedTuple</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
@@ -1272,14 +1273,16 @@
 
         <span class="k">if</span> <span class="n">jitter_generator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">rng_key</span><span class="p">,</span> <span class="n">carry_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
-            <span class="n">jitter_gn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="n">jitter_generator</span><span class="p">(</span>
-                <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">fold_in</span><span class="p">(</span><span class="n">carry_key</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
-            <span class="p">)</span> <span class="o">*</span> <span class="n">jitter_amount</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">jitter_amount</span><span class="p">)</span>
+            <span class="n">jitter_gn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">jitter_generator</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">fold_in</span><span class="p">(</span><span class="n">carry_key</span><span class="p">,</span> <span class="n">i</span><span class="p">))</span> <span class="o">*</span> <span class="n">jitter_amount</span>
+                <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">jitter_amount</span><span class="p">)</span>
+            <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">max_bits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">num_steps</span> <span class="o">+</span> <span class="n">max_sampling_steps</span><span class="p">))</span>
-            <span class="n">jitter_gn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="n">dynamic_hmc</span><span class="o">.</span><span class="n">halton_sequence</span><span class="p">(</span>
-                <span class="n">i</span><span class="p">,</span> <span class="n">max_bits</span>
-            <span class="p">)</span> <span class="o">*</span> <span class="n">jitter_amount</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">jitter_amount</span><span class="p">)</span>
+            <span class="n">jitter_gn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">dynamic_hmc</span><span class="o">.</span><span class="n">halton_sequence</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">max_bits</span><span class="p">)</span> <span class="o">*</span> <span class="n">jitter_amount</span>
+                <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">jitter_amount</span><span class="p">)</span>
+            <span class="p">)</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">integration_steps_fn</span><span class="p">(</span><span class="n">random_generator_arg</span><span class="p">,</span> <span class="n">num_leapfrog_steps</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
@@ -1455,12 +1458,15 @@
 
         <span class="n">keys_step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
         <span class="p">(</span>
-            <span class="n">last_states</span><span class="p">,</span>
-            <span class="n">last_adaptation_state</span><span class="p">,</span>
-            <span class="n">last_mm_accum</span><span class="p">,</span>
-            <span class="n">last_cov_accum</span><span class="p">,</span>
-            <span class="n">last_eig_state</span><span class="p">,</span>
-        <span class="p">),</span> <span class="n">info</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="n">last_states</span><span class="p">,</span>
+                <span class="n">last_adaptation_state</span><span class="p">,</span>
+                <span class="n">last_mm_accum</span><span class="p">,</span>
+                <span class="n">last_cov_accum</span><span class="p">,</span>
+                <span class="n">last_eig_state</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">info</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
             <span class="n">one_step</span><span class="p">,</span>
             <span class="p">(</span>
                 <span class="n">init_states</span><span class="p">,</span>

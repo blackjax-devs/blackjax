@@ -24,7 +24,7 @@ Functions
 Module Contents
 ---------------
 
-.. py:function:: build_kernel(logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, target_ess: float | blackjax.types.Array, update_strategy: Callable = update_and_take_last, root_solver: Callable = solver.dichotomy, batch_size: int = 0) -> Callable
+.. py:function:: build_kernel(logprior_fn: collections.abc.Callable, loglikelihood_fn: collections.abc.Callable, mcmc_step_fn: collections.abc.Callable, mcmc_init_fn: collections.abc.Callable, resampling_fn: collections.abc.Callable, target_ess: float | blackjax.types.Array, update_strategy: collections.abc.Callable = update_and_take_last, root_solver: collections.abc.Callable = solver.dichotomy, batch_size: int = 0) -> collections.abc.Callable
 
    Build an adaptive Persistent Sampling kernel, with signature
    (rng_key,
@@ -81,7 +81,7 @@ Module Contents
 
 .. py:data:: init
 
-.. py:function:: as_top_level_api(logprior_fn: Callable, loglikelihood_fn: Callable, max_iterations: int | blackjax.types.Array, mcmc_step_fn: Callable, mcmc_init_fn: Callable, mcmc_parameters: dict, resampling_fn: Callable, target_ess: float | blackjax.types.Array = 3, num_mcmc_steps: int = 10, update_strategy: Callable = update_and_take_last, root_solver: Callable = solver.dichotomy, batch_size: int = 0) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logprior_fn: collections.abc.Callable, loglikelihood_fn: collections.abc.Callable, max_iterations: int | blackjax.types.Array, mcmc_step_fn: collections.abc.Callable, mcmc_init_fn: collections.abc.Callable, mcmc_parameters: dict, resampling_fn: collections.abc.Callable, target_ess: float | blackjax.types.Array = 3, num_mcmc_steps: int = 10, update_strategy: collections.abc.Callable = update_and_take_last, root_solver: collections.abc.Callable = solver.dichotomy, batch_size: int = 0) -> blackjax.base.SamplingAlgorithm
 
    Implements the user interface for the adaptive Persistent Sampling
    kernel from Karamanis et al. 2025. See build_kernel and

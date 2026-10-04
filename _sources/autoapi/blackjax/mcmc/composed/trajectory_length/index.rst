@@ -154,7 +154,7 @@ Module Contents
       :type:  blackjax.types.Array
 
 
-.. py:function:: num_steps_to_uturn(integrator: Callable, step_size: float, metric: blackjax.mcmc.metrics.Metric, max_num_steps: int) -> Callable
+.. py:function:: num_steps_to_uturn(integrator: collections.abc.Callable, step_size: float, metric: blackjax.mcmc.metrics.Metric, max_num_steps: int) -> collections.abc.Callable
 
    Build the ``U(theta, rho)`` forward-rollout function, section 2.2.2.
 
@@ -192,7 +192,7 @@ Module Contents
              * *(possibly capped) number of leapfrog steps to the no-return condition.*
 
 
-.. py:function:: build_kernel(integrator: Callable = integrators.velocity_verlet, divergence_threshold: float = 1000, path_fraction: float = 0.5, max_num_steps: int = 1024) -> Callable
+.. py:function:: build_kernel(integrator: collections.abc.Callable = integrators.velocity_verlet, divergence_threshold: float = 1000, path_fraction: float = 0.5, max_num_steps: int = 1024) -> collections.abc.Callable
 
    Build a ``gist_trajectory_length`` kernel.
 
@@ -214,7 +214,7 @@ Module Contents
              * *information about the transition.*
 
 
-.. py:function:: as_top_level_api(logdensity_fn: Callable, inverse_mass_matrix: blackjax.mcmc.metrics.MetricTypes, step_size: float, *, path_fraction: float = 0.5, max_num_steps: int = 1024, divergence_threshold: float = 1000, integrator: Callable = integrators.velocity_verlet) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logdensity_fn: collections.abc.Callable, inverse_mass_matrix: blackjax.mcmc.metrics.MetricTypes, step_size: float, *, path_fraction: float = 0.5, max_num_steps: int = 1024, divergence_threshold: float = 1000, integrator: collections.abc.Callable = integrators.velocity_verlet) -> blackjax.base.SamplingAlgorithm
 
    ``blackjax.gist_trajectory_length`` -- GIST self-tuning path length
    (no-U-turn condition, section 2.2; NOT NUTS's recursive doubling).

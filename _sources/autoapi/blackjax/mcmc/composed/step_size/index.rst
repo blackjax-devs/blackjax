@@ -174,7 +174,7 @@ Module Contents
       :type:  blackjax.types.Array
 
 
-.. py:function:: step_size_selector(integrator: Callable, num_integration_steps: int, initial_step_size: float, max_search_steps: int = 10, criterion: str = 'symmetric') -> Callable
+.. py:function:: step_size_selector(integrator: collections.abc.Callable, num_integration_steps: int, initial_step_size: float, max_search_steps: int = 10, criterion: str = 'symmetric') -> collections.abc.Callable
 
    Build the ``mu(state, a, b, logdensity_fn, metric) -> (step_index,
    search_exhausted)`` selector, section 2.1.2.
@@ -197,7 +197,7 @@ Module Contents
    :rtype: The selector ``mu``.
 
 
-.. py:function:: build_kernel(integrator: Callable = integrators.velocity_verlet, divergence_threshold: float = 1000, criterion: str = 'symmetric', max_search_steps: int = 10) -> Callable
+.. py:function:: build_kernel(integrator: collections.abc.Callable = integrators.velocity_verlet, divergence_threshold: float = 1000, criterion: str = 'symmetric', max_search_steps: int = 10) -> collections.abc.Callable
 
    Build a ``gist_step_size`` kernel.
 
@@ -215,7 +215,7 @@ Module Contents
              * *information about the transition.*
 
 
-.. py:function:: as_top_level_api(logdensity_fn: Callable, inverse_mass_matrix: blackjax.mcmc.metrics.MetricTypes, initial_step_size: float, num_integration_steps: int = 1, *, criterion: str = 'symmetric', max_search_steps: int = 10, divergence_threshold: float = 1000, integrator: Callable = integrators.velocity_verlet) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logdensity_fn: collections.abc.Callable, inverse_mass_matrix: blackjax.mcmc.metrics.MetricTypes, initial_step_size: float, num_integration_steps: int = 1, *, criterion: str = 'symmetric', max_search_steps: int = 10, divergence_threshold: float = 1000, integrator: collections.abc.Callable = integrators.velocity_verlet) -> blackjax.base.SamplingAlgorithm
 
    ``blackjax.gist_step_size`` -- GIST self-tuning step size (autoStep-style).
 

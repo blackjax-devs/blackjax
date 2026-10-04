@@ -87,7 +87,7 @@ Module Contents
       :type:  BarkerState
 
 
-.. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: Callable) -> BarkerState
+.. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: collections.abc.Callable) -> BarkerState
 
 .. py:function:: build_kernel()
 
@@ -98,7 +98,7 @@ Module Contents
              * *information about the transition.*
 
 
-.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float, inverse_mass_matrix: blackjax.mcmc.metrics.MetricTypes | None = None) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logdensity_fn: collections.abc.Callable, step_size: float, inverse_mass_matrix: blackjax.mcmc.metrics.MetricTypes | None = None) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the Barker's proposal :cite:p:`Livingstone2022Barker` kernel with a
    Gaussian base kernel.

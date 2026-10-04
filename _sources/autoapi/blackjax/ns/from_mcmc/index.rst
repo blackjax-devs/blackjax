@@ -70,7 +70,7 @@ Module Contents
              * *infos.*
 
 
-.. py:function:: reject_constrained_step(init_state_fn: Callable, logdensity_fn: Callable, mcmc_init_fn: Callable, mcmc_step_fn: Callable) -> Callable
+.. py:function:: reject_constrained_step(init_state_fn: collections.abc.Callable, logdensity_fn: collections.abc.Callable, mcmc_init_fn: collections.abc.Callable, mcmc_step_fn: collections.abc.Callable) -> collections.abc.Callable
 
    Constrained inner step wrapping a generic MCMC kernel (propose-then-reject).
 
@@ -90,7 +90,7 @@ Module Contents
              * (new_state, ConstrainedMCMCInfo)``.
 
 
-.. py:function:: build_kernel(constrained_step_fn: Callable, num_inner_steps: int, update_inner_kernel_params_fn: Callable, num_delete: int = 1, delete_fn: Callable = default_delete_fn, update_strategy: Callable = update_with_mcmc_take_last) -> Callable
+.. py:function:: build_kernel(constrained_step_fn: collections.abc.Callable, num_inner_steps: int, update_inner_kernel_params_fn: collections.abc.Callable, num_delete: int = 1, delete_fn: collections.abc.Callable = default_delete_fn, update_strategy: collections.abc.Callable = update_with_mcmc_take_last) -> collections.abc.Callable
 
    Build a Nested Sampling kernel from a constrained inner step.
 

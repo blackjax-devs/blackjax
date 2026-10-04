@@ -55,7 +55,7 @@ Module Contents
    the Inverse Mass Matrix of Hamiltonian Monte Carlo.
 
 
-.. py:function:: update_parameter_distribution(key: blackjax.types.PRNGKey, previous_param_samples: blackjax.types.ArrayLikeTree, previous_particles: blackjax.types.ArrayLikeTree, latest_particles: blackjax.types.ArrayLikeTree, measure_of_chain_mixing: Callable, alpha: float, sigma_parameters: blackjax.types.ArrayLikeTree, acceptance_probability: blackjax.types.Array)
+.. py:function:: update_parameter_distribution(key: blackjax.types.PRNGKey, previous_param_samples: blackjax.types.ArrayLikeTree, previous_particles: blackjax.types.ArrayLikeTree, latest_particles: blackjax.types.ArrayLikeTree, measure_of_chain_mixing: collections.abc.Callable, alpha: float, sigma_parameters: blackjax.types.ArrayLikeTree, acceptance_probability: blackjax.types.Array)
 
    Given an existing parameter distribution that was used to mutate previous_particles
    into latest_particles, updates that parameter distribution by resampling from previous_param_samples after adding
@@ -77,7 +77,7 @@ Module Contents
 
 .. py:function:: default_measure_factory(state)
 
-.. py:function:: build_pretune(mcmc_init_fn: Callable, mcmc_step_fn: Callable, alpha: float, sigma_parameters: blackjax.types.ArrayLikeTree, n_particles: int, performance_of_chain_measure_factory: Callable = default_measure_factory, natural_parameters: list[str] | None = None, positive_parameters: list[str] | None = None)
+.. py:function:: build_pretune(mcmc_init_fn: collections.abc.Callable, mcmc_step_fn: collections.abc.Callable, alpha: float, sigma_parameters: blackjax.types.ArrayLikeTree, n_particles: int, performance_of_chain_measure_factory: collections.abc.Callable = default_measure_factory, natural_parameters: list[str] | None = None, positive_parameters: list[str] | None = None)
 
    Implements Buchholz et al https://arxiv.org/pdf/1808.07730 pretuning procedure.
    The goal is to maintain a probability distribution of parameters, in order
@@ -89,7 +89,7 @@ Module Contents
    implementation runs a single MCMC step which gets discarded, to then proceed with the SMC step execution.
 
 
-.. py:function:: build_kernel(smc_algorithm, logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, pretune_fn: Callable, num_mcmc_steps: int = 10, update_strategy=update_and_take_last, **extra_parameters) -> Callable
+.. py:function:: build_kernel(smc_algorithm, logprior_fn: collections.abc.Callable, loglikelihood_fn: collections.abc.Callable, mcmc_step_fn: collections.abc.Callable, mcmc_init_fn: collections.abc.Callable, resampling_fn: collections.abc.Callable, pretune_fn: collections.abc.Callable, num_mcmc_steps: int = 10, update_strategy=update_and_take_last, **extra_parameters) -> collections.abc.Callable
 
    In the context of an SMC sampler (whose step_fn returning state has a .particles attribute), there's an inner
    MCMC that is used to perturbate/update each of the particles. This adaptation tunes some parameter of that MCMC,
@@ -120,7 +120,7 @@ Module Contents
              * *parameter distribution.*
 
 
-.. py:function:: as_top_level_api(smc_algorithm, logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, num_mcmc_steps: int, initial_parameter_value: blackjax.types.ArrayLikeTree, pretune_fn: Callable, **extra_parameters)
+.. py:function:: as_top_level_api(smc_algorithm, logprior_fn: collections.abc.Callable, loglikelihood_fn: collections.abc.Callable, mcmc_step_fn: collections.abc.Callable, mcmc_init_fn: collections.abc.Callable, resampling_fn: collections.abc.Callable, num_mcmc_steps: int, initial_parameter_value: blackjax.types.ArrayLikeTree, pretune_fn: collections.abc.Callable, **extra_parameters)
 
    In the context of an SMC sampler (whose step_fn returning state has a .particles attribute), there's an inner
    MCMC that is used to perturbate/update each of the particles. This adaptation tunes some parameter of that MCMC,

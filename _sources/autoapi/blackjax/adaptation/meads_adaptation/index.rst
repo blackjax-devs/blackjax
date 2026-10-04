@@ -86,7 +86,7 @@ Module Contents
              * *update* -- Function that moves the warmup one step forward.
 
 
-.. py:function:: meads_adaptation(logdensity_fn: Callable, num_chains: int, num_folds: int = 4, step_size_multiplier: float = 0.5, damping_slowdown: float = 1.0, adaptation_info_fn: Callable = return_all_adapt_info, low_rank_rank: int | None = None, low_rank_window_fraction: float = 0.5) -> blackjax.base.AdaptationAlgorithm
+.. py:function:: meads_adaptation(logdensity_fn: collections.abc.Callable, num_chains: int, num_folds: int = 4, step_size_multiplier: float = 0.5, damping_slowdown: float = 1.0, adaptation_info_fn: collections.abc.Callable = return_all_adapt_info, low_rank_rank: int | None = None, low_rank_window_fraction: float = 0.5) -> blackjax.base.AdaptationAlgorithm
 
    Adapt the parameters of the Generalized HMC algorithm.
 

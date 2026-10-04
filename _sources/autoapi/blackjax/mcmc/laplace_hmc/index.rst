@@ -110,7 +110,7 @@ Module Contents
                    returned by :func:`~blackjax.mcmc.laplace_marginal.laplace_marginal_factory`.
 
 
-.. py:function:: build_kernel(integrator: Callable = integrators.velocity_verlet, divergence_threshold: float = 1000, build_proposal: Callable = hmc.hmc_proposal) -> Callable
+.. py:function:: build_kernel(integrator: collections.abc.Callable = integrators.velocity_verlet, divergence_threshold: float = 1000, build_proposal: collections.abc.Callable = hmc.hmc_proposal) -> collections.abc.Callable
 
    Build the Laplace-HMC kernel.
 
@@ -123,7 +123,7 @@ Module Contents
    :rtype: A kernel ``(rng_key, state, laplace, step_size, inverse_mass_matrix, num_integration_steps) -> (LaplaceHMCState, LaplaceHMCInfo)``.
 
 
-.. py:function:: as_top_level_api(log_joint_fn: Callable, theta_init: blackjax.types.ArrayLikeTree, step_size: float, inverse_mass_matrix: blackjax.mcmc.metrics.MetricTypes, num_integration_steps: int, *, divergence_threshold: int = 1000, integrator: Callable = integrators.velocity_verlet, build_proposal: Callable = hmc.hmc_proposal, **optimizer_kwargs) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(log_joint_fn: collections.abc.Callable, theta_init: blackjax.types.ArrayLikeTree, step_size: float, inverse_mass_matrix: blackjax.mcmc.metrics.MetricTypes, num_integration_steps: int, *, divergence_threshold: int = 1000, integrator: collections.abc.Callable = integrators.velocity_verlet, build_proposal: collections.abc.Callable = hmc.hmc_proposal, **optimizer_kwargs) -> blackjax.base.SamplingAlgorithm
 
    HMC on the Laplace-approximated marginal log-density.
 

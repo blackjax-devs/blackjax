@@ -147,27 +147,27 @@ Module Contents
 
 
    .. py:attribute:: init
-      :type:  Callable
+      :type:  collections.abc.Callable
 
 
    .. py:attribute:: update
-      :type:  Callable
+      :type:  collections.abc.Callable
 
 
    .. py:attribute:: push_split
-      :type:  Callable
+      :type:  collections.abc.Callable
 
 
    .. py:attribute:: get_moments
-      :type:  Callable
+      :type:  collections.abc.Callable
 
 
    .. py:attribute:: get_support
-      :type:  Callable
+      :type:  collections.abc.Callable
 
 
    .. py:attribute:: get_diag_reference
-      :type:  Callable
+      :type:  collections.abc.Callable
 
 
 .. py:class:: MomentBlock

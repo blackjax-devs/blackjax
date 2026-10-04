@@ -76,7 +76,7 @@ Module Contents
       :type:  blackjax.types.ArrayTree
 
 
-.. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: Callable, period: int) -> PeriodicOrbitalState
+.. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: collections.abc.Callable, period: int) -> PeriodicOrbitalState
 
    Create a periodic orbital state from a position.
 
@@ -93,7 +93,7 @@ Module Contents
              * *gradient.*
 
 
-.. py:function:: build_kernel(bijection: Callable = integrators.velocity_verlet)
+.. py:function:: build_kernel(bijection: collections.abc.Callable = integrators.velocity_verlet)
 
    Build a Periodic Orbital kernel :cite:p:`neklyudov2022orbital`.
 
@@ -104,7 +104,7 @@ Module Contents
              * *information about the transition.*
 
 
-.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float, inverse_mass_matrix: blackjax.types.Array, period: int, *, bijection: Callable = integrators.velocity_verlet) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logdensity_fn: collections.abc.Callable, step_size: float, inverse_mass_matrix: blackjax.types.Array, period: int, *, bijection: collections.abc.Callable = integrators.velocity_verlet) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the Periodic orbital MCMC kernel.
 

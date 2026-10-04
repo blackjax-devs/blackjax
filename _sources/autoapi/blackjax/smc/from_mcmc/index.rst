@@ -16,7 +16,7 @@ Functions
 Module Contents
 ---------------
 
-.. py:function:: unshared_parameters_and_step_fn(mcmc_parameters: dict, mcmc_step_fn: Callable) -> tuple[dict, Callable]
+.. py:function:: unshared_parameters_and_step_fn(mcmc_parameters: dict, mcmc_step_fn: collections.abc.Callable) -> tuple[dict, collections.abc.Callable]
 
    Split MCMC parameters into shared and unshared parameters.
 
@@ -34,7 +34,7 @@ Module Contents
              * **shared_mcmc_step_fn** (*Callable*) -- MCMC step function with shared parameters bound.
 
 
-.. py:function:: build_kernel(mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, update_strategy: Callable = update_and_take_last, batch_size: int = 0) -> Callable
+.. py:function:: build_kernel(mcmc_step_fn: collections.abc.Callable, mcmc_init_fn: collections.abc.Callable, resampling_fn: collections.abc.Callable, update_strategy: collections.abc.Callable = update_and_take_last, batch_size: int = 0) -> collections.abc.Callable
 
    Build an SMC step function from MCMC kernels.
 

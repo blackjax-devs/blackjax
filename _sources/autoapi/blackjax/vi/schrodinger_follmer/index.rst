@@ -51,7 +51,7 @@ Module Contents
 
 .. py:function:: init(example_position: blackjax.types.ArrayLikeTree) -> SchrodingerFollmerState
 
-.. py:function:: step(rng_key: blackjax.types.PRNGKey, state: SchrodingerFollmerState, logdensity_fn: Callable, step_size: float, n_samples: int) -> tuple[SchrodingerFollmerState, SchrodingerFollmerInfo]
+.. py:function:: step(rng_key: blackjax.types.PRNGKey, state: SchrodingerFollmerState, logdensity_fn: collections.abc.Callable, step_size: float, n_samples: int) -> tuple[SchrodingerFollmerState, SchrodingerFollmerInfo]
 
    Runs one step of the Schrödinger-Föllmer algorithm. As per the paper, we only allow for Euler-Maruyama integration.
    It is likely possible to generalize this to other integration schemes but is not considered in the original work
@@ -66,7 +66,7 @@ Module Contents
    :param n_samples: Number of samples to use to approximate the drift term
 
 
-.. py:function:: sample(rng_key: blackjax.types.PRNGKey, initial_state: SchrodingerFollmerState, log_density_fn: Callable, n_steps: int, n_inner_samples, n_samples: int = 1)
+.. py:function:: sample(rng_key: blackjax.types.PRNGKey, initial_state: SchrodingerFollmerState, log_density_fn: collections.abc.Callable, n_steps: int, n_inner_samples, n_samples: int = 1)
 
    Samples from the target distribution using the Schrödinger-Föllmer algorithm.
 

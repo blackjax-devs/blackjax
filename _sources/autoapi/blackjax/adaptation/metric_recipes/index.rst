@@ -148,15 +148,15 @@ Module Contents
 
 
    .. py:attribute:: init
-      :type:  Callable
+      :type:  collections.abc.Callable
 
 
    .. py:attribute:: update
-      :type:  Callable
+      :type:  collections.abc.Callable
 
 
    .. py:attribute:: final
-      :type:  Callable
+      :type:  collections.abc.Callable
 
 
 .. py:class:: LowRankMetricCoreState

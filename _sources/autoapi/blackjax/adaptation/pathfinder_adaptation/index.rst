@@ -65,7 +65,7 @@ Module Contents
              * *final* -- Function that returns the step size and mass matrix given a warmup state.
 
 
-.. py:function:: pathfinder_adaptation(algorithm, logdensity_fn: Callable, *, num_chains: int = 1, n_paths: int | None = None, num_samples_per_path: int = 200, psis_imm_n_samples: int = 2000, imm_estimator: Literal['lbfgs_psis_mixture', 'psis_empirical'] = 'lbfgs_psis_mixture', initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, adaptation_info_fn: Callable = return_all_adapt_info, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
+.. py:function:: pathfinder_adaptation(algorithm, logdensity_fn: collections.abc.Callable, *, num_chains: int = 1, n_paths: int | None = None, num_samples_per_path: int = 200, psis_imm_n_samples: int = 2000, imm_estimator: Literal['lbfgs_psis_mixture', 'psis_empirical'] = 'lbfgs_psis_mixture', initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, adaptation_info_fn: collections.abc.Callable = return_all_adapt_info, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
 
    Adapt the value of the inverse mass matrix and step size parameters of
    algorithms in the HMC family.

@@ -53,7 +53,7 @@
     <link rel="search" title="Search" href="../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g50818d9c4" />
+  <meta name="docsearch:version" content="0.1.dev1+g02681f020" />
   
     
     <script src="../../_static/searchtools.js"></script>
@@ -526,10 +526,10 @@
             <span class="n">state</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">key_adaptation</span>
         <span class="p">)</span>
         <span class="n">expected_value_summary_statistics</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
-            <span class="k">lambda</span> <span class="n">summary_statistics</span><span class="p">:</span> <span class="n">lax</span><span class="o">.</span><span class="n">psum</span><span class="p">(</span>
-                <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">summary_statistics</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">axis_name</span><span class="o">=</span><span class="s2">"chains"</span>
-            <span class="p">)</span>
-            <span class="o">/</span> <span class="n">num_chains</span><span class="p">,</span>
+            <span class="k">lambda</span> <span class="n">summary_statistics</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">lax</span><span class="o">.</span><span class="n">psum</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">summary_statistics</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">axis_name</span><span class="o">=</span><span class="s2">"chains"</span><span class="p">)</span>
+                <span class="o">/</span> <span class="n">num_chains</span>
+            <span class="p">),</span>
             <span class="n">summary_statistics</span><span class="p">,</span>
         <span class="p">)</span>
 

@@ -24,12 +24,12 @@ Module Contents
 
 .. py:function:: init(position: blackjax.types.ArrayLikeTree) -> blackjax.types.ArrayLikeTree
 
-.. py:function:: build_kernel() -> Callable
+.. py:function:: build_kernel() -> collections.abc.Callable
 
    Stochastic gradient Langevin Dynamics (SgLD) algorithm.
 
 
-.. py:function:: as_top_level_api(grad_estimator: Callable) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(grad_estimator: collections.abc.Callable) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the SGLD kernel.
 

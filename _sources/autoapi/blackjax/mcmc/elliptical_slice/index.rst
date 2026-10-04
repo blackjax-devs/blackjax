@@ -86,7 +86,7 @@ Module Contents
       :type:  int
 
 
-.. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: Callable)
+.. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: collections.abc.Callable)
 
 .. py:function:: build_kernel(cov_matrix: blackjax.types.Array, mean: blackjax.types.Array)
 
@@ -100,7 +100,7 @@ Module Contents
              * *information about the transition.*
 
 
-.. py:function:: as_top_level_api(loglikelihood_fn: Callable, *, mean: blackjax.types.Array, cov: blackjax.types.Array) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(loglikelihood_fn: collections.abc.Callable, *, mean: blackjax.types.Array, cov: blackjax.types.Array) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the Elliptical Slice sampling kernel.
 

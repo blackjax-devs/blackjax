@@ -108,7 +108,7 @@ Module Contents
       :type:  float
 
 
-.. py:function:: build_kernel(integrator: Callable = integrators.velocity_verlet, divergence_threshold: int = 1000)
+.. py:function:: build_kernel(integrator: collections.abc.Callable = integrators.velocity_verlet, divergence_threshold: int = 1000)
 
    Build an iterative NUTS kernel.
 
@@ -137,7 +137,7 @@ Module Contents
                                 a transition "divergent".
 
 
-.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float, inverse_mass_matrix: blackjax.mcmc.metrics.MetricTypes, *, max_num_doublings: int = 10, divergence_threshold: int = 1000, integrator: Callable = integrators.velocity_verlet) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logdensity_fn: collections.abc.Callable, step_size: float, inverse_mass_matrix: blackjax.mcmc.metrics.MetricTypes, *, max_num_doublings: int = 10, divergence_threshold: int = 1000, integrator: collections.abc.Callable = integrators.velocity_verlet) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the nuts kernel.
 

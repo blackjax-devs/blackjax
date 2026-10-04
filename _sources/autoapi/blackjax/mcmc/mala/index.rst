@@ -81,7 +81,7 @@ Module Contents
       :type:  bool
 
 
-.. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: Callable) -> MALAState
+.. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: collections.abc.Callable) -> MALAState
 
 .. py:function:: build_kernel()
 
@@ -92,7 +92,7 @@ Module Contents
              * *information about the transition.*
 
 
-.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logdensity_fn: collections.abc.Callable, step_size: float) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the MALA kernel.
 

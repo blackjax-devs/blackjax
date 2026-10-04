@@ -20,7 +20,7 @@ Functions
 Module Contents
 ---------------
 
-.. py:function:: dichotomy(fun: Callable, min_delta: float | blackjax.types.Array, max_delta: float | blackjax.types.Array, eps: float = 0.0001, max_iter: int = 100) -> blackjax.types.Array
+.. py:function:: dichotomy(fun: collections.abc.Callable, min_delta: float | blackjax.types.Array, max_delta: float | blackjax.types.Array, eps: float = 0.0001, max_iter: int = 100) -> blackjax.types.Array
 
    Solves for delta by dichotomy.
 

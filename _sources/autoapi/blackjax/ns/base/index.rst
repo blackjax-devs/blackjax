@@ -83,7 +83,7 @@ Module Contents
       :type:  NamedTuple
 
 
-.. py:function:: init(positions: blackjax.types.ArrayLikeTree, init_state_fn: Callable, loglikelihood_birth: float = jnp.nan) -> NSState
+.. py:function:: init(positions: blackjax.types.ArrayLikeTree, init_state_fn: collections.abc.Callable, loglikelihood_birth: float = jnp.nan) -> NSState
 
    Initializes the Nested Sampler state.
 
@@ -100,7 +100,7 @@ Module Contents
    :rtype: NSState
 
 
-.. py:function:: build_kernel(delete_fn: Callable, inner_kernel: Callable) -> Callable
+.. py:function:: build_kernel(delete_fn: collections.abc.Callable, inner_kernel: collections.abc.Callable) -> collections.abc.Callable
 
    Build a generic Nested Sampling kernel.
 

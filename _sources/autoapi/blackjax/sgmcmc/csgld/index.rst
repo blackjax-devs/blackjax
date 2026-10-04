@@ -57,7 +57,7 @@ Module Contents
 
 .. py:function:: init(position: blackjax.types.ArrayLikeTree, num_partitions=512) -> ContourSGLDState
 
-.. py:function:: build_kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable
+.. py:function:: build_kernel(num_partitions=512, energy_gap=10, min_energy=0) -> collections.abc.Callable
 
    :param num_partitions: The number of partitions we divide the energy landscape into.
    :param energy_gap: The difference in energy :math:`\Delta u` between the successive
@@ -71,7 +71,7 @@ Module Contents
                       the closer the gap between min_energy and 3456 is, the better.
 
 
-.. py:function:: as_top_level_api(logdensity_estimator: Callable, gradient_estimator: Callable, zeta: float = 1, num_partitions: int = 512, energy_gap: float = 100, min_energy: float = 0) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logdensity_estimator: collections.abc.Callable, gradient_estimator: collections.abc.Callable, zeta: float = 1, num_partitions: int = 512, energy_gap: float = 100, min_energy: float = 0) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the Contour SGLD kernel.
 

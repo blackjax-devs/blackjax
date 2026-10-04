@@ -124,7 +124,7 @@ Module Contents
       :type:  blackjax.adaptation.metric_buffers._FisherMomentBlock
 
 
-.. py:function:: mass_matrix_adaptation(is_diagonal_matrix: bool = True, imm_shrinkage_to_previous: float = 0.0, diagonal_estimator: str = 'welford') -> tuple[Callable, Callable, Callable]
+.. py:function:: mass_matrix_adaptation(is_diagonal_matrix: bool = True, imm_shrinkage_to_previous: float = 0.0, diagonal_estimator: str = 'welford') -> tuple[collections.abc.Callable, collections.abc.Callable, collections.abc.Callable]
 
    Adapts the values in the mass matrix by computing the covariance
    between parameters.
@@ -192,7 +192,7 @@ Module Contents
                state.
 
 
-.. py:function:: welford_algorithm(is_diagonal_matrix: bool) -> tuple[Callable, Callable, Callable]
+.. py:function:: welford_algorithm(is_diagonal_matrix: bool) -> tuple[collections.abc.Callable, collections.abc.Callable, collections.abc.Callable]
 
    Welford's online estimator of covariance.
 

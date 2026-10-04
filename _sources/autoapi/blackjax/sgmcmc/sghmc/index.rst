@@ -24,12 +24,12 @@ Module Contents
 
 .. py:function:: init(position: blackjax.types.ArrayLikeTree) -> blackjax.types.ArrayLikeTree
 
-.. py:function:: build_kernel(alpha: float = 0.01, beta: float = 0) -> Callable
+.. py:function:: build_kernel(alpha: float = 0.01, beta: float = 0) -> collections.abc.Callable
 
    Stochastic gradient Hamiltonian Monte Carlo (SgHMC) algorithm.
 
 
-.. py:function:: as_top_level_api(grad_estimator: Callable, num_integration_steps: int = 10, alpha: float = 0.01, beta: float = 0) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(grad_estimator: collections.abc.Callable, num_integration_steps: int = 10, alpha: float = 0.01, beta: float = 0) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the SGHMC kernel.
 

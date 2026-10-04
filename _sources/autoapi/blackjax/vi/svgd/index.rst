@@ -65,7 +65,7 @@ Module Contents
              * *the median heuristic.*
 
 
-.. py:function:: as_top_level_api(grad_logdensity_fn: Callable, optimizer, kernel: Callable = rbf_kernel, update_kernel_parameters: Callable = update_median_heuristic)
+.. py:function:: as_top_level_api(grad_logdensity_fn: collections.abc.Callable, optimizer, kernel: collections.abc.Callable = rbf_kernel, update_kernel_parameters: collections.abc.Callable = update_median_heuristic)
 
    Implements the (basic) user interface for the svgd algorithm :cite:p:`liu2016stein`.
 

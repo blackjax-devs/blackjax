@@ -55,12 +55,12 @@ Module Contents
 
 .. py:function:: init(position: blackjax.types.ArrayLikeTree, rng_key: blackjax.types.PRNGKey, xi: float) -> SGNHTState
 
-.. py:function:: build_kernel(alpha: float = 0.01, beta: float = 0) -> Callable
+.. py:function:: build_kernel(alpha: float = 0.01, beta: float = 0) -> collections.abc.Callable
 
    Stochastic gradient Nosé-Hoover Thermostat (SGNHT) algorithm.
 
 
-.. py:function:: as_top_level_api(grad_estimator: Callable, alpha: float = 0.01, beta: float = 0.0) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(grad_estimator: collections.abc.Callable, alpha: float = 0.01, beta: float = 0.0) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the SGNHT kernel.
 

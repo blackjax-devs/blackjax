@@ -58,9 +58,9 @@ Module Contents
       :type:  blackjax.types.Array
 
 
-.. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: Callable, random_generator_arg: blackjax.types.Array)
+.. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: collections.abc.Callable, random_generator_arg: blackjax.types.Array)
 
-.. py:function:: build_kernel(integrator: Callable = integrators.velocity_verlet, divergence_threshold: float = 1000, next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1], integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10), build_proposal: Callable = hmc_proposal)
+.. py:function:: build_kernel(integrator: collections.abc.Callable = integrators.velocity_verlet, divergence_threshold: float = 1000, next_random_arg_fn: collections.abc.Callable = lambda key: jax.random.split(key)[1], integration_steps_fn: collections.abc.Callable = lambda key: jax.random.randint(key, (), 1, 10), build_proposal: collections.abc.Callable = hmc_proposal)
 
    Build a Dynamic HMC kernel where the number of integration steps is chosen randomly.
 
@@ -83,7 +83,7 @@ Module Contents
              * *information about the transition.*
 
 
-.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float, inverse_mass_matrix: blackjax.types.Array, *, divergence_threshold: int = 1000, integrator: Callable = integrators.velocity_verlet, next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1], integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10), integration_steps_params: tuple = (), build_proposal: Callable = hmc_proposal) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logdensity_fn: collections.abc.Callable, step_size: float, inverse_mass_matrix: blackjax.types.Array, *, divergence_threshold: int = 1000, integrator: collections.abc.Callable = integrators.velocity_verlet, next_random_arg_fn: collections.abc.Callable = lambda key: jax.random.split(key)[1], integration_steps_fn: collections.abc.Callable = lambda key: jax.random.randint(key, (), 1, 10), integration_steps_params: tuple = (), build_proposal: collections.abc.Callable = hmc_proposal) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the dynamic HMC kernel.
 

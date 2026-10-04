@@ -44,7 +44,7 @@ Module Contents
    :rtype: float | Array
 
 
-.. py:function:: ess_solver(logdensity_fn: Callable, particles: blackjax.types.ArrayLikeTree, target_ess: float | blackjax.types.Array, max_delta: float | blackjax.types.Array, root_solver: Callable) -> float | blackjax.types.Array
+.. py:function:: ess_solver(logdensity_fn: collections.abc.Callable, particles: blackjax.types.ArrayLikeTree, target_ess: float | blackjax.types.Array, max_delta: float | blackjax.types.Array, root_solver: collections.abc.Callable) -> float | blackjax.types.Array
 
    ESS solver for computing the next increment of SMC tempering.
 

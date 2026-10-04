@@ -24,7 +24,7 @@ Functions
 Module Contents
 ---------------
 
-.. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: Callable) -> blackjax.mcmc.hmc.HMCState
+.. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: collections.abc.Callable) -> blackjax.mcmc.hmc.HMCState
 
    Create an initial state for the MHMCHMC kernel.
 
@@ -34,7 +34,7 @@ Module Contents
    :rtype: The initial HMCState.
 
 
-.. py:function:: build_kernel(integrator: Callable = integrators.isokinetic_mclachlan, divergence_threshold: float = 1000)
+.. py:function:: build_kernel(integrator: collections.abc.Callable = integrators.isokinetic_mclachlan, divergence_threshold: float = 1000)
 
    Build an MHMCHMC kernel.
 
@@ -47,7 +47,7 @@ Module Contents
              * *information about the transition.*
 
 
-.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float, L_proposal_factor: float = jnp.inf, inverse_mass_matrix=1.0, *, divergence_threshold: int = 1000, integrator: Callable = integrators.isokinetic_mclachlan, num_integration_steps=None, integration_steps_params: tuple | None = None) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logdensity_fn: collections.abc.Callable, step_size: float, L_proposal_factor: float = jnp.inf, inverse_mass_matrix=1.0, *, divergence_threshold: int = 1000, integrator: collections.abc.Callable = integrators.isokinetic_mclachlan, num_integration_steps=None, integration_steps_params: tuple | None = None) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the MHMCHMC kernel.
 

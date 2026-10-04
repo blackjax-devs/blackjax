@@ -163,7 +163,7 @@ Module Contents
    :rtype: ArrayTree
 
 
-.. py:function:: uniform_prior(rng_key: blackjax.types.PRNGKey, num_live: int, bounds: dict[str, tuple[float, float]]) -> tuple[blackjax.types.ArrayTree, Callable]
+.. py:function:: uniform_prior(rng_key: blackjax.types.PRNGKey, num_live: int, bounds: dict[str, tuple[float, float]]) -> tuple[blackjax.types.ArrayTree, collections.abc.Callable]
 
    Sample initial particles and build a log-prior for a box-uniform prior.
 

@@ -72,7 +72,7 @@ Module Contents
       :type:  float
 
 
-.. py:function:: step(rng_key: blackjax.types.PRNGKey, state: FRVIState, logdensity_fn: Callable, optimizer: optax.GradientTransformation, num_samples: int = 5, objective: blackjax.vi._gaussian_vi.Objective = KL(), stl_estimator: bool = True) -> tuple[FRVIState, FRVIInfo]
+.. py:function:: step(rng_key: blackjax.types.PRNGKey, state: FRVIState, logdensity_fn: collections.abc.Callable, optimizer: optax.GradientTransformation, num_samples: int = 5, objective: blackjax.vi._gaussian_vi.Objective = KL(), stl_estimator: bool = True) -> tuple[FRVIState, FRVIInfo]
 
    Approximate the target density using the full-rank Gaussian approximation.
 
@@ -105,7 +105,7 @@ Module Contents
              * leading axis of size ``num_samples``.
 
 
-.. py:function:: as_top_level_api(logdensity_fn: Callable, optimizer: optax.GradientTransformation, num_samples: int = 100, objective: blackjax.vi._gaussian_vi.Objective = KL(), stl_estimator: bool = True)
+.. py:function:: as_top_level_api(logdensity_fn: collections.abc.Callable, optimizer: optax.GradientTransformation, num_samples: int = 100, objective: blackjax.vi._gaussian_vi.Objective = KL(), stl_estimator: bool = True)
 
    High-level implementation of Full-Rank Variational Inference.
 

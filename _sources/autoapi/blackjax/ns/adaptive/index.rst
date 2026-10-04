@@ -25,7 +25,7 @@ Functions
 Module Contents
 ---------------
 
-.. py:function:: init(positions: blackjax.types.ArrayLikeTree, init_state_fn: Callable, loglikelihood_birth: float = jnp.nan, update_inner_kernel_params_fn: Callable | None = None, rng_key: blackjax.types.PRNGKey | None = None) -> AdaptiveNSState
+.. py:function:: init(positions: blackjax.types.ArrayLikeTree, init_state_fn: collections.abc.Callable, loglikelihood_birth: float = jnp.nan, update_inner_kernel_params_fn: collections.abc.Callable | None = None, rng_key: blackjax.types.PRNGKey | None = None) -> AdaptiveNSState
 
    Initialize the adaptive Nested Sampling state from live positions.
 
@@ -39,7 +39,7 @@ Module Contents
    :rtype: The initial ``AdaptiveNSState``.
 
 
-.. py:function:: build_kernel(delete_fn: Callable, inner_kernel: Callable, update_inner_kernel_params_fn: Callable[[blackjax.types.PRNGKey, blackjax.ns.base.NSState, blackjax.ns.base.NSInfo, dict[str, blackjax.types.ArrayTree]], dict[str, blackjax.types.ArrayTree]]) -> Callable
+.. py:function:: build_kernel(delete_fn: collections.abc.Callable, inner_kernel: collections.abc.Callable, update_inner_kernel_params_fn: collections.abc.Callable[[blackjax.types.PRNGKey, blackjax.ns.base.NSState, blackjax.ns.base.NSInfo, dict[str, blackjax.types.ArrayTree]], dict[str, blackjax.types.ArrayTree]]) -> collections.abc.Callable
 
    Build an adaptive Nested Sampling kernel.
 

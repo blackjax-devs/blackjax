@@ -24,7 +24,7 @@ Functions
 Module Contents
 ---------------
 
-.. py:function:: build_kernel(logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, target_ess: float, root_solver: Callable = solver.dichotomy, batch_size: int = 0, **extra_parameters: dict[str, Any]) -> Callable
+.. py:function:: build_kernel(logprior_fn: collections.abc.Callable, loglikelihood_fn: collections.abc.Callable, mcmc_step_fn: collections.abc.Callable, mcmc_init_fn: collections.abc.Callable, resampling_fn: collections.abc.Callable, target_ess: float, root_solver: collections.abc.Callable = solver.dichotomy, batch_size: int = 0, **extra_parameters: dict[str, Any]) -> collections.abc.Callable
 
    Build a Tempered SMC step using an adaptive schedule.
 
@@ -62,7 +62,7 @@ Module Contents
 
 .. py:data:: init
 
-.. py:function:: as_top_level_api(logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, mcmc_parameters: dict, resampling_fn: Callable, target_ess: float, root_solver: Callable = solver.dichotomy, num_mcmc_steps: int = 10, batch_size: int = 0, **extra_parameters: dict[str, Any]) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logprior_fn: collections.abc.Callable, loglikelihood_fn: collections.abc.Callable, mcmc_step_fn: collections.abc.Callable, mcmc_init_fn: collections.abc.Callable, mcmc_parameters: dict, resampling_fn: collections.abc.Callable, target_ess: float, root_solver: collections.abc.Callable = solver.dichotomy, num_mcmc_steps: int = 10, batch_size: int = 0, **extra_parameters: dict[str, Any]) -> blackjax.base.SamplingAlgorithm
 
    Implements the user interface for the Adaptive Tempered SMC kernel.
 

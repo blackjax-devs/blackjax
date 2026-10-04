@@ -159,7 +159,7 @@ Module Contents
       :type:  NamedTuple
 
 
-.. py:function:: init(particles: blackjax.types.ArrayLikeTree, loglikelihood_fn: Callable, n_schedule: int | blackjax.types.Array, batch_size: int = 0) -> PersistentSMCState
+.. py:function:: init(particles: blackjax.types.ArrayLikeTree, loglikelihood_fn: collections.abc.Callable, n_schedule: int | blackjax.types.Array, batch_size: int = 0) -> PersistentSMCState
 
    Initialize the Persistent Sampling state.
 
@@ -244,7 +244,7 @@ Module Contents
                iteration.
 
 
-.. py:function:: resample_from_persistent(rng_key: blackjax.types.PRNGKey, persistent_particles: blackjax.types.ArrayLikeTree, persistent_weights: blackjax.types.Array, resample_fn: Callable) -> tuple[blackjax.types.ArrayTree, blackjax.types.Array]
+.. py:function:: resample_from_persistent(rng_key: blackjax.types.PRNGKey, persistent_particles: blackjax.types.ArrayLikeTree, persistent_weights: blackjax.types.Array, resample_fn: collections.abc.Callable) -> tuple[blackjax.types.ArrayTree, blackjax.types.Array]
 
    Resample N particles from the :math:`i \times N`
    persistent ensemble, where i is the current iteration.
@@ -290,7 +290,7 @@ Module Contents
    :rtype: float | Array
 
 
-.. py:function:: step(rng_key: blackjax.types.PRNGKey, state: PersistentSMCState, lmbda: float | blackjax.types.Array, loglikelihood_fn: Callable, update_fn: Callable, resample_fn: Callable, weight_fn: Callable = compute_log_persistent_weights, batch_size: int = 0) -> tuple[PersistentSMCState, PersistentStateInfo]
+.. py:function:: step(rng_key: blackjax.types.PRNGKey, state: PersistentSMCState, lmbda: float | blackjax.types.Array, loglikelihood_fn: collections.abc.Callable, update_fn: collections.abc.Callable, resample_fn: collections.abc.Callable, weight_fn: collections.abc.Callable = compute_log_persistent_weights, batch_size: int = 0) -> tuple[PersistentSMCState, PersistentStateInfo]
 
    One step of the Persistent Sampling algorithm, as
    described in algorithm 2 of Karamanis et al. (2025).
@@ -320,7 +320,7 @@ Module Contents
                ess (effective sample size), and update_info from the MCMC update step.
 
 
-.. py:function:: build_kernel(logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, update_strategy: Callable = update_and_take_last, batch_size: int = 0) -> Callable
+.. py:function:: build_kernel(logprior_fn: collections.abc.Callable, loglikelihood_fn: collections.abc.Callable, mcmc_step_fn: collections.abc.Callable, mcmc_init_fn: collections.abc.Callable, resampling_fn: collections.abc.Callable, update_strategy: collections.abc.Callable = update_and_take_last, batch_size: int = 0) -> collections.abc.Callable
 
    Build a Persistent Sampling kernel, with signature
    (rng_key,
@@ -373,7 +373,7 @@ Module Contents
    :rtype: Callable
 
 
-.. py:function:: as_top_level_api(logprior_fn: Callable, loglikelihood_fn: Callable, n_schedule: int | blackjax.types.Array, mcmc_step_fn: Callable, mcmc_init_fn: Callable, mcmc_parameters: dict, resampling_fn: Callable, num_mcmc_steps: int = 10, update_strategy: Callable = update_and_take_last, batch_size: int = 0) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logprior_fn: collections.abc.Callable, loglikelihood_fn: collections.abc.Callable, n_schedule: int | blackjax.types.Array, mcmc_step_fn: collections.abc.Callable, mcmc_init_fn: collections.abc.Callable, mcmc_parameters: dict, resampling_fn: collections.abc.Callable, num_mcmc_steps: int = 10, update_strategy: collections.abc.Callable = update_and_take_last, batch_size: int = 0) -> blackjax.base.SamplingAlgorithm
 
    Implements the user interface for the Persistent Sampling
    kernel. See build_kernel for details.

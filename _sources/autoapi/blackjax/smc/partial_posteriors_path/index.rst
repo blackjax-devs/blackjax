@@ -59,7 +59,7 @@ Module Contents
    means that no likelihood term will be added (only prior).
 
 
-.. py:function:: build_kernel(mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, num_mcmc_steps: int | None, mcmc_parameters: blackjax.types.ArrayTree, partial_logposterior_factory: Callable[[blackjax.types.Array], Callable], update_strategy=update_and_take_last, batch_size: int = 0) -> Callable
+.. py:function:: build_kernel(mcmc_step_fn: collections.abc.Callable, mcmc_init_fn: collections.abc.Callable, resampling_fn: collections.abc.Callable, num_mcmc_steps: int | None, mcmc_parameters: blackjax.types.ArrayTree, partial_logposterior_factory: collections.abc.Callable[[blackjax.types.Array], collections.abc.Callable], update_strategy=update_and_take_last, batch_size: int = 0) -> collections.abc.Callable
 
    Build the Partial Posteriors (data tempering) SMC kernel.
 
@@ -82,7 +82,7 @@ Module Contents
    :rtype: A callable that takes a rng_key and PartialPosteriorsSMCState and selectors for the current and previous posteriors, and takes a data-tempered SMC state.
 
 
-.. py:function:: as_top_level_api(mcmc_step_fn: Callable, mcmc_init_fn: Callable, mcmc_parameters: dict, resampling_fn: Callable, num_mcmc_steps, partial_logposterior_factory: Callable, update_strategy=update_and_take_last, batch_size: int = 0) -> blackjax.SamplingAlgorithm
+.. py:function:: as_top_level_api(mcmc_step_fn: collections.abc.Callable, mcmc_init_fn: collections.abc.Callable, mcmc_parameters: dict, resampling_fn: collections.abc.Callable, num_mcmc_steps, partial_logposterior_factory: collections.abc.Callable, update_strategy=update_and_take_last, batch_size: int = 0) -> blackjax.SamplingAlgorithm
 
    A factory that wraps the kernel into a SamplingAlgorithm object.
    See build_kernel for full documentation on the parameters.

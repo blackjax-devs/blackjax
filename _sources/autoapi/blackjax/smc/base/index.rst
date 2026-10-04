@@ -111,7 +111,7 @@ Module Contents
    :rtype: SMCState
 
 
-.. py:function:: step(rng_key: blackjax.types.PRNGKey, state: SMCState, update_fn: Callable, weight_fn: Callable, resample_fn: Callable, num_resampled: int | None = None) -> tuple[SMCState, SMCInfo]
+.. py:function:: step(rng_key: blackjax.types.PRNGKey, state: SMCState, update_fn: collections.abc.Callable, weight_fn: collections.abc.Callable, resample_fn: collections.abc.Callable, num_resampled: int | None = None) -> tuple[SMCState, SMCInfo]
 
    General SMC sampling step.
 
@@ -172,17 +172,17 @@ Module Contents
    :rtype: Array
 
 
-.. py:function:: map_fn(fn: Callable, batch_size: int) -> Callable
+.. py:function:: map_fn(fn: collections.abc.Callable, batch_size: int) -> collections.abc.Callable
 
    Return a batched or vmap'd version of fn applied over a pytree axis.
 
 
-.. py:function:: map_kernel(kernel: Callable, batch_size: int) -> Callable
+.. py:function:: map_kernel(kernel: collections.abc.Callable, batch_size: int) -> collections.abc.Callable
 
    Return a batched or vmap'd n-ary kernel applied over the leading axis.
 
 
-.. py:function:: update_and_take_last(mcmc_init_fn: Callable, tempered_logposterior_fn: Callable, shared_mcmc_step_fn: Callable, num_mcmc_steps: int, n_particles: int | blackjax.types.Array, batch_size: int = 0) -> tuple[Callable, int | blackjax.types.Array]
+.. py:function:: update_and_take_last(mcmc_init_fn: collections.abc.Callable, tempered_logposterior_fn: collections.abc.Callable, shared_mcmc_step_fn: collections.abc.Callable, num_mcmc_steps: int, n_particles: int | blackjax.types.Array, batch_size: int = 0) -> tuple[collections.abc.Callable, int | blackjax.types.Array]
 
    Create an MCMC update strategy that runs multiple steps and keeps the last.
 

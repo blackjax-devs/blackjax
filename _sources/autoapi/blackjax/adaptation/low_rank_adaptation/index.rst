@@ -258,7 +258,7 @@ Module Contents
              * (stage ``0`` = fast/step-size-only, stage ``1`` = slow/mass-matrix-adapting).
 
 
-.. py:function:: window_adaptation_low_rank(algorithm, logdensity_fn: Callable, max_rank: int = 10, initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, gamma: float = 1e-05, cutoff: float = 2.0, adaptation_info_fn: Callable = _default_low_rank_adaptation_info_fn, integrator=mcmc.integrators.velocity_verlet, gradient_based_init: bool = False, schedule_fn: Callable[[int], blackjax.types.Array] = build_schedule, buffer_policy: str = 'reset', recompute_every: int = 1, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
+.. py:function:: window_adaptation_low_rank(algorithm, logdensity_fn: collections.abc.Callable, max_rank: int = 10, initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, gamma: float = 1e-05, cutoff: float = 2.0, adaptation_info_fn: collections.abc.Callable = _default_low_rank_adaptation_info_fn, integrator=mcmc.integrators.velocity_verlet, gradient_based_init: bool = False, schedule_fn: collections.abc.Callable[[int], blackjax.types.Array] = build_schedule, buffer_policy: str = 'reset', recompute_every: int = 1, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
 
    Adapt step size and a low-rank mass matrix for HMC-family samplers.
 

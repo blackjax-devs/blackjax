@@ -17,7 +17,7 @@ Functions
 Module Contents
 ---------------
 
-.. py:function:: logdensity_estimator(logprior_fn: Callable, loglikelihood_fn: Callable, data_size: int) -> Callable
+.. py:function:: logdensity_estimator(logprior_fn: collections.abc.Callable, loglikelihood_fn: collections.abc.Callable, data_size: int) -> collections.abc.Callable
 
    Builds a simple estimator for the log-density.
 
@@ -35,12 +35,12 @@ Module Contents
    :param data_size: The number of items in the full dataset.
 
 
-.. py:function:: grad_estimator(logprior_fn: Callable, loglikelihood_fn: Callable, data_size: int) -> Callable
+.. py:function:: grad_estimator(logprior_fn: collections.abc.Callable, loglikelihood_fn: collections.abc.Callable, data_size: int) -> collections.abc.Callable
 
    Build a simple estimator for the gradient of the log-density.
 
 
-.. py:function:: control_variates(logdensity_grad_estimator: Callable, centering_position: blackjax.types.ArrayLikeTree, data: blackjax.types.ArrayLikeTree) -> Callable
+.. py:function:: control_variates(logdensity_grad_estimator: collections.abc.Callable, centering_position: blackjax.types.ArrayLikeTree, data: blackjax.types.ArrayLikeTree) -> collections.abc.Callable
 
    Builds a control variate gradient estimator :cite:p:`baker2019control`.
 

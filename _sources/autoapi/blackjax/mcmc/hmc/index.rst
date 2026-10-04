@@ -116,9 +116,9 @@ Module Contents
       :type:  int
 
 
-.. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: Callable)
+.. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: collections.abc.Callable)
 
-.. py:function:: multinomial_hmc_proposal(integrator: Callable, kinetic_energy: blackjax.mcmc.metrics.KineticEnergy, step_size: float | blackjax.types.ArrayLikeTree, num_integration_steps: int = 1, divergence_threshold: float = 1000) -> Callable
+.. py:function:: multinomial_hmc_proposal(integrator: collections.abc.Callable, kinetic_energy: blackjax.mcmc.metrics.KineticEnergy, step_size: float | blackjax.types.ArrayLikeTree, num_integration_steps: int = 1, divergence_threshold: float = 1000) -> collections.abc.Callable
 
    Multinomial HMC proposal.
 
@@ -138,7 +138,7 @@ Module Contents
              * **interface compatibility** (``(sampled_state, info, None)``.)
 
 
-.. py:function:: build_kernel(integrator: Callable = integrators.velocity_verlet, divergence_threshold: float = 1000, build_proposal: Callable = hmc_proposal)
+.. py:function:: build_kernel(integrator: collections.abc.Callable = integrators.velocity_verlet, divergence_threshold: float = 1000, build_proposal: collections.abc.Callable = hmc_proposal)
 
    Build a HMC kernel.
 
@@ -155,7 +155,7 @@ Module Contents
              * *information about the transition.*
 
 
-.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float, inverse_mass_matrix: blackjax.mcmc.metrics.MetricTypes, num_integration_steps: int, *, divergence_threshold: int = 1000, integrator: Callable = integrators.velocity_verlet, build_proposal: Callable = hmc_proposal) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logdensity_fn: collections.abc.Callable, step_size: float, inverse_mass_matrix: blackjax.mcmc.metrics.MetricTypes, num_integration_steps: int, *, divergence_threshold: int = 1000, integrator: collections.abc.Callable = integrators.velocity_verlet, build_proposal: collections.abc.Callable = hmc_proposal) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the HMC kernel.
 

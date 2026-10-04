@@ -60,7 +60,7 @@ Module Contents
       :type:  blackjax.types.Array
 
 
-.. py:function:: multi_approximate(rng_key: blackjax.types.PRNGKey, logdensity_fn: Callable, initial_positions: blackjax.types.ArrayLikeTree, num_samples: int = 200, *, maxiter: int = 30, maxcor: int = 10, maxls: int = 1000, gtol: float = 1e-08, ftol: float = 1e-05) -> tuple[MultipathfinderState, blackjax.vi.pathfinder.PathfinderInfo]
+.. py:function:: multi_approximate(rng_key: blackjax.types.PRNGKey, logdensity_fn: collections.abc.Callable, initial_positions: blackjax.types.ArrayLikeTree, num_samples: int = 200, *, maxiter: int = 30, maxcor: int = 10, maxls: int = 1000, gtol: float = 1e-08, ftol: float = 1e-05) -> tuple[MultipathfinderState, blackjax.vi.pathfinder.PathfinderInfo]
 
    Multi-path Pathfinder variational inference.
 
@@ -100,7 +100,7 @@ Module Contents
                unreliable estimates.
 
 
-.. py:function:: as_top_level_api(logdensity_fn: Callable) -> blackjax.base.VIAlgorithm
+.. py:function:: as_top_level_api(logdensity_fn: collections.abc.Callable) -> blackjax.base.VIAlgorithm
 
    High-level multi-path Pathfinder interface.
 

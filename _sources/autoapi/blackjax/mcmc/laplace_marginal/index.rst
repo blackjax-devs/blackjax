@@ -221,26 +221,26 @@ Module Contents
 
 
    .. py:attribute:: solve_theta
-      :type:  Callable
+      :type:  collections.abc.Callable
 
 
    .. py:attribute:: solve_theta_with_info
-      :type:  Callable
+      :type:  collections.abc.Callable
 
 
    .. py:attribute:: get_theta_star
-      :type:  Callable
+      :type:  collections.abc.Callable
 
 
    .. py:attribute:: log_marginal
-      :type:  Callable
+      :type:  collections.abc.Callable
 
 
    .. py:attribute:: sample_theta
-      :type:  Callable
+      :type:  collections.abc.Callable
 
 
-.. py:function:: laplace_marginal_factory(log_joint_fn: Callable, theta_init: blackjax.types.ArrayLikeTree, **optimizer_kwargs) -> LaplaceMarginal
+.. py:function:: laplace_marginal_factory(log_joint_fn: collections.abc.Callable, theta_init: blackjax.types.ArrayLikeTree, **optimizer_kwargs) -> LaplaceMarginal
 
    Build a Laplace-approximated marginal log-density over hyperparameters.
 

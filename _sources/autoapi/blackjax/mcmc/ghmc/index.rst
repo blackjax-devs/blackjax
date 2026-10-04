@@ -67,9 +67,9 @@ Module Contents
       :type:  float
 
 
-.. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: Callable, rng_key: blackjax.types.PRNGKey) -> GHMCState
+.. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: collections.abc.Callable, rng_key: blackjax.types.PRNGKey) -> GHMCState
 
-.. py:function:: build_kernel(noise_fn: Callable = lambda _: 0.0, divergence_threshold: float = 1000)
+.. py:function:: build_kernel(noise_fn: collections.abc.Callable = lambda _: 0.0, divergence_threshold: float = 1000)
 
    Build a Generalized HMC kernel.
 
@@ -92,7 +92,7 @@ Module Contents
              * *returns a new state of the chain along with information about the transition.*
 
 
-.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float, momentum_inverse_scale: blackjax.types.ArrayLikeTree | blackjax.mcmc.metrics.MetricTypes, alpha: float, delta: float, *, divergence_threshold: int = 1000, noise_fn: Callable = lambda _: 0.0) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logdensity_fn: collections.abc.Callable, step_size: float, momentum_inverse_scale: blackjax.types.ArrayLikeTree | blackjax.mcmc.metrics.MetricTypes, alpha: float, delta: float, *, divergence_threshold: int = 1000, noise_fn: collections.abc.Callable = lambda _: 0.0) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the Generalized HMC kernel.
 
