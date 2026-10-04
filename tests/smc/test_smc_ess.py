@@ -27,6 +27,33 @@ class SMCEffectiveSampleSizeTest(chex.TestCase):
         assert ess_val == 12
 
     @chex.all_variants(with_pmap=False)
+    @parameterized.product(
+        dtype=[np.float32, np.float64],
+        offset_sign=[-1, 0, 1],
+        log_weights=[
+            [0, 0, 0, 0],
+            [0, -16, -32, -np.inf],
+            [0, -np.inf, -np.inf, -np.inf],
+        ],
+    )
+    def test_ess_common_log_weight_offset(self, dtype, offset_sign, log_weights):
+        offset = offset_sign * (1e8 if dtype == np.float32 else 1e15)
+        shifted = np.asarray(log_weights, dtype=dtype) + dtype(offset)
+        weights = np.exp(shifted.astype(np.float64) - np.max(shifted))
+        expected = weights.sum() ** 2 / np.square(weights).sum()
+        with jax.enable_x64(dtype == np.float64):
+            inputs = jnp.asarray(shifted)
+            np.testing.assert_allclose(
+                self.variant(ess.ess)(inputs), expected, rtol=1e-6
+            )
+            np.testing.assert_allclose(
+                self.variant(ess.log_ess)(inputs),
+                np.log(expected),
+                rtol=1e-6,
+                atol=1e-7,
+            )
+
+    @chex.all_variants(with_pmap=False)
     @parameterized.parameters([0.2, 0.95])
     def test_ess_solver(self, target_ess):
         # NOTE: ``ess_solver`` expects a log-density (positive sign — same as
