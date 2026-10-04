@@ -2,13 +2,14 @@ from functools import partial
 
 import chex
 import numpy as np
-from absl.testing import absltest
+from absl.testing import absltest, parameterized
 from jax import jit
 from jax import numpy as jnp
 from jax import random as jr
 from jax import tree, vmap
 
 import blackjax
+from blackjax.base import SamplingAlgorithm
 from blackjax.diagnostics import psis_weights
 from blackjax.mcmc.integrators import isokinetic_mclachlan
 from blackjax.util import (
@@ -93,6 +94,29 @@ class RunInferenceAlgorithmTest(chex.TestCase):
         )
 
         assert jnp.allclose(trace_at_every_step[0][-1], samples.mean(axis=0))
+
+    @chex.all_variants(with_pmap=False)
+    @parameterized.parameters(0, 1, 3, 5)
+    def test_streaming_with_burn_in(self, burn_in):
+        algorithm = SamplingAlgorithm(
+            lambda value: value, lambda key, value: (value + 1, None)
+        )
+        streaming, transform = store_only_expectation_values(
+            algorithm,
+            state_transform=lambda value: {"value": value, "square": value**2},
+            burn_in=burn_in,
+        )
+        state = streaming.init(jnp.array(0.0))
+        step = self.variant(streaming.step)
+        for index in range(1, 7):
+            state, info = step(jr.fold_in(self.key, index), state)
+            average, _ = transform(state, info)
+            kept = np.arange(burn_in + 1, index + 1, dtype=float)
+            expected = {
+                "value": kept.mean() if kept.size else 0.0,
+                "square": (kept**2).mean() if kept.size else 0.0,
+            }
+            chex.assert_trees_all_close(average, expected, rtol=1e-6, atol=1e-6)
 
     def test_compatible_with_initial_pos(self):
         _ = run_inference_algorithm(
