@@ -17,6 +17,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from absl.testing import absltest
+from jax.extend import core
 
 import blackjax
 from blackjax.vi.pathfinder import PathfinderState, approximate, sample
@@ -46,9 +47,6 @@ class PathfinderApproximateTest(BlackJAXTest):
 
     def test_both_elbo_axes_are_chunked_through_top_level_api(self):
         """Both maps add scans, and the top-level init forwards batch_size."""
-        from jax.extend import core
-
-        import blackjax
 
         def count_scans(value):
             if isinstance(value, core.Jaxpr):

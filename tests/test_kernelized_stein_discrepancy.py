@@ -6,7 +6,7 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-from blackjax.diagnostics import kernelized_stein_discrepancy
+from blackjax.diagnostics import imq_kernel, kernelized_stein_discrepancy
 from blackjax.vi.svgd import rbf_kernel
 
 
@@ -128,11 +128,9 @@ def test_u_statistic_matches_off_diagonal_reference():
 
 
 def test_imq_statistical_behavior():
-    from blackjax.diagnostics import imq_kernel
-
     # Fixed common draws isolate location/scale changes rather than comparing
     # independent Monte Carlo noise. This is not a general convergence test.
-    samples = jax.random.normal(jax.random.key(42), (400, 4))
+    samples = jax.random.normal(jax.random.key(20261003), (400, 4))
     evaluate = jax.jit(
         lambda x: kernelized_stein_discrepancy(
             x, lambda y: -y, imq_kernel, statistic="u"
@@ -145,8 +143,6 @@ def test_imq_statistical_behavior():
 
 
 def test_sequential_rows_and_imq_formula():
-    from blackjax.diagnostics import imq_kernel
-
     x, y = jnp.array([1.0, 2.0]), jnp.array([-1.0, 1.0])
     np.testing.assert_allclose(imq_kernel(x, y), 6**-0.5)
     samples = jnp.zeros((3, 2))
