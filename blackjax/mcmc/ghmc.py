@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for the Generalized (Non-reversible w/ persistent momentum) HMC Kernel"""
+
 from typing import Callable, NamedTuple
 
 import jax
@@ -214,8 +215,9 @@ def update_momentum(rng_key, state, alpha, momentum_generator):
     position, momentum, *_ = state
 
     momentum = jax.tree.map(
-        lambda prev_momentum, shifted_momentum: prev_momentum * jnp.sqrt(1.0 - alpha)
-        + jnp.sqrt(alpha) * shifted_momentum,
+        lambda prev_momentum, shifted_momentum: (
+            prev_momentum * jnp.sqrt(1.0 - alpha) + jnp.sqrt(alpha) * shifted_momentum
+        ),
         momentum,
         momentum_generator(rng_key, position),
     )

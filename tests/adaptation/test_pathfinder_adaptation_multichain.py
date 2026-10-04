@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for pathfinder_adaptation's num_chains, n_paths, and imm_estimator kwargs."""
+
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -409,9 +410,9 @@ def test_both_estimators_converge_on_gaussian():
     # Diagonal elements (variances) should be positive and in the same ballpark.
     diag_a = jnp.diag(imm_a)
     diag_b = jnp.diag(imm_b)
-    assert jnp.all(
-        diag_a > 0
-    ), f"lbfgs_psis_mixture diagonal not all positive: {diag_a}"
+    assert jnp.all(diag_a > 0), (
+        f"lbfgs_psis_mixture diagonal not all positive: {diag_a}"
+    )
     assert jnp.all(diag_b > 0), f"psis_empirical diagonal not all positive: {diag_b}"
 
     # Trace should be similar within a generous factor (x5)

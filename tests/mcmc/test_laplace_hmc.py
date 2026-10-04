@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for the Laplace-HMC sampler (laplace_hmc)."""
+
 import chex
 import jax
 import jax.numpy as jnp
@@ -348,11 +349,13 @@ class TestLaplaceHMCFunnel(BlackJAXTest):
         # and/or pin the sampler seed. Tracked as a follow-up.
 
         # --- phi ---
-        mean_phi_laplace, mean_phi_ncp = float(jnp.mean(phi_laplace)), float(
-            jnp.mean(phi_ncp)
+        mean_phi_laplace, mean_phi_ncp = (
+            float(jnp.mean(phi_laplace)),
+            float(jnp.mean(phi_ncp)),
         )
-        std_phi_laplace, std_phi_ncp = float(jnp.std(phi_laplace)), float(
-            jnp.std(phi_ncp)
+        std_phi_laplace, std_phi_ncp = (
+            float(jnp.std(phi_laplace)),
+            float(jnp.std(phi_ncp)),
         )
         np.testing.assert_allclose(
             mean_phi_laplace,
@@ -374,11 +377,13 @@ class TestLaplaceHMCFunnel(BlackJAXTest):
         )
 
         # --- theta (pooled across components) ---
-        mean_theta_laplace, mean_theta_ncp = float(jnp.mean(theta_laplace)), float(
-            jnp.mean(theta_ncp)
+        mean_theta_laplace, mean_theta_ncp = (
+            float(jnp.mean(theta_laplace)),
+            float(jnp.mean(theta_ncp)),
         )
-        std_theta_laplace, std_theta_ncp = float(jnp.std(theta_laplace)), float(
-            jnp.std(theta_ncp)
+        std_theta_laplace, std_theta_ncp = (
+            float(jnp.std(theta_laplace)),
+            float(jnp.std(theta_ncp)),
         )
         np.testing.assert_allclose(
             mean_theta_laplace,

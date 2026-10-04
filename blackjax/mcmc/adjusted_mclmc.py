@@ -16,6 +16,7 @@
 NOTE: For best performance, we recommend using adjusted_mclmc_dynamic instead of this module, which is primarily intended for use in parallelized versions of the algorithm.
 
 """
+
 import warnings
 from typing import Callable
 

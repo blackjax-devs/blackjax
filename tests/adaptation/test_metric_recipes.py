@@ -21,6 +21,7 @@ Coverage:
 - State-type identities (``MassMatrixAdaptationState`` vs
   ``FisherMassMatrixAdaptationState``).
 """
+
 import jax
 import jax.numpy as jnp
 import numpy as np

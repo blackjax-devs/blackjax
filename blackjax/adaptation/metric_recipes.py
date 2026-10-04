@@ -82,6 +82,7 @@ replace these with proper constructor objects once the schema is stable across
 all recipe families.  Import directly from ``blackjax.adaptation.metric_recipes``
 — :class:`MetricRecipe` is not exported at the ``blackjax`` top level.
 """
+
 import dataclasses
 from typing import Callable, NamedTuple
 

@@ -35,6 +35,7 @@ Notes
 ``build_schedule`` is defined here (canonical location) and re-exported from
 ``window_adaptation`` for backward compatibility.  Import from either module.
 """
+
 import inspect
 import warnings
 from functools import partial

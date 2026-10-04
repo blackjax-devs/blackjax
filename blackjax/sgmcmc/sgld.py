@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for the Stochastic gradient Langevin Dynamics kernel."""
+
 from typing import Callable
 
 import blackjax.sgmcmc.diffusions as diffusions

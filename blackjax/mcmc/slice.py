@@ -226,9 +226,7 @@ def doubling(
     )
     idx = _best_interval(both_out.astype(int))
     left, right = lefts[idx], rights[idx]
-    accept_fn = lambda t: _doubling_accept(
-        in_slice, t, left, right, width
-    )  # noqa: E731
+    accept_fn = lambda t: _doubling_accept(in_slice, t, left, right, width)  # noqa: E731
     return left, right, idx, accept_fn
 
 

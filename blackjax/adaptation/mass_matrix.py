@@ -18,6 +18,7 @@ The Stan Manual :cite:p:`stan_hmc_param` is a very good reference on automatic t
 parameters used in Hamiltonian Monte Carlo.
 
 """
+
 from typing import Callable, NamedTuple
 
 import jax
@@ -202,8 +203,7 @@ def mass_matrix_adaptation(
         )
     if imm_shrinkage_to_previous < 0.0:
         raise ValueError(
-            f"imm_shrinkage_to_previous must be >= 0.0, "
-            f"got {imm_shrinkage_to_previous}"
+            f"imm_shrinkage_to_previous must be >= 0.0, got {imm_shrinkage_to_previous}"
         )
     if diagonal_estimator == "fisher" and imm_shrinkage_to_previous != 0.0:
         raise ValueError(

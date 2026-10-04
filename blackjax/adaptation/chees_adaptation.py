@@ -755,14 +755,16 @@ def chees_adaptation(
 
         if jitter_generator is not None:
             rng_key, carry_key = jax.random.split(rng_key)
-            jitter_gn = lambda i: jitter_generator(
-                jax.random.fold_in(carry_key, i)
-            ) * jitter_amount + (1.0 - jitter_amount)
+            jitter_gn = lambda i: (
+                jitter_generator(jax.random.fold_in(carry_key, i)) * jitter_amount
+                + (1.0 - jitter_amount)
+            )
         else:
             max_bits = np.ceil(np.log2(num_steps + max_sampling_steps))
-            jitter_gn = lambda i: dynamic_hmc.halton_sequence(
-                i, max_bits
-            ) * jitter_amount + (1.0 - jitter_amount)
+            jitter_gn = lambda i: (
+                dynamic_hmc.halton_sequence(i, max_bits) * jitter_amount
+                + (1.0 - jitter_amount)
+            )
 
         def integration_steps_fn(random_generator_arg, num_leapfrog_steps):
             return jnp.asarray(
@@ -938,12 +940,15 @@ def chees_adaptation(
 
         keys_step = jax.random.split(rng_key, num_steps)
         (
-            last_states,
-            last_adaptation_state,
-            last_mm_accum,
-            last_cov_accum,
-            last_eig_state,
-        ), info = jax.lax.scan(
+            (
+                last_states,
+                last_adaptation_state,
+                last_mm_accum,
+                last_cov_accum,
+                last_eig_state,
+            ),
+            info,
+        ) = jax.lax.scan(
             one_step,
             (
                 init_states,

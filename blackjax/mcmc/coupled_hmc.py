@@ -87,6 +87,7 @@ nothing is broadcast or inferred.
     state, info = algorithm.step(rng_key, state)
 
 """
+
 from typing import Callable, NamedTuple, Sequence
 
 import jax

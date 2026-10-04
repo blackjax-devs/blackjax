@@ -56,6 +56,7 @@ Both behaviors are now covered indirectly by
   same: IMM checked via explicit ``fisher_score_diagonal_from_moments`` call
   rather than via ``final()`` read-back.
 """
+
 import jax
 import jax.numpy as jnp
 import numpy as np

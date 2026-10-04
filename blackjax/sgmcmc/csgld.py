@@ -11,9 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Public API for the Contour Stochastic gradient Langevin Dynamics kernel :cite:p:`deng2020contour,deng2022interacting`.
+"""Public API for the Contour Stochastic gradient Langevin Dynamics kernel :cite:p:`deng2020contour,deng2022interacting`."""
 
-"""
 from typing import Callable, NamedTuple
 
 import jax
@@ -41,6 +40,7 @@ class ContourSGLDState(NamedTuple):
         Index `i` such that the current position belongs to :math:`S_i`.
 
     """
+
     position: ArrayTree
     energy_pdf: Array
     energy_idx: int

@@ -7,6 +7,7 @@ pytest-benchmark x xdist under this project's ``filterwarnings = error``
 issue in this module; the documented blackjax test command already
 includes ``--benchmark-disable``.
 """
+
 import chex
 import jax
 import jax.numpy as jnp

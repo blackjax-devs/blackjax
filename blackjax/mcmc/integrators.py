@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Symplectic, time-reversible, integrators for Hamiltonian trajectories."""
+
 from typing import Any, Callable, NamedTuple, TypeAlias
 
 import jax

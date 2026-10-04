@@ -16,6 +16,7 @@
 All buffer-generation helpers in one place so the test split files don't
 duplicate them.
 """
+
 import jax
 import jax.numpy as jnp
 import numpy as np

@@ -45,6 +45,7 @@ Typical usage::
     # new_state.theta_star  — MAP latent at accepted phi
     # new_state.random_generator_arg  — advanced Halton index
 """
+
 from typing import Callable, NamedTuple
 
 import jax

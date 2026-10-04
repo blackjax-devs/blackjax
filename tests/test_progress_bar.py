@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Unit tests for the jaxtap-powered progress bar."""
+
 import os
 import stat
 import tempfile
@@ -351,8 +352,7 @@ class ProgressBarTest(BlackJAXTest):
                     state._step_callback(jnp.array(0))
                 except Exception as e:  # pragma: no cover -- failure path
                     self.fail(
-                        "_step_callback raised under a promoted warnings "
-                        f"filter: {e!r}"
+                        f"_step_callback raised under a promoted warnings filter: {e!r}"
                     )
             self.assertIsNone(state.output_file)
         finally:

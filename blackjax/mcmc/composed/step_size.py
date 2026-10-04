@@ -42,6 +42,7 @@ References
    "asymmetric"``, provided for cross-validation against the original paper
    only -- can get stuck near the mode/in the tails).
 """
+
 from typing import Callable, NamedTuple, cast
 
 import jax
@@ -177,7 +178,7 @@ def step_size_selector(
     """
     if criterion not in ("symmetric", "asymmetric"):
         raise ValueError(
-            "criterion must be 'symmetric' or 'asymmetric', got " f"{criterion!r}"
+            f"criterion must be 'symmetric' or 'asymmetric', got {criterion!r}"
         )
     is_symmetric = criterion == "symmetric"
 
@@ -377,7 +378,7 @@ def build_kernel(
     """
     if criterion not in ("symmetric", "asymmetric"):
         raise ValueError(
-            "criterion must be 'symmetric' or 'asymmetric', got " f"{criterion!r}"
+            f"criterion must be 'symmetric' or 'asymmetric', got {criterion!r}"
         )
     gist_step = seam._step
 

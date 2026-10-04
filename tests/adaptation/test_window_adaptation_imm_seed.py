@@ -17,6 +17,7 @@ Behavioral/numeric tests have been migrated to target staged_adaptation instead.
 This file retains only the surface-level validation tests (error raising, kwarg
 validation) that exercise the frozen shim surface of window_adaptation.
 """
+
 import jax.numpy as jnp
 import pytest
 

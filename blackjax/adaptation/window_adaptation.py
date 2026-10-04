@@ -29,6 +29,7 @@ delegates to :func:`~blackjax.adaptation.staged_adaptation.staged_adaptation`).
 Fisher-diagonal adaptation is accessible via
 ``staged_adaptation(metric="fisher_diag")`` only.
 """
+
 import warnings
 from typing import Callable
 
@@ -417,8 +418,7 @@ def window_adaptation(
     # Validate imm_shrinkage_to_previous before any JIT-traced path.
     if imm_shrinkage_to_previous < 0.0:
         raise ValueError(
-            f"imm_shrinkage_to_previous must be >= 0.0, "
-            f"got {imm_shrinkage_to_previous}"
+            f"imm_shrinkage_to_previous must be >= 0.0, got {imm_shrinkage_to_previous}"
         )
 
     # Map the old parameter names to a registered MetricRecipe and build

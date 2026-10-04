@@ -19,6 +19,7 @@ adaptation layer's step-size response to a flagged kernel step, and the
 LAPS burn-in's eps-halving safety when the reported acceptance statistics
 are themselves non-finite.
 """
+
 import jax
 import jax.numpy as jnp
 import pytest
@@ -158,12 +159,12 @@ def test_kernel_flags_finite_state_with_nonfinite_logdensity():
         n_flagged += not bool(info.nonans)
         n_ld_finite += bool(jnp.isfinite(new_state.logdensity))
 
-    assert (
-        n_flagged == 8
-    ), f"expected all 8 seeds to flag nonans=False at vv ss=8, got {n_flagged}/8"
-    assert (
-        n_ld_finite == 8
-    ), f"expected 8/8 reverted logdensities to be finite, got {n_ld_finite}/8"
+    assert n_flagged == 8, (
+        f"expected all 8 seeds to flag nonans=False at vv ss=8, got {n_flagged}/8"
+    )
+    assert n_ld_finite == 8, (
+        f"expected 8/8 reverted logdensities to be finite, got {n_ld_finite}/8"
+    )
 
 
 def test_kernel_handle_nans_catches_nan_kinetic_change_with_finite_state():
@@ -213,18 +214,18 @@ def test_adaptation_divergent_step_shrinks_step_size():
         kernel_nonans=info.nonans,
         key=nan_key,
     )
-    assert not bool(
-        success
-    ), "handle_nans must return success=False on a divergent step"
-    assert jnp.isclose(
-        new_step_size_max, 80.0, rtol=1e-5
-    ), f"step_size_max should be 100*0.8=80, got {float(new_step_size_max)}"
+    assert not bool(success), (
+        "handle_nans must return success=False on a divergent step"
+    )
+    assert jnp.isclose(new_step_size_max, 80.0, rtol=1e-5), (
+        f"step_size_max should be 100*0.8=80, got {float(new_step_size_max)}"
+    )
 
     # Multi-step: three tuning steps from ss=100 must decrease step_size to ≤ 80
     params = _run_tuning(isokinetic_mclachlan, seed=0, ss_init=100.0, num_steps=3)
-    assert (
-        params.step_size <= 80.0
-    ), f"After ≥1 divergent step, step_size must be ≤80 (got {float(params.step_size)})"
+    assert params.step_size <= 80.0, (
+        f"After ≥1 divergent step, step_size must be ≤80 (got {float(params.step_size)})"
+    )
 
 
 @pytest.mark.parametrize("integrator,name", _INTEGRATORS)
@@ -256,9 +257,9 @@ def test_sampling_path_no_nan_logdensity_velocity_verlet():
         step_fn, init_state, jax.random.split(jax.random.key(123), 15)
     )
     nan_count = int(jnp.sum(~ld_finite))
-    assert (
-        nan_count == 0
-    ), f"{nan_count}/15 steps have NaN logdensity (pre-fix was 9/15)"
+    assert nan_count == 0, (
+        f"{nan_count}/15 steps have NaN logdensity (pre-fix was 9/15)"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -295,15 +296,15 @@ def test_structural_noop_gaussian(integrator, name):
     )
 
     # (a) the revert branch never fires on a well-conditioned Gaussian target
-    assert jnp.all(
-        all_nonans
-    ), f"{name}: revert branch fired on Gaussian — not a no-op here"
+    assert jnp.all(all_nonans), (
+        f"{name}: revert branch fired on Gaussian — not a no-op here"
+    )
     assert jnp.all(all_ec_finite), f"{name}: non-finite energy_change on Gaussian"
     # (b) Since no revert occurred, returned ld equals proposed ld; it is always finite,
     #     so isfinite(ld) was True at every proposed step.
-    assert jnp.all(
-        all_ld_finite
-    ), f"{name}: non-finite ld on Gaussian — formulas would diverge"
+    assert jnp.all(all_ld_finite), (
+        f"{name}: non-finite ld on Gaussian — formulas would diverge"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -329,9 +330,9 @@ def test_laps_eps_halving_fires_on_divergence():
     init_key, kernel_key = jax.random.split(jax.random.key(42))
     init_state = mclmc_init(jnp.zeros(ndims), _bounded_target, init_key)
     _, stats = laps_kernel(kernel_key, init_state, adap_state)
-    assert (
-        float(stats["nans"]) > 0.0
-    ), f"LAPS nans must be >0 at ss=100 (got {stats['nans']})"
+    assert float(stats["nans"]) > 0.0, (
+        f"LAPS nans must be >0 at ss=100 (got {stats['nans']})"
+    )
 
     Etheta = {
         "equipartition_diagonal": jax.tree.map(
@@ -348,9 +349,9 @@ def test_laps_eps_halving_fires_on_divergence():
         "entropy": jnp.zeros(()),
     }
     new_adap_state, _ = adaptation.update(adap_state, Etheta)
-    assert jnp.isclose(
-        new_adap_state.step_size, 50.0, rtol=1e-5
-    ), f"LAPS eps-halving: expected step_size=50.0, got {float(new_adap_state.step_size)}"
+    assert jnp.isclose(new_adap_state.step_size, 50.0, rtol=1e-5), (
+        f"LAPS eps-halving: expected step_size=50.0, got {float(new_adap_state.step_size)}"
+    )
 
 
 def test_step_size_survives_undetected_nan_route():

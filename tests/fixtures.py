@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Shared test utilities for BlackJAX tests."""
+
 import datetime
 
 import chex

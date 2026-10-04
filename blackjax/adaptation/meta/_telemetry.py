@@ -77,6 +77,7 @@ window's adaptation couples them.
 ``support_pooled_rows`` and ``core_chain_updates_total`` are the only
 summed ones.
 """
+
 from __future__ import annotations
 
 from typing import Any, NamedTuple

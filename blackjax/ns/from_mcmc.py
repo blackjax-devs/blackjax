@@ -13,6 +13,7 @@
 # limitations under the License.
 """NS particle-update strategies that wrap a generic MCMC kernel under the
 likelihood constraint."""
+
 from functools import partial
 from typing import Callable, NamedTuple
 

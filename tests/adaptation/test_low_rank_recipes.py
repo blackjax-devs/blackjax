@@ -30,6 +30,7 @@ Coverage:
   (reset + accumulating) vs frozen inline references on an anisotropic target
   (``recompute_every ∈ {1, 5, 25}``, ``atol=0.0``).
 """
+
 from functools import partial
 
 import jax

@@ -522,8 +522,8 @@ class EshOperatorParityTest(chex.TestCase):
             g = random.normal(k5, (d,)).astype(dtype)
 
             # Frozen original forward_L (verbatim from integrators.py pre-refactor)
-            frozen_forward_L = lambda v: sigma * (
-                v + U @ ((sqrt_lam - 1.0) * (U.T @ v))
+            frozen_forward_L = lambda v: (
+                sigma * (v + U @ ((sqrt_lam - 1.0) * (U.T @ v)))
             )
 
             # Frozen original adjoint_L

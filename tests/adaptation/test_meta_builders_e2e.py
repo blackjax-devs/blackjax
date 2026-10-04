@@ -20,6 +20,7 @@ Coverage:
 - TestBranchCompatibilityInvariants, TestNewStateFieldsPopulated, TestSharedEpsilonDA,
   TestWBranchE2ESmoke, TestEndToEndEscalation: multi-chain e2e tests.
 """
+
 import warnings
 
 import jax
@@ -214,8 +215,7 @@ class TestEscalationDecisionTable(BlackJAXTest):
         self.assertGreater(
             s_gap,
             _S_MIN,
-            "Fixture must have high S_gap for isolation; got "
-            + str(s_gap),  # noqa: E702
+            "Fixture must have high S_gap for isolation; got " + str(s_gap),  # noqa: E702
         )
         # R² gate blocks.
         r2 = float(np.asarray(state.r2_latest))

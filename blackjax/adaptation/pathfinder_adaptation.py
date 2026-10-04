@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Implementation of the Pathfinder warmup for the HMC family of sampling algorithms."""
+
 import warnings
 from typing import Callable, Literal, NamedTuple
 

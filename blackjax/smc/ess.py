@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """All things related to SMC effective sample size"""
+
 from typing import Callable
 
 import jax.numpy as jnp
