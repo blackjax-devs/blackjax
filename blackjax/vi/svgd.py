@@ -20,7 +20,7 @@ __all__ = [
 
 
 class SVGDState(NamedTuple):
-    particles: ArrayTree
+    particles: ArrayLikeTree
     kernel_parameters: dict[str, ArrayTree]
     opt_state: Any
 
