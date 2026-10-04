@@ -21,8 +21,11 @@ import jax
 import jax.numpy as jnp
 import pytest
 
+from blackjax.adaptation.laps_burn_in import Adaptation, AdaptationState
+from blackjax.adaptation.laps_burn_in import build_kernel as laps_build_kernel
 from blackjax.adaptation.mclmc_adaptation import (
     MCLMCAdaptationState,
+    handle_nans,
     mclmc_find_L_and_step_size,
 )
 from blackjax.mcmc.integrators import isokinetic_mclachlan, isokinetic_velocity_verlet
@@ -128,8 +131,6 @@ def test_adaptation_divergent_step_shrinks_step_size():
     """Single step: handle_nans returns success=False and shrinks step_size_max to 0.8×ss.
     Three steps: adaptation must drive step_size to ≤ 80 from ss_init=100.
     """
-    from blackjax.adaptation.mclmc_adaptation import handle_nans
-
     kernel = build_kernel(integrator=isokinetic_mclachlan)
     init_key, step_key, nan_key = jax.random.split(jax.random.key(0), 3)
     state = mclmc_init(jnp.zeros(_DIM), _bounded_target, init_key)
@@ -252,9 +253,6 @@ def test_structural_noop_gaussian(integrator, name):
 
 def test_laps_eps_halving_fires_on_divergence():
     """LAPS eps-halving safety fires post-fix (was dead pre-fix: no_nans on reverted state)."""
-    from blackjax.adaptation.laps_burn_in import Adaptation, AdaptationState
-    from blackjax.adaptation.laps_burn_in import build_kernel as laps_build_kernel
-
     ndims = 2
     laps_kernel = laps_build_kernel(_bounded_target, ndims=ndims)
     adaptation = Adaptation(ndims=ndims, microcanonical=True)

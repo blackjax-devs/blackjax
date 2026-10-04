@@ -18,6 +18,7 @@ import jax.numpy as jnp
 import numpy as np
 from absl.testing import absltest
 
+import blackjax
 from blackjax.vi.pathfinder import PathfinderState, approximate, sample
 from tests.fixtures import BlackJAXTest, std_normal_logdensity
 
@@ -196,8 +197,6 @@ class PathfinderTopLevelAPITest(BlackJAXTest):
 
     def test_init_and_sample(self):
         """Top-level API: init then sample gives correct-shaped output."""
-        import blackjax
-
         ndim = 2
 
         algo = blackjax.pathfinder(std_normal_logdensity)
@@ -211,8 +210,6 @@ class PathfinderTopLevelAPITest(BlackJAXTest):
 
     def test_step_is_noop(self):
         """Pathfinder step is a no-op (returns the same state)."""
-        import blackjax
-
         algo = blackjax.pathfinder(std_normal_logdensity)
         key_init, key_step = jax.random.split(self.next_key())
         state, _ = algo.init(key_init, jnp.zeros(2), num_samples=20)
