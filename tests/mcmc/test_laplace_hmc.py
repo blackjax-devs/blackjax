@@ -20,6 +20,7 @@ import numpy as np
 from absl.testing import absltest
 
 import blackjax
+from blackjax.mcmc.hmc import multinomial_hmc_proposal
 from blackjax.mcmc.laplace_hmc import LaplaceHMCState, as_top_level_api, init
 from blackjax.mcmc.laplace_marginal import LaplaceHMCInfo, laplace_marginal_factory
 from blackjax.util import run_inference_algorithm
@@ -428,8 +429,6 @@ class TestLaplaceMHMC(BlackJAXTest):
 
     def test_is_accepted_always_true(self):
         """Multinomial proposal has no M-H rejection step."""
-        from blackjax.mcmc.hmc import multinomial_hmc_proposal
-
         sampler = blackjax.laplace_hmc(
             self.log_joint,
             self.theta_init,
@@ -443,8 +442,6 @@ class TestLaplaceMHMC(BlackJAXTest):
     def test_alias_matches_explicit_build_proposal(self):
         """laplace_mhmc produces the same result as
         laplace_hmc(build_proposal=multinomial_hmc_proposal)."""
-        from blackjax.mcmc.hmc import multinomial_hmc_proposal
-
         sampler_alias = blackjax.laplace_mhmc(
             self.log_joint, self.theta_init, **self.kwargs
         )

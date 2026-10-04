@@ -16,6 +16,7 @@ from jax.flatten_util import ravel_pytree
 import blackjax.diagnostics as diagnostics
 import blackjax.mcmc.metrics as metrics
 import blackjax.mcmc.random_walk
+from blackjax import mgrad_gaussian
 from blackjax.adaptation.base import get_filter_adapt_info_fn, return_all_adapt_info
 from blackjax.adaptation.laps import laps as run_laps
 from blackjax.mcmc.adjusted_mclmc import rescale
@@ -1049,8 +1050,6 @@ class LatentGaussianTest(chex.TestCase):
 
     @chex.all_variants(with_pmap=False)
     def test_latent_gaussian(self):
-        from blackjax import mgrad_gaussian
-
         inference_algorithm = mgrad_gaussian(
             lambda x: -0.5 * jnp.sum((x - 1.0) ** 2),
             covariance=self.C,

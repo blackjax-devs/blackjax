@@ -7,6 +7,7 @@ import jax
 import jax.numpy as jnp
 import jax.scipy.stats as stats
 from absl.testing import absltest, parameterized
+from scipy.stats import norm
 
 from blackjax.mcmc import random_walk
 from blackjax.mcmc.slice import fixed_order
@@ -534,8 +535,6 @@ class NestedSamplingStatisticalTest(chex.TestCase):
 
         # Analytic evidence: Z = ∫[-3,3] (1/6) * exp(-0.5*x²) dx
         # = (1/6) * √(2π) * [Φ(3) - Φ(-3)]
-        from scipy.stats import norm
-
         prior_width = prior_b - prior_a
         integral_part = jnp.sqrt(2 * jnp.pi) * (norm.cdf(3.0) - norm.cdf(-3.0))
         analytical_evidence = integral_part / prior_width
@@ -984,8 +983,6 @@ class NestedSamplingStatisticalTest(chex.TestCase):
             )
 
         # Analytic evidence
-        from scipy.stats import norm
-
         analytical_evidence = (
             norm.cdf((prior_b - mu_true) / sigma_true)
             - norm.cdf((prior_a - mu_true) / sigma_true)

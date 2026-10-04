@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """MCMC diagnostics."""
-from typing import NamedTuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
 import numpy as np
+from jax.flatten_util import ravel_pytree
 from scipy.fftpack import next_fast_len  # type: ignore
 
-from blackjax.types import Array, ArrayLike
+from blackjax.types import Array, ArrayLike, ArrayLikeTree
 
 __all__ = [
     "potential_scale_reduction",
@@ -33,6 +34,8 @@ __all__ = [
     "divergence_concentration",
     "divergence_concentration_from_counts",
     "format_divergence_warning",
+    "imq_kernel",
+    "kernelized_stein_discrepancy",
 ]
 
 
@@ -1143,3 +1146,98 @@ def format_divergence_warning(report: DivergenceConcentrationReport) -> str:
             "untrustworthy."
         )
     return "\n".join(lines)
+
+
+def imq_kernel(x: Array, y: Array, c: float = 1.0, beta: float = -0.5) -> Array:
+    """Inverse multiquadric kernel ``(c² + ||x-y||²)**beta``.
+
+    Use ``c > 0`` and ``-1 < beta < 0``. Bind non-default parameters with
+    ``functools.partial``. Convergence guarantees additionally require target
+    conditions; see :cite:p:`gorham2017kernels`.
+    """
+    return (c**2 + jnp.sum((x - y) ** 2)) ** beta
+
+
+def kernelized_stein_discrepancy(
+    samples: ArrayLikeTree,
+    grad_logdensity_fn: Callable,
+    kernel: Callable,
+    *,
+    statistic: str = "v",
+) -> Array:
+    """Estimate squared kernelized Stein discrepancy with a V- or U-statistic.
+
+    Parameters
+    ----------
+    samples
+        PyTree (an array, or a dict/tuple/NamedTuple of per-field arrays) whose
+        leaves share a leading ``num_samples`` axis. Chain dimensions must be
+        pooled explicitly before calling this function.
+    grad_logdensity_fn
+        Target score function, mapping one sample (one leading-axis slice of
+        ``samples``, with the same PyTree structure) to the gradient of its log
+        density. For example, ``jax.grad(logdensity_fn)``. The normalizing
+        constant is not required.
+    kernel
+        Scalar-valued, twice differentiable positive semidefinite kernel taking
+        two flattened sample vectors. Bind kernel parameters such as bandwidth
+        with ``functools.partial``. The kernel must satisfy the target's Stein
+        boundary conditions; choosing an appropriate kernel is the caller's
+        responsibility.
+
+    statistic
+        ``"v"`` includes diagonal pairs; ``"u"`` excludes them and requires at
+        least two draws. The U-statistic can be negative, even in exact arithmetic.
+
+    Returns
+    -------
+    Estimate of squared KSD, not a calibrated p-value or convergence certificate.
+    The V-statistic has a sample-dependent diagonal bias of order ``1/n``.
+
+    Notes
+    -----
+    Complements rather than replaces R-hat. Approximately independent draws are
+    assumed; autocorrelation and an unvisited mode can make the result misleading.
+    A positive semidefinite kernel alone does not identify every distribution:
+    this requires additional conditions, including integral strict positive
+    definiteness :cite:p:`liu2016kernelized`. Gaussian RBF kernels do not in
+    general detect non-convergence in dimension three or higher. IMQ kernels
+    have convergence guarantees for suitable targets, but targets with bounded
+    scores, including some heavy-tailed targets, remain a gap
+    :cite:p:`gorham2017kernels`.
+
+    Uses the score/kernel derivative expression in :cite:p:`liu2016kernelized`.
+    Rows are processed sequentially and columns are vectorized. The computation
+    has quadratic cost in sample count and mixed Hessians with ``d²`` entries;
+    temporary pairwise storage scales as ``O(n*d²)`` rather than ``O(n²*d²)``.
+    The supplied functions must support JAX differentiation and transformations.
+    No clipping is applied to either statistic.
+    """
+    if statistic not in ("v", "u"):
+        raise ValueError("statistic must be v or u")
+    flat = jax.vmap(lambda s: ravel_pytree(s)[0])(samples)
+    scores = jax.vmap(lambda s: ravel_pytree(grad_logdensity_fn(s))[0])(samples)
+    kernel_value_and_grad = jax.value_and_grad(kernel, argnums=(0, 1))
+    mixed_derivative = jax.jacfwd(jax.grad(kernel, argnums=0), argnums=1)
+
+    def stein_kernel(x, y, score_x, score_y):
+        value, (grad_x, grad_y) = kernel_value_and_grad(x, y)
+        return (
+            value * jnp.dot(score_x, score_y)
+            + jnp.dot(score_x, grad_y)
+            + jnp.dot(grad_x, score_y)
+            + jnp.trace(mixed_derivative(x, y))
+        )
+
+    def row_sum(args):
+        x, score_x = args
+        return jax.vmap(stein_kernel, in_axes=(None, 0, None, 0))(
+            x, flat, score_x, scores
+        ).sum()
+
+    n = flat.shape[0]
+    total = jax.lax.map(row_sum, (flat, scores)).sum()
+    if statistic == "v":
+        return total / n**2
+    diagonal = jax.vmap(stein_kernel)(flat, flat, scores, scores).sum()
+    return (total - diagonal) / (n * (n - 1))
