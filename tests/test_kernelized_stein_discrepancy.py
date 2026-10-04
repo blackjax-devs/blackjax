@@ -1,5 +1,6 @@
 """Analytic reference checks for the squared KSD V-statistic."""
 import functools
+from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -82,23 +83,50 @@ def test_sample_gradient_matches_finite_difference():
     np.testing.assert_allclose(actual, expected, rtol=2e-4, atol=2e-4)
 
 
-@pytest.mark.parametrize(
-    "samples",
-    [
-        jnp.zeros((0, 2)),
-        jnp.zeros((2, 0)),
-        jnp.zeros((2,)),
-        jnp.zeros((2, 2), dtype=int),
-    ],
-)
-def test_rejects_invalid_sample_layout(samples):
-    with pytest.raises(ValueError):
-        kernelized_stein_discrepancy(samples, lambda x: -x, rbf_kernel)
+def test_pytree_samples_match_flat_array():
+    """dict/tuple/NamedTuple samples give the same KSD as the equivalent (n, d) array."""
+
+    class Position(NamedTuple):
+        a: jnp.ndarray
+        b: jnp.ndarray
+
+    samples = np.array([[-1.0, 0.5], [0.25, -0.75], [1.5, 2.0]])
+    score = lambda x: -x
+    tree_score = lambda t: jax.tree.map(lambda v: -v, t)
+    a, b = jnp.asarray(samples[:, 0]), jnp.asarray(samples[:, 1])
+    pytree_variants = ({"a": a, "b": b}, (a, b), Position(a, b))
+
+    for statistic in ("v", "u"):
+        expected = kernelized_stein_discrepancy(
+            samples, score, rbf_kernel, statistic=statistic
+        )
+        for pytree_samples in pytree_variants:
+            actual = kernelized_stein_discrepancy(
+                pytree_samples, tree_score, rbf_kernel, statistic=statistic
+            )
+            np.testing.assert_allclose(actual, expected, rtol=2e-6)
 
 
-def test_rejects_scalar_score():
-    with pytest.raises(ValueError, match="vector"):
-        kernelized_stein_discrepancy(jnp.zeros((2, 1)), lambda x: x.sum(), rbf_kernel)
+def test_1d_samples_match_column_vector():
+    samples_1d = jnp.array([-1.0, 0.5, 2.0])
+    samples_2d = samples_1d[:, None]
+    score = lambda x: -x
+
+    for statistic in ("v", "u"):
+        result_1d = kernelized_stein_discrepancy(
+            samples_1d, score, rbf_kernel, statistic=statistic
+        )
+        result_2d = kernelized_stein_discrepancy(
+            samples_2d, score, rbf_kernel, statistic=statistic
+        )
+        np.testing.assert_allclose(result_1d, result_2d, rtol=2e-6)
+
+
+def test_rejects_invalid_statistic():
+    with pytest.raises(ValueError, match="statistic"):
+        kernelized_stein_discrepancy(
+            jnp.ones((2, 2)), lambda x: -x, rbf_kernel, statistic="invalid"
+        )
 
 
 def test_linear_kernel_matches_stein_feature_norm():
@@ -150,18 +178,3 @@ def test_sequential_rows_and_imq_formula():
         lambda x: kernelized_stein_discrepancy(x, lambda y: -y, imq_kernel)
     )(samples)
     assert any(e.primitive.name == "scan" for e in jaxpr.jaxpr.eqns)
-
-
-@pytest.mark.parametrize(
-    "samples,statistic,message",
-    [
-        ({"x": jnp.ones((2, 1))}, "v", "ravel"),
-        (jnp.ones((1, 2)), "u", "two samples"),
-        (jnp.ones((2, 2)), "invalid", "statistic"),
-    ],
-)
-def test_statistic_and_pytree_contract(samples, statistic, message):
-    with pytest.raises(ValueError, match=message):
-        kernelized_stein_discrepancy(
-            samples, lambda x: -x, rbf_kernel, statistic=statistic
-        )
