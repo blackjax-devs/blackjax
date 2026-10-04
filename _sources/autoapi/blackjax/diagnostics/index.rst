@@ -459,19 +459,22 @@ Module Contents
    conditions; see :cite:p:`gorham2017kernels`.
 
 
-.. py:function:: kernelized_stein_discrepancy(samples: blackjax.types.ArrayLike, grad_logdensity_fn: Callable, kernel: Callable, *, statistic: str = 'v') -> blackjax.types.Array
+.. py:function:: kernelized_stein_discrepancy(samples: blackjax.types.ArrayLikeTree, grad_logdensity_fn: Callable, kernel: Callable, *, statistic: str = 'v') -> blackjax.types.Array
 
    Estimate squared kernelized Stein discrepancy with a V- or U-statistic.
 
-   :param samples: Floating-point array of shape ``(num_samples, num_dimensions)``. Chain
-                   dimensions must be pooled explicitly before calling this function.
-   :param grad_logdensity_fn: Target score function, mapping one sample vector to the gradient of its
-                              log density with the same shape. For example, ``jax.grad(logdensity_fn)``.
-                              The normalizing constant is not required.
-   :param kernel: Scalar-valued, twice differentiable positive semidefinite kernel taking two
-                  sample vectors. Bind kernel parameters such as bandwidth with
-                  ``functools.partial``. The kernel must satisfy the target's Stein boundary
-                  conditions; choosing an appropriate kernel is the caller's responsibility.
+   :param samples: PyTree (an array, or a dict/tuple/NamedTuple of per-field arrays) whose
+                   leaves share a leading ``num_samples`` axis. Chain dimensions must be
+                   pooled explicitly before calling this function.
+   :param grad_logdensity_fn: Target score function, mapping one sample (one leading-axis slice of
+                              ``samples``, with the same PyTree structure) to the gradient of its log
+                              density. For example, ``jax.grad(logdensity_fn)``. The normalizing
+                              constant is not required.
+   :param kernel: Scalar-valued, twice differentiable positive semidefinite kernel taking
+                  two flattened sample vectors. Bind kernel parameters such as bandwidth
+                  with ``functools.partial``. The kernel must satisfy the target's Stein
+                  boundary conditions; choosing an appropriate kernel is the caller's
+                  responsibility.
    :param statistic: ``"v"`` includes diagonal pairs; ``"u"`` excludes them and requires at
                      least two draws. The U-statistic can be negative, even in exact arithmetic.
 
@@ -495,8 +498,6 @@ Module Contents
    has quadratic cost in sample count and mixed Hessians with ``d²`` entries;
    temporary pairwise storage scales as ``O(n*d²)`` rather than ``O(n²*d²)``.
    The supplied functions must support JAX differentiation and transformations.
-   Flatten PyTree positions explicitly with ``jax.flatten_util.ravel_pytree``
-   before stacking samples; this function accepts a flat floating-point array.
    No clipping is applied to either statistic.
 
 

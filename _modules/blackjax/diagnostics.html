@@ -53,7 +53,7 @@
     <link rel="search" title="Search" href="../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g080662f84" />
+  <meta name="docsearch:version" content="0.1.dev1+g832a1bde0" />
   
     
     <script src="../../_static/searchtools.js"></script>
@@ -487,9 +487,10 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax.flatten_util</span><span class="w"> </span><span class="kn">import</span> <span class="n">ravel_pytree</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.fftpack</span><span class="w"> </span><span class="kn">import</span> <span class="n">next_fast_len</span>  <span class="c1"># type: ignore</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLike</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">ArrayLikeTree</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">"potential_scale_reduction"</span><span class="p">,</span>
@@ -1699,7 +1700,7 @@
 <div class="viewcode-block" id="kernelized_stein_discrepancy">
 <a class="viewcode-back" href="../../autoapi/blackjax/diagnostics/index.html#blackjax.diagnostics.kernelized_stein_discrepancy">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">kernelized_stein_discrepancy</span><span class="p">(</span>
-    <span class="n">samples</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="n">samples</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
     <span class="n">grad_logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">kernel</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -1710,17 +1711,20 @@
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    samples</span>
-<span class="sd">        Floating-point array of shape ``(num_samples, num_dimensions)``. Chain</span>
-<span class="sd">        dimensions must be pooled explicitly before calling this function.</span>
+<span class="sd">        PyTree (an array, or a dict/tuple/NamedTuple of per-field arrays) whose</span>
+<span class="sd">        leaves share a leading ``num_samples`` axis. Chain dimensions must be</span>
+<span class="sd">        pooled explicitly before calling this function.</span>
 <span class="sd">    grad_logdensity_fn</span>
-<span class="sd">        Target score function, mapping one sample vector to the gradient of its</span>
-<span class="sd">        log density with the same shape. For example, ``jax.grad(logdensity_fn)``.</span>
-<span class="sd">        The normalizing constant is not required.</span>
+<span class="sd">        Target score function, mapping one sample (one leading-axis slice of</span>
+<span class="sd">        ``samples``, with the same PyTree structure) to the gradient of its log</span>
+<span class="sd">        density. For example, ``jax.grad(logdensity_fn)``. The normalizing</span>
+<span class="sd">        constant is not required.</span>
 <span class="sd">    kernel</span>
-<span class="sd">        Scalar-valued, twice differentiable positive semidefinite kernel taking two</span>
-<span class="sd">        sample vectors. Bind kernel parameters such as bandwidth with</span>
-<span class="sd">        ``functools.partial``. The kernel must satisfy the target's Stein boundary</span>
-<span class="sd">        conditions; choosing an appropriate kernel is the caller's responsibility.</span>
+<span class="sd">        Scalar-valued, twice differentiable positive semidefinite kernel taking</span>
+<span class="sd">        two flattened sample vectors. Bind kernel parameters such as bandwidth</span>
+<span class="sd">        with ``functools.partial``. The kernel must satisfy the target's Stein</span>
+<span class="sd">        boundary conditions; choosing an appropriate kernel is the caller's</span>
+<span class="sd">        responsibility.</span>
 
 <span class="sd">    statistic</span>
 <span class="sd">        ``"v"`` includes diagonal pairs; ``"u"`` excludes them and requires at</span>
@@ -1748,26 +1752,12 @@
 <span class="sd">    has quadratic cost in sample count and mixed Hessians with ``d²`` entries;</span>
 <span class="sd">    temporary pairwise storage scales as ``O(n*d²)`` rather than ``O(n²*d²)``.</span>
 <span class="sd">    The supplied functions must support JAX differentiation and transformations.</span>
-<span class="sd">    Flatten PyTree positions explicitly with ``jax.flatten_util.ravel_pytree``</span>
-<span class="sd">    before stacking samples; this function accepts a flat floating-point array.</span>
 <span class="sd">    No clipping is applied to either statistic.</span>
 <span class="sd">    """</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"samples must be a flat array; ravel PyTree positions first"</span><span class="p">)</span>
-    <span class="n">samples</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">samples</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"samples must have shape (num_samples, num_dimensions)"</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">min</span><span class="p">(</span><span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"samples must have nonempty sample and dimension axes"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">statistic</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"v"</span><span class="p">,</span> <span class="s2">"u"</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"statistic must be v or u"</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">statistic</span> <span class="o">==</span> <span class="s2">"u"</span> <span class="ow">and</span> <span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"the U-statistic requires at least two samples"</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">jnp</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">samples</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">floating</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"samples must have a floating-point dtype"</span><span class="p">)</span>
-    <span class="n">scores</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">grad_logdensity_fn</span><span class="p">)(</span><span class="n">samples</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">scores</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"grad_logdensity_fn must return a vector matching each sample"</span><span class="p">)</span>
+    <span class="n">flat</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">s</span><span class="p">)[</span><span class="mi">0</span><span class="p">])(</span><span class="n">samples</span><span class="p">)</span>
+    <span class="n">scores</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">grad_logdensity_fn</span><span class="p">(</span><span class="n">s</span><span class="p">))[</span><span class="mi">0</span><span class="p">])(</span><span class="n">samples</span><span class="p">)</span>
     <span class="n">kernel_value_and_grad</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">value_and_grad</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">argnums</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
     <span class="n">mixed_derivative</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jacfwd</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">argnums</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">argnums</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
@@ -1781,17 +1771,17 @@
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">row_sum</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
-        <span class="n">index</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">score_x</span> <span class="o">=</span> <span class="n">args</span>
-        <span class="n">values</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">stein_kernel</span><span class="p">,</span> <span class="n">in_axes</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">))(</span>
-            <span class="n">x</span><span class="p">,</span> <span class="n">samples</span><span class="p">,</span> <span class="n">score_x</span><span class="p">,</span> <span class="n">scores</span>
-        <span class="p">)</span>
-        <span class="k">if</span> <span class="n">statistic</span> <span class="o">==</span> <span class="s2">"u"</span><span class="p">:</span>
-            <span class="n">values</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">values</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">score_x</span> <span class="o">=</span> <span class="n">args</span>
+        <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">stein_kernel</span><span class="p">,</span> <span class="n">in_axes</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">))(</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">flat</span><span class="p">,</span> <span class="n">score_x</span><span class="p">,</span> <span class="n">scores</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
 
-    <span class="n">n</span> <span class="o">=</span> <span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">total</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">row_sum</span><span class="p">,</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">samples</span><span class="p">,</span> <span class="n">scores</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">total</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">statistic</span> <span class="o">==</span> <span class="s2">"u"</span> <span class="k">else</span> <span class="n">n</span> <span class="o">*</span> <span class="n">n</span><span class="p">)</span></div>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">flat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">row_sum</span><span class="p">,</span> <span class="p">(</span><span class="n">flat</span><span class="p">,</span> <span class="n">scores</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">statistic</span> <span class="o">==</span> <span class="s2">"v"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">total</span> <span class="o">/</span> <span class="n">n</span><span class="o">**</span><span class="mi">2</span>
+    <span class="n">diagonal</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">stein_kernel</span><span class="p">)(</span><span class="n">flat</span><span class="p">,</span> <span class="n">flat</span><span class="p">,</span> <span class="n">scores</span><span class="p">,</span> <span class="n">scores</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">total</span> <span class="o">-</span> <span class="n">diagonal</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span></div>
 
 </pre></div>
 

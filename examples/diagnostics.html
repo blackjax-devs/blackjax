@@ -57,7 +57,7 @@
     <link rel="prev" title="A Quick Introduction to Blackjax" href="quickstart.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g080662f84" />
+  <meta name="docsearch:version" content="0.1.dev1+g832a1bde0" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -686,9 +686,8 @@ to identify distributions; integral strict positive definiteness and the target�
 Stein boundary conditions are additional requirements.</p>
 <p>Rows are processed sequentially, with vectorized columns. Pairwise work is
 quadratic in sample count, and mixed Hessians have <code class="docutils literal notranslate"><span class="pre">d²</span></code> entries; temporary
-pairwise storage scales as <code class="docutils literal notranslate"><span class="pre">O(n*d²)</span></code>. Flatten PyTree positions explicitly with
-<code class="docutils literal notranslate"><span class="pre">jax.flatten_util.ravel_pytree</span></code> before stacking. This example pools a thinned
-subset from each chain:</p>
+pairwise storage scales as <code class="docutils literal notranslate"><span class="pre">O(n*d²)</span></code>. This example pools a thinned subset from
+each chain:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
