@@ -43,8 +43,9 @@ class Proposal(NamedTuple):
     sum_log_p_accept: Numeric
 
 
-def safe_energy_diff(initial_energy: Numeric, new_energy: Numeric) -> Numeric:
+def safe_energy_diff(initial_energy: Numeric, new_energy: Numeric) -> Array:
     delta_energy = initial_energy - new_energy
+    # jnp.where always returns a jax Array, regardless of its inputs' types.
     delta_energy = jnp.where(jnp.isnan(delta_energy), -jnp.inf, delta_energy)
     return delta_energy
 
@@ -203,7 +204,7 @@ def compute_asymmetric_acceptance_ratio(transition_energy_fn: Callable) -> Calla
         initial_state: TrajectoryState,
         state: TrajectoryState,
         **energy_params,
-    ) -> Numeric:
+    ) -> Array:
         new_energy = transition_energy_fn(initial_state, state, **energy_params)
         prev_energy = transition_energy_fn(state, initial_state, **energy_params)
         log_p_accept = safe_energy_diff(prev_energy, new_energy)
