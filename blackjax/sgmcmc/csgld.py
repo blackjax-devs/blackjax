@@ -21,7 +21,7 @@ import jax.numpy as jnp
 
 from blackjax.base import SamplingAlgorithm
 from blackjax.sgmcmc.diffusions import overdamped_langevin
-from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import Array, ArrayLikeTree, Numeric, PRNGKey
 
 __all__ = ["ContourSGLDState", "init", "build_kernel", "as_top_level_api"]
 
@@ -42,9 +42,9 @@ class ContourSGLDState(NamedTuple):
 
     """
 
-    position: ArrayTree
+    position: ArrayLikeTree
     energy_pdf: Array
-    energy_idx: int
+    energy_idx: Numeric
 
 
 def init(position: ArrayLikeTree, num_partitions=512) -> ContourSGLDState:
