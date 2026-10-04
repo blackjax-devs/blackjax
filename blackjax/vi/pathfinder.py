@@ -162,7 +162,7 @@ def approximate(
     s_padded = jnp.pad(s_masked, ((maxcor, 0), (0, 0)), mode="constant")
     z_padded = jnp.pad(z_masked, ((maxcor, 0), (0, 0)), mode="constant")
 
-    def path_finder_body_fn(args: tuple[int, jax.Array]):
+    def path_finder_body_fn(args: tuple[jax.Array, jax.Array]):
         """The for loop body in Algorithm 1 of the Pathfinder paper."""
 
         i, key_i = args

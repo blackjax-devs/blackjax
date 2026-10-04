@@ -18,7 +18,7 @@ import operator
 import jax
 import jax.numpy as jnp
 
-from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import ArrayLikeTree, PRNGKey
 from blackjax.util import generate_gaussian_noise, pytree_size
 
 __all__ = ["overdamped_langevin", "sghmc", "sgnht"]
@@ -37,7 +37,7 @@ def overdamped_langevin():
         logdensity_grad: ArrayLikeTree,
         step_size: float,
         temperature: float = 1.0,
-    ) -> ArrayTree:
+    ) -> ArrayLikeTree:
         noise = generate_gaussian_noise(rng_key, position)
         position = jax.tree.map(
             lambda p, g, n: (

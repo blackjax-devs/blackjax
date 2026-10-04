@@ -123,7 +123,7 @@ class RWState(NamedTuple):
 
     """
 
-    position: ArrayTree
+    position: ArrayLikeTree
     logdensity: float
 
 

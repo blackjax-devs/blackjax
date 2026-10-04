@@ -27,7 +27,7 @@ import blackjax.mcmc.proposal as proposal
 import blackjax.mcmc.termination as termination
 import blackjax.mcmc.trajectory as trajectory
 from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
-from blackjax.types import ArrayTree, PRNGKey
+from blackjax.types import ArrayTree, Numeric, PRNGKey
 
 __all__ = ["NUTSInfo", "init", "build_kernel", "as_top_level_api"]
 
@@ -273,7 +273,7 @@ def iterative_nuts_proposal(
         max_num_expansions,
     )
 
-    def _compute_energy(state: integrators.IntegratorState) -> float:
+    def _compute_energy(state: integrators.IntegratorState) -> Numeric:
         energy = -state.logdensity + kinetic_energy(state.momentum)
         return energy
 

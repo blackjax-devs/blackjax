@@ -21,7 +21,7 @@ import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
 
 from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
-from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, Numeric, PRNGKey
 from blackjax.util import generate_gaussian_noise
 
 __all__ = [
@@ -43,8 +43,8 @@ class EllipSliceState(NamedTuple):
 
     """
 
-    position: ArrayTree
-    logdensity: ArrayTree
+    position: ArrayLikeTree
+    logdensity: Array
 
 
 class EllipSliceInfo(NamedTuple):
@@ -67,7 +67,7 @@ class EllipSliceInfo(NamedTuple):
     """
 
     momentum: ArrayTree
-    theta: float
+    theta: Numeric
     subiter: int
 
 
