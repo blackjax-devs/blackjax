@@ -154,7 +154,9 @@ def _systematic_or_stratified(
         u = jax.random.uniform(rng_key, (num_samples,))
     cumsum = jnp.cumsum(weights)
     linspace = (jnp.arange(num_samples, dtype=weights.dtype) + u) / num_samples
-    idx = jnp.searchsorted(cumsum, linspace)
+    # Keep rounded upper endpoints below the final cumulative weight.
+    linspace = jnp.minimum(linspace, jnp.nextafter(cumsum[-1], -jnp.inf))
+    idx = jnp.searchsorted(cumsum, linspace, side="right")
     return jnp.clip(idx, 0, n - 1)
 
 
