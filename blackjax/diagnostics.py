@@ -20,7 +20,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from jax.flatten_util import ravel_pytree
-from scipy.fftpack import next_fast_len  # type: ignore
+from scipy.fftpack import next_fast_len
 
 from blackjax.types import Array, ArrayLike, ArrayLikeTree
 
