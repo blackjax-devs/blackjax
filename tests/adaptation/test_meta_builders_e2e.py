@@ -27,6 +27,7 @@ import jax.numpy as jnp
 import numpy as np
 
 import blackjax
+from blackjax.adaptation.low_rank_adaptation import build_growing_window_schedule
 from blackjax.adaptation.meta import (
     MetaAdaptationVerdict,
     build_meta_adaptation_core,
@@ -52,7 +53,12 @@ from blackjax.adaptation.meta._signals import (
     _compute_whitened_spectrum,
 )
 from blackjax.adaptation.metric_recipes import MetricCore
-from blackjax.adaptation.staged_adaptation import _make_engine
+from blackjax.adaptation.staged_adaptation import (
+    _make_engine,
+    _resolve_metric_and_schedule,
+    build_schedule,
+)
+from blackjax.adaptation.step_size import dual_averaging_adaptation
 from blackjax.mcmc.metrics import LowRankInverseMassMatrix
 from tests.adaptation._meta_fixtures import (
     _fill_mc_state,
@@ -534,14 +540,6 @@ class TestRecovershClassical(BlackJAXTest):
         Both are fixed via _resolve_metric_and_schedule: the function is called
         directly so the returned schedule identity is observable.
         """
-        from blackjax.adaptation.low_rank_adaptation import (
-            build_growing_window_schedule,
-        )
-        from blackjax.adaptation.staged_adaptation import (
-            _resolve_metric_and_schedule,
-            build_schedule,
-        )
-
         # auto + no explicit schedule → growing window (the override).
         _, sched_auto_default = _resolve_metric_and_schedule(
             "auto", None, max_grad_budget=5000
@@ -1481,9 +1479,6 @@ class TestMeanPoolGainDefect(BlackJAXTest):
         This test asserts the CORRECT (mean-pool) behavior.  It FAILs with the
         M-sequential lax.scan implementation and PASSes after the mean-pool fix.
         """
-        from blackjax.adaptation.meta import build_meta_adaptation_core
-        from blackjax.adaptation.step_size import dual_averaging_adaptation
-
         target_ar = 0.80
         M = 4
         ar_uniform = 0.75  # same rate on all chains
@@ -1545,8 +1540,6 @@ class TestMeanPoolGainDefect(BlackJAXTest):
         with the M-sequential implementation (counter advances by M) and PASSes
         after the mean-pool fix.
         """
-        from blackjax.adaptation.meta import build_meta_adaptation_core
-
         M = 6
         per_chain = jnp.full((M,), 0.78)
 
@@ -1583,9 +1576,6 @@ class TestSharedEpsilonDA(BlackJAXTest):
         mean observation.  The engine must produce the same step_size_avg as a
         single da_update at mean(per_chain), not M sequential updates.
         """
-        from blackjax.adaptation.meta import build_meta_adaptation_core
-        from blackjax.adaptation.step_size import dual_averaging_adaptation
-
         target_ar = 0.80
         M = 4
         per_chain = jnp.array([0.55, 0.65, 0.75, 0.85])
@@ -1624,8 +1614,6 @@ class TestSharedEpsilonDA(BlackJAXTest):
 
     def test_step_counter_increments_once_per_step(self):
         """After n_da_updates=M (mean-pool), the DA step counter increments by 1."""
-        from blackjax.adaptation.meta import build_meta_adaptation_core
-
         M = 3
         per_chain = jnp.array([0.70, 0.75, 0.80])
 
@@ -1669,9 +1657,6 @@ class TestSharedEpsilonDA(BlackJAXTest):
         The mean-pool result must match a single da_update at the mean
         acceptance rate.
         """
-        from blackjax.adaptation.meta import build_meta_adaptation_core
-        from blackjax.adaptation.step_size import dual_averaging_adaptation
-
         M = 8  # matches the recommended n_chains minimum
         ar_val = 0.78
         per_chain = jnp.full((M,), ar_val)
