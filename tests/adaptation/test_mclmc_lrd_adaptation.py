@@ -13,13 +13,18 @@
 # limitations under the License.
 """Tests for mclmc_lrd_warmup (Scheme A, pilot-free LRD warmup)."""
 
+import math
 import warnings
 
 import jax
 import jax.numpy as jnp
+import numpy as np
 import pytest
 
 import blackjax
+import blackjax.adaptation.mclmc_lrd_adaptation as lrd_mod
+import blackjax.mcmc.adjusted_mclmc as adj_mod
+import blackjax.mcmc.mclmc as mclmc_mod
 from blackjax.adaptation.mclmc_lrd_adaptation import (
     MCLMCLRDAdaptationState,
     _check_da_ceiling_warning,
@@ -144,7 +149,6 @@ class TestRankGuard:
         matters because `_extract_lrd_from_samples` consumes the same
         contaminated draws and returns an all-NaN preconditioner from them.
         """
-        import blackjax.adaptation.mclmc_lrd_adaptation as lrd_mod
 
         def _tripwire(*args, **kwargs):
             raise AssertionError("SVD ran despite invalid pilot diagnostics")
@@ -331,8 +335,6 @@ class TestMCLMCLRDWarmupSmoke:
 
     def test_lrd_imm_usable_with_mclmc_kernel(self):
         """The returned LRD IMM must plug into the mclmc base kernel without error."""
-        import blackjax.mcmc.mclmc as mclmc_mod
-
         rng = jax.random.key(44)
         pos = jnp.zeros(D)
 
@@ -526,8 +528,6 @@ class TestMCLMCLRDAdjustedSmoke:
 
     def test_adjusted_path_lrd_imm_usable_with_adjusted_kernel(self):
         """LRD IMM from adjusted path must plug into adjusted_mclmc kernel."""
-        import blackjax.mcmc.adjusted_mclmc as adj_mod
-
         rng = jax.random.key(51)
         pos = jnp.zeros(D)
 
@@ -726,16 +726,16 @@ class TestAdjustedFracTune2Invariant:
 
     def test_frac_tune2_is_zero_in_adjusted_call(self, monkeypatch):
         """Monkeypatch adjusted_mclmc_find_L_and_step_size to capture kwargs."""
-        import blackjax.adaptation.mclmc_lrd_adaptation as _mod
-
         captured_kwargs = {}
-        original_fn = _mod.adjusted_mclmc_find_L_and_step_size
+        original_fn = lrd_mod.adjusted_mclmc_find_L_and_step_size
 
         def capturing_fn(*args, **kwargs):  # noqa: F841 (original_fn used in body)
             captured_kwargs.update(kwargs)
             return original_fn(*args, **kwargs)
 
-        monkeypatch.setattr(_mod, "adjusted_mclmc_find_L_and_step_size", capturing_fn)
+        monkeypatch.setattr(
+            lrd_mod, "adjusted_mclmc_find_L_and_step_size", capturing_fn
+        )
 
         rng = jax.random.key(60)
         pos = jnp.zeros(D)
@@ -820,8 +820,6 @@ class TestKappaEffPilot:
         the correct formula must give 1.0 (all directions whitened).
         """
         # Build a d=8 correlated Gaussian with kappa=100
-        import numpy as np
-
         d_test = 8
         rng_np = np.random.default_rng(7)
         eigs_test = np.array([1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 0.5])
@@ -884,8 +882,6 @@ class TestE1WarmStart:
             + kappa_str
         )
         # Adapted step should be within 15% of 1.22*sqrt(d)
-        import math
-
         target_step = 1.22 * math.sqrt(D)
         lrd_step = result.diagnostics["lrd_step_size"]
         step_ratio = lrd_step / target_step
@@ -920,8 +916,6 @@ class TestE1WarmStart:
         the gate). When e1_fired=False, "law" and "default" produce bit-identical
         output (same rng_key → same PRNG trajectory → same adapted (L, step)).
         """
-        import numpy as np
-
         d_ill = 6
         rho = 0.97
         R = (1.0 - rho) * np.eye(d_ill) + rho * np.ones((d_ill, d_ill))

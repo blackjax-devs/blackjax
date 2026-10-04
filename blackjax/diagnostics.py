@@ -17,9 +17,10 @@ from typing import Callable, NamedTuple
 import jax
 import jax.numpy as jnp
 import numpy as np
+from jax.flatten_util import ravel_pytree
 from scipy.fftpack import next_fast_len  # type: ignore
 
-from blackjax.types import Array, ArrayLike
+from blackjax.types import Array, ArrayLike, ArrayLikeTree
 
 __all__ = [
     "potential_scale_reduction",
@@ -1158,7 +1159,7 @@ def imq_kernel(x: Array, y: Array, c: float = 1.0, beta: float = -0.5) -> Array:
 
 
 def kernelized_stein_discrepancy(
-    samples: ArrayLike,
+    samples: ArrayLikeTree,
     grad_logdensity_fn: Callable,
     kernel: Callable,
     *,
@@ -1169,17 +1170,20 @@ def kernelized_stein_discrepancy(
     Parameters
     ----------
     samples
-        Floating-point array of shape ``(num_samples, num_dimensions)``. Chain
-        dimensions must be pooled explicitly before calling this function.
+        PyTree (an array, or a dict/tuple/NamedTuple of per-field arrays) whose
+        leaves share a leading ``num_samples`` axis. Chain dimensions must be
+        pooled explicitly before calling this function.
     grad_logdensity_fn
-        Target score function, mapping one sample vector to the gradient of its
-        log density with the same shape. For example, ``jax.grad(logdensity_fn)``.
-        The normalizing constant is not required.
+        Target score function, mapping one sample (one leading-axis slice of
+        ``samples``, with the same PyTree structure) to the gradient of its log
+        density. For example, ``jax.grad(logdensity_fn)``. The normalizing
+        constant is not required.
     kernel
-        Scalar-valued, twice differentiable positive semidefinite kernel taking two
-        sample vectors. Bind kernel parameters such as bandwidth with
-        ``functools.partial``. The kernel must satisfy the target's Stein boundary
-        conditions; choosing an appropriate kernel is the caller's responsibility.
+        Scalar-valued, twice differentiable positive semidefinite kernel taking
+        two flattened sample vectors. Bind kernel parameters such as bandwidth
+        with ``functools.partial``. The kernel must satisfy the target's Stein
+        boundary conditions; choosing an appropriate kernel is the caller's
+        responsibility.
 
     statistic
         ``"v"`` includes diagonal pairs; ``"u"`` excludes them and requires at
@@ -1207,26 +1211,12 @@ def kernelized_stein_discrepancy(
     has quadratic cost in sample count and mixed Hessians with ``d²`` entries;
     temporary pairwise storage scales as ``O(n*d²)`` rather than ``O(n²*d²)``.
     The supplied functions must support JAX differentiation and transformations.
-    Flatten PyTree positions explicitly with ``jax.flatten_util.ravel_pytree``
-    before stacking samples; this function accepts a flat floating-point array.
     No clipping is applied to either statistic.
     """
-    if isinstance(samples, dict):
-        raise ValueError("samples must be a flat array; ravel PyTree positions first")
-    samples = jnp.asarray(samples)
-    if samples.ndim != 2:
-        raise ValueError("samples must have shape (num_samples, num_dimensions)")
-    if min(samples.shape) == 0:
-        raise ValueError("samples must have nonempty sample and dimension axes")
     if statistic not in ("v", "u"):
         raise ValueError("statistic must be v or u")
-    if statistic == "u" and samples.shape[0] < 2:
-        raise ValueError("the U-statistic requires at least two samples")
-    if not jnp.issubdtype(samples.dtype, jnp.floating):
-        raise ValueError("samples must have a floating-point dtype")
-    scores = jax.vmap(grad_logdensity_fn)(samples)
-    if scores.shape != samples.shape:
-        raise ValueError("grad_logdensity_fn must return a vector matching each sample")
+    flat = jax.vmap(lambda s: ravel_pytree(s)[0])(samples)
+    scores = jax.vmap(lambda s: ravel_pytree(grad_logdensity_fn(s))[0])(samples)
     kernel_value_and_grad = jax.value_and_grad(kernel, argnums=(0, 1))
     mixed_derivative = jax.jacfwd(jax.grad(kernel, argnums=0), argnums=1)
 
@@ -1240,14 +1230,14 @@ def kernelized_stein_discrepancy(
         )
 
     def row_sum(args):
-        index, x, score_x = args
-        values = jax.vmap(stein_kernel, in_axes=(None, 0, None, 0))(
-            x, samples, score_x, scores
-        )
-        if statistic == "u":
-            values = values.at[index].set(0)
-        return values.sum()
+        x, score_x = args
+        return jax.vmap(stein_kernel, in_axes=(None, 0, None, 0))(
+            x, flat, score_x, scores
+        ).sum()
 
-    n = samples.shape[0]
-    total = jax.lax.map(row_sum, (jnp.arange(n), samples, scores)).sum()
-    return total / (n * (n - 1) if statistic == "u" else n * n)
+    n = flat.shape[0]
+    total = jax.lax.map(row_sum, (flat, scores)).sum()
+    if statistic == "v":
+        return total / n**2
+    diagonal = jax.vmap(stein_kernel)(flat, flat, scores, scores).sum()
+    return (total - diagonal) / (n * (n - 1))

@@ -18,6 +18,9 @@ import numpy as np
 import pytest
 
 import blackjax
+from blackjax.adaptation.pathfinder_adaptation import _psis_weighted_mixture_covariance
+from blackjax.optimizers.lbfgs import lbfgs_inverse_hessian_formula_1
+from blackjax.vi.multipathfinder import multi_approximate, psis_weights
 from tests.fixtures import std_normal_logdensity
 
 # ---------------------------------------------------------------------------
@@ -339,11 +342,6 @@ def test_degenerate_n_paths_1_matches_single_path():
     # the n_paths=1 lbfgs_psis_mixture result is a valid (d, d) PSD matrix
     # and that it equals the lbfgs_inverse_hessian at the same ELBO-argmax
     # iterate from that run.
-    from blackjax.adaptation.pathfinder_adaptation import (
-        _psis_weighted_mixture_covariance,
-    )
-    from blackjax.vi.multipathfinder import multi_approximate, psis_weights
-
     rng_key = jax.random.key(0)
     init_pos = jnp.zeros(DIM)
 
@@ -359,8 +357,6 @@ def test_degenerate_n_paths_1_matches_single_path():
     mix_imm = _psis_weighted_mixture_covariance(mpf_state, log_weights)
 
     # Directly compute via lbfgs_inverse_hessian_formula_1 on the single path
-    from blackjax.optimizers.lbfgs import lbfgs_inverse_hessian_formula_1
-
     single_imm = lbfgs_inverse_hessian_formula_1(
         mpf_state.path_states.alpha[0],
         mpf_state.path_states.beta[0],
@@ -440,11 +436,6 @@ def test_between_component_contributes_for_bimodal_target():
     verify that the between-component correction increases the trace relative to
     a within-component-only estimate.
     """
-    from blackjax.adaptation.pathfinder_adaptation import (
-        _psis_weighted_mixture_covariance,
-    )
-    from blackjax.optimizers.lbfgs import lbfgs_inverse_hessian_formula_1
-    from blackjax.vi.multipathfinder import multi_approximate, psis_weights
 
     # 1-D bimodal: two Gaussians at -3 and +3
     def bimodal_logdensity(x):

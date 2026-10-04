@@ -10,6 +10,7 @@ from jax import tree, vmap
 
 import blackjax
 from blackjax.diagnostics import psis_weights
+from blackjax.mcmc.integrators import isokinetic_mclachlan
 from blackjax.util import (
     run_inference_algorithm,
     store_only_expectation_values,
@@ -124,8 +125,6 @@ class ThinInferenceAlgorithmTest(chex.TestCase):
         self.num_steps = 10_000
 
     def warmup(self, rng_key, num_steps, thinning: int = 1):
-        from blackjax.mcmc.integrators import isokinetic_mclachlan
-
         init_key, tune_key = jr.split(rng_key, 2)
 
         state = blackjax.mcmc.mclmc.init(
