@@ -115,7 +115,7 @@ Module Contents
 
 
    .. py:attribute:: momentum
-      :type:  blackjax.types.Array
+      :type:  blackjax.types.ArrayTree
 
 
    .. py:attribute:: tuning_parameter

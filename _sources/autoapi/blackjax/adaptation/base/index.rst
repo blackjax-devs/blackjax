@@ -30,7 +30,7 @@ Module Contents
 
 
    .. py:attribute:: state
-      :type:  blackjax.types.ArrayTree
+      :type:  blackjax.types.ArrayLikeTree
 
 
    .. py:attribute:: parameters

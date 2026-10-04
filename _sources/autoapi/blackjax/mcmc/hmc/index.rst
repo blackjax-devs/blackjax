@@ -93,7 +93,7 @@ Module Contents
 
 
    .. py:attribute:: acceptance_rate
-      :type:  float
+      :type:  blackjax.types.Numeric
 
 
    .. py:attribute:: is_accepted
@@ -101,11 +101,11 @@ Module Contents
 
 
    .. py:attribute:: is_divergent
-      :type:  bool
+      :type:  blackjax.types.Array
 
 
    .. py:attribute:: energy
-      :type:  float
+      :type:  blackjax.types.Numeric
 
 
    .. py:attribute:: proposal

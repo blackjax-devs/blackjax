@@ -85,7 +85,7 @@ Module Contents
 
 
    .. py:attribute:: position
-      :type:  blackjax.types.ArrayTree
+      :type:  blackjax.types.ArrayLikeTree
 
 
    .. py:attribute:: logdensity

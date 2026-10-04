@@ -53,7 +53,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g02681f020" />
+  <meta name="docsearch:version" content="0.1.dev1+gf79f9fd1e" />
   
     
     <script src="../../../_static/searchtools.js"></script>
@@ -484,7 +484,7 @@
 <span class="sd">"""Public API for the Dynamic HMC Kernel"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NamedTuple</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">cast</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
@@ -494,7 +494,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.adjusted_mclmc</span><span class="w"> </span><span class="kn">import</span> <span class="n">rescale</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.hmc</span><span class="w"> </span><span class="kn">import</span> <span class="n">HMCInfo</span><span class="p">,</span> <span class="n">HMCState</span><span class="p">,</span> <span class="n">hmc_proposal</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.hmc</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_kernel</span> <span class="k">as</span> <span class="n">build_static_hmc_kernel</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">Numeric</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">"DynamicHMCState"</span><span class="p">,</span>
@@ -540,10 +540,22 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span>
     <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
     <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">random_generator_arg</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">random_generator_arg</span><span class="p">:</span> <span class="n">Numeric</span><span class="p">,</span>
 <span class="p">):</span>
     <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">value_and_grad</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">)(</span><span class="n">position</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">DynamicHMCState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">,</span> <span class="n">random_generator_arg</span><span class="p">)</span></div>
+    <span class="c1"># position is stored unconverted, like hmc.HMCState: adjusted_mclmc_dynamic</span>
+    <span class="c1"># re-feeds DynamicHMCState.position straight into an IntegratorState.</span>
+    <span class="c1"># random_generator_arg is accepted as a plain int Halton-sequence index</span>
+    <span class="c1"># too (chees_adaptation seeds it with a literal 0), but the field stays</span>
+    <span class="c1"># Array: every downstream consumer (halton_sequence, trajectory_length)</span>
+    <span class="c1"># calls .dtype on it, which a bare Python int would not survive at</span>
+    <span class="c1"># runtime any more than it does today.</span>
+    <span class="k">return</span> <span class="n">DynamicHMCState</span><span class="p">(</span>
+        <span class="n">cast</span><span class="p">(</span><span class="n">ArrayTree</span><span class="p">,</span> <span class="n">position</span><span class="p">),</span>
+        <span class="n">logdensity</span><span class="p">,</span>
+        <span class="n">logdensity_grad</span><span class="p">,</span>
+        <span class="n">cast</span><span class="p">(</span><span class="n">Array</span><span class="p">,</span> <span class="n">random_generator_arg</span><span class="p">),</span>
+    <span class="p">)</span></div>
 
 
 
@@ -698,7 +710,7 @@
 
 <div class="viewcode-block" id="halton_sequence">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.halton_sequence">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">halton_sequence</span><span class="p">(</span><span class="n">i</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">max_bits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">halton_sequence</span><span class="p">(</span><span class="n">i</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">max_bits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Generate the (i+1)-th element of the Halton sequence.</span>
 
 <span class="sd">    Warning: max_bits should be less than the bit width of i.dtype to prevent integer overflow (e.g., max_bits &lt;= 63 for int64).</span>
@@ -714,7 +726,7 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">halton_trajectory_length</span><span class="p">(</span>
     <span class="n">i</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">trajectory_length_adjustment</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">max_bits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Generate a quasi-random number of integration steps."""</span>
     <span class="n">s</span> <span class="o">=</span> <span class="n">rescale</span><span class="p">(</span><span class="n">trajectory_length_adjustment</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">rint</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">+</span> <span class="n">halton_sequence</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">max_bits</span><span class="p">)</span> <span class="o">*</span> <span class="n">s</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>

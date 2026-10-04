@@ -38,7 +38,7 @@ Module Contents
 
 
    .. py:attribute:: step_size
-      :type:  float
+      :type:  blackjax.types.Numeric
 
 
    .. py:attribute:: inverse_mass_matrix

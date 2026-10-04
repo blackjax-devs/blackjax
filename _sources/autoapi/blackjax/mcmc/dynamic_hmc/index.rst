@@ -58,7 +58,7 @@ Module Contents
       :type:  blackjax.types.Array
 
 
-.. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: collections.abc.Callable, random_generator_arg: blackjax.types.Array)
+.. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: collections.abc.Callable, random_generator_arg: blackjax.types.Numeric)
 
 .. py:function:: build_kernel(integrator: collections.abc.Callable = integrators.velocity_verlet, divergence_threshold: float = 1000, next_random_arg_fn: collections.abc.Callable = lambda key: jax.random.split(key)[1], integration_steps_fn: collections.abc.Callable = lambda key: jax.random.randint(key, (), 1, 10), build_proposal: collections.abc.Callable = hmc_proposal)
 
@@ -113,7 +113,7 @@ Module Contents
    :rtype: A ``SamplingAlgorithm``.
 
 
-.. py:function:: halton_sequence(i: blackjax.types.Array, max_bits: int = 10) -> float
+.. py:function:: halton_sequence(i: blackjax.types.Array, max_bits: int = 10) -> blackjax.types.Array
 
    Generate the (i+1)-th element of the Halton sequence.
 

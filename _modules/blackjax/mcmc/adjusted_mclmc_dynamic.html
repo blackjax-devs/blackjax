@@ -53,7 +53,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g02681f020" />
+  <meta name="docsearch:version" content="0.1.dev1+gf79f9fd1e" />
   
     
     <script src="../../../_static/searchtools.js"></script>
@@ -484,6 +484,7 @@
 <span class="sd">"""Public API for the Metropolis Hastings Microcanonical Hamiltonian Monte Carlo (MHMCHMC) Kernel. This is closely related to the Microcanonical Langevin Monte Carlo (MCLMC) Kernel, which is an unadjusted method. This kernel adds a Metropolis-Hastings correction to the MCLMC kernel. It also only refreshes the momentum variable after each MH step, rather than during the integration of the trajectory. Hence "Hamiltonian" and not "Langevin"."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">cast</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
@@ -493,7 +494,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.adjusted_mclmc</span><span class="w"> </span><span class="kn">import</span> <span class="n">adjusted_mclmc_proposal</span><span class="p">,</span> <span class="n">rescale</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.dynamic_hmc</span><span class="w"> </span><span class="kn">import</span> <span class="n">DynamicHMCState</span><span class="p">,</span> <span class="n">halton_sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.hmc</span><span class="w"> </span><span class="kn">import</span> <span class="n">HMCInfo</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">generate_unit_vector</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"init"</span><span class="p">,</span> <span class="s2">"build_kernel"</span><span class="p">,</span> <span class="s2">"as_top_level_api"</span><span class="p">]</span>
@@ -521,7 +522,11 @@
 <span class="sd">    The initial DynamicHMCState.</span>
 <span class="sd">    """</span>
     <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">value_and_grad</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">)(</span><span class="n">position</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">DynamicHMCState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">,</span> <span class="n">random_generator_arg</span><span class="p">)</span></div>
+    <span class="c1"># position is stored unconverted, like dynamic_hmc.init; build_kernel</span>
+    <span class="c1"># below re-feeds DynamicHMCState.position into an IntegratorState.</span>
+    <span class="k">return</span> <span class="n">DynamicHMCState</span><span class="p">(</span>
+        <span class="n">cast</span><span class="p">(</span><span class="n">ArrayTree</span><span class="p">,</span> <span class="n">position</span><span class="p">),</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">,</span> <span class="n">random_generator_arg</span>
+    <span class="p">)</span></div>
 
 
 
@@ -674,7 +679,7 @@
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">trajectory_length</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">mu</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">trajectory_length</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">mu</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Quasi-random trajectory length using the Halton sequence.</span>
 
 <span class="sd">    Parameters</span>

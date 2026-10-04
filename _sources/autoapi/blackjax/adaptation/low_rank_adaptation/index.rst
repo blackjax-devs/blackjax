@@ -163,15 +163,15 @@ Module Contents
 
 
    .. py:attribute:: step_size
-      :type:  float
+      :type:  blackjax.types.Numeric
 
 
    .. py:attribute:: draws_buffer
-      :type:  blackjax.types.Array
+      :type:  blackjax.types.Array | None
 
 
    .. py:attribute:: grads_buffer
-      :type:  blackjax.types.Array
+      :type:  blackjax.types.Array | None
 
 
    .. py:attribute:: buffer_idx

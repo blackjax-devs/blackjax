@@ -57,7 +57,7 @@
     <link rel="prev" title="blackjax.smc.adaptive_tempered" href="../adaptive_tempered/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g02681f020" />
+  <meta name="docsearch:version" content="0.1.dev1+gf79f9fd1e" />
   
     
     <script src="../../../../_static/searchtools.js"></script>
@@ -531,7 +531,7 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.smc.base.step" title="blackjax.smc.base.step"><code class="xref py py-obj docutils literal notranslate"><span class="pre">step</span></code></a>(→ tuple[SMCState, SMCInfo])</p></td>
 <td><p>General SMC sampling step.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.base.extend_params" title="blackjax.smc.base.extend_params"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extend_params</span></code></a>(→ blackjax.types.Array)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.base.extend_params" title="blackjax.smc.base.extend_params"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extend_params</span></code></a>(→ blackjax.types.ArrayTree)</p></td>
 <td><p>Extend parameters to be used for all particles in SMC.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.smc.base.map_fn" title="blackjax.smc.base.map_fn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">map_fn</span></code></a>(→ collections.abc.Callable)</p></td>
@@ -708,20 +708,20 @@ transition.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.smc.base.extend_params">
-<span class="sig-name descname"><span class="pre">extend_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.Array</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/base.html#extend_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.base.extend_params" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">extend_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.ArrayLikeTree</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.ArrayTree</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/base.html#extend_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.base.extend_params" title="Link to this definition">#</a></dt>
 <dd><p>Extend parameters to be used for all particles in SMC.</p>
 <p>Given a dictionary of params, repeats them for every single particle. The
 expected usage is in cases where the aim is to repeat the same parameters for
 all chains within SMC.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>params</strong> (<em>Array</em>) – Parameters to extend for all particles.</p>
+<dd class="field-odd"><p><strong>params</strong> (<em>ArrayLikeTree</em>) – Parameters to extend for all particles.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Extended parameters with an additional dimension for particles.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Array</p>
+<dd class="field-odd"><p>ArrayTree</p>
 </dd>
 </dl>
 </dd></dl>

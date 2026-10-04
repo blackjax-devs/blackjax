@@ -157,7 +157,7 @@ Module Contents
                transition.
 
 
-.. py:function:: extend_params(params: blackjax.types.Array) -> blackjax.types.Array
+.. py:function:: extend_params(params: blackjax.types.ArrayLikeTree) -> blackjax.types.ArrayTree
 
    Extend parameters to be used for all particles in SMC.
 
@@ -166,10 +166,10 @@ Module Contents
    all chains within SMC.
 
    :param params: Parameters to extend for all particles.
-   :type params: Array
+   :type params: ArrayLikeTree
 
    :returns: Extended parameters with an additional dimension for particles.
-   :rtype: Array
+   :rtype: ArrayTree
 
 
 .. py:function:: map_fn(fn: collections.abc.Callable, batch_size: int) -> collections.abc.Callable

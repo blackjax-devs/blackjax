@@ -39,7 +39,7 @@ Functions
 Module Contents
 ---------------
 
-.. py:function:: potential_scale_reduction(input_array: blackjax.types.ArrayLike, chain_axis: int = 0, sample_axis: int = 1) -> blackjax.types.Array
+.. py:function:: potential_scale_reduction(input_array: ChainArray, chain_axis: int = 0, sample_axis: int = 1) -> blackjax.types.Array
 
    Gelman and Rubin (1992)'s potential scale reduction for computing multiple MCMC chain convergence.
 
@@ -62,7 +62,7 @@ Module Contents
    greater than one indicate that one or more chains have not yet converged :cite:p:`stan_rhat,gelman1992inference`.
 
 
-.. py:function:: rhat(input_array: blackjax.types.ArrayLike, chain_axis: int = 0, sample_axis: int = 1) -> blackjax.types.Array
+.. py:function:: rhat(input_array: ChainArray, chain_axis: int = 0, sample_axis: int = 1) -> blackjax.types.Array
 
    Rank-normalized split-R̂ (Vehtari et al. 2021).
 
@@ -112,7 +112,7 @@ Module Contents
    .. cite:p:`vehtari2021rank`
 
 
-.. py:function:: effective_sample_size(input_array: blackjax.types.ArrayLike, chain_axis: int = 0, sample_axis: int = 1) -> blackjax.types.Array
+.. py:function:: effective_sample_size(input_array: ChainArray, chain_axis: int = 0, sample_axis: int = 1) -> blackjax.types.Array
 
    Compute estimate of the effective sample size (ess).
 
@@ -145,7 +145,7 @@ Module Contents
    criterion :cite:p:`geyer1992practical,geyer2011introduction`.
 
 
-.. py:function:: ess_bulk(input_array: blackjax.types.ArrayLike, chain_axis: int = 0, sample_axis: int = 1) -> blackjax.types.Array
+.. py:function:: ess_bulk(input_array: ChainArray, chain_axis: int = 0, sample_axis: int = 1) -> blackjax.types.Array
 
    Bulk effective sample size (rank-normalized split-chain ESS).
 
@@ -174,7 +174,7 @@ Module Contents
    .. cite:p:`vehtari2021rank`
 
 
-.. py:function:: ess_tail(input_array: blackjax.types.ArrayLike, chain_axis: int = 0, sample_axis: int = 1, prob: float = 0.9) -> blackjax.types.Array
+.. py:function:: ess_tail(input_array: ChainArray, chain_axis: int = 0, sample_axis: int = 1, prob: float = 0.9) -> blackjax.types.Array
 
    Tail effective sample size.
 

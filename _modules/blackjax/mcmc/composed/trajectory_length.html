@@ -53,7 +53,7 @@
     <link rel="search" title="Search" href="../../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g02681f020" />
+  <meta name="docsearch:version" content="0.1.dev1+gf79f9fd1e" />
   
     
     <script src="../../../../_static/searchtools.js"></script>
@@ -548,7 +548,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">SamplingAlgorithm</span><span class="p">,</span> <span class="n">build_sampling_algorithm</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.composed</span><span class="w"> </span><span class="kn">import</span> <span class="n">_seam</span> <span class="k">as</span> <span class="n">seam</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.integrators</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntegratorState</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">PRNGKey</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">"GISTTrajectoryLengthInfo"</span><span class="p">,</span>
@@ -598,7 +598,7 @@
 
 <div class="viewcode-block" id="GISTTrajectoryLengthInfo.momentum">
 <a class="viewcode-back" href="../../../../autoapi/blackjax/mcmc/composed/trajectory_length/index.html#blackjax.mcmc.composed.trajectory_length.GISTTrajectoryLengthInfo.momentum">[docs]</a>
-    <span class="n">momentum</span><span class="p">:</span> <span class="n">Array</span></div>
+    <span class="n">momentum</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
 
 <div class="viewcode-block" id="GISTTrajectoryLengthInfo.tuning_parameter">
 <a class="viewcode-back" href="../../../../autoapi/blackjax/mcmc/composed/trajectory_length/index.html#blackjax.mcmc.composed.trajectory_length.GISTTrajectoryLengthInfo.tuning_parameter">[docs]</a>
@@ -935,13 +935,14 @@
             <span class="n">inverse_mass_matrix</span><span class="p">,</span>
             <span class="n">divergence_threshold</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="c1"># `raw_extra_info` is declared as the generic `ArrayTree` in the</span>
-        <span class="c1"># general spine (opaque to it by design); cast back to the concrete</span>
-        <span class="c1"># type this kernel actually produces.</span>
+        <span class="c1"># `raw_extra_info`/`info.tuning_parameter` are declared as the</span>
+        <span class="c1"># generic `ArrayTree` in the general spine (opaque to it by design);</span>
+        <span class="c1"># cast back to the concrete types this kernel actually produces --</span>
+        <span class="c1"># `tuning_parameter` is `L` itself here (see the class docstring).</span>
         <span class="n">extra_info</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">_TrajectoryLengthExtra</span><span class="p">,</span> <span class="n">raw_extra_info</span><span class="p">)</span>
         <span class="n">trajectory_length_info</span> <span class="o">=</span> <span class="n">GISTTrajectoryLengthInfo</span><span class="p">(</span>
             <span class="n">info</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span>
-            <span class="n">info</span><span class="o">.</span><span class="n">tuning_parameter</span><span class="p">,</span>
+            <span class="n">cast</span><span class="p">(</span><span class="n">Array</span><span class="p">,</span> <span class="n">info</span><span class="o">.</span><span class="n">tuning_parameter</span><span class="p">),</span>
             <span class="n">info</span><span class="o">.</span><span class="n">is_accepted</span><span class="p">,</span>
             <span class="n">info</span><span class="o">.</span><span class="n">is_divergent</span><span class="p">,</span>
             <span class="n">info</span><span class="o">.</span><span class="n">acceptance_rate</span><span class="p">,</span>

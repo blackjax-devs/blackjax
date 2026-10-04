@@ -53,7 +53,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g02681f020" />
+  <meta name="docsearch:version" content="0.1.dev1+gf79f9fd1e" />
   
     
     <script src="../../../_static/searchtools.js"></script>
@@ -507,7 +507,7 @@
     <span class="n">target_ess</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">root_solver</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">dichotomy</span><span class="p">,</span>
     <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-    <span class="o">**</span><span class="n">extra_parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="o">**</span><span class="n">extra_parameters</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Build a Tempered SMC step using an adaptive schedule.</span>
 
@@ -571,7 +571,7 @@
         <span class="n">mcmc_init_fn</span><span class="p">,</span>
         <span class="n">resampling_fn</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
+        <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span>
@@ -609,7 +609,7 @@
     <span class="n">root_solver</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">dichotomy</span><span class="p">,</span>
     <span class="n">num_mcmc_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-    <span class="o">**</span><span class="n">extra_parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="o">**</span><span class="n">extra_parameters</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Implements the user interface for the Adaptive Tempered SMC kernel.</span>
 

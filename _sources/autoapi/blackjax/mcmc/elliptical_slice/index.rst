@@ -45,11 +45,11 @@ Module Contents
 
 
    .. py:attribute:: position
-      :type:  blackjax.types.ArrayTree
+      :type:  blackjax.types.ArrayLikeTree
 
 
    .. py:attribute:: logdensity
-      :type:  blackjax.types.ArrayTree
+      :type:  blackjax.types.Array
 
 
 .. py:class:: EllipSliceInfo
@@ -79,7 +79,7 @@ Module Contents
 
 
    .. py:attribute:: theta
-      :type:  float
+      :type:  blackjax.types.Numeric
 
 
    .. py:attribute:: subiter

@@ -62,18 +62,18 @@ Module Contents
 
 
    .. py:attribute:: energy
-      :type:  float
+      :type:  blackjax.types.Numeric
 
 
    .. py:attribute:: weight
-      :type:  float
+      :type:  blackjax.types.Numeric
 
 
    .. py:attribute:: sum_log_p_accept
-      :type:  float
+      :type:  blackjax.types.Numeric
 
 
-.. py:function:: safe_energy_diff(initial_energy: float, new_energy: float) -> float
+.. py:function:: safe_energy_diff(initial_energy: blackjax.types.Numeric, new_energy: blackjax.types.Numeric) -> blackjax.types.Array
 
 .. py:function:: proposal_generator(energy_fn: collections.abc.Callable) -> tuple[collections.abc.Callable, collections.abc.Callable]
 
@@ -107,7 +107,7 @@ Module Contents
    :rtype: A functions to compute the acceptance ratio .
 
 
-.. py:function:: static_binomial_sampling(rng_key: blackjax.types.PRNGKey, log_p_accept: float, proposal, new_proposal)
+.. py:function:: static_binomial_sampling(rng_key: blackjax.types.PRNGKey, log_p_accept: blackjax.types.Numeric, proposal, new_proposal)
 
    Accept or reject a proposal.
 
@@ -118,7 +118,7 @@ Module Contents
 
 
 
-.. py:function:: nonreversible_slice_sampling(slice: blackjax.types.Array, delta_energy: float, proposal, new_proposal)
+.. py:function:: nonreversible_slice_sampling(slice: blackjax.types.Array, delta_energy: blackjax.types.Numeric, proposal, new_proposal)
 
    Slice sampling for non-reversible Metropolis-Hasting update.
 

@@ -53,7 +53,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g02681f020" />
+  <meta name="docsearch:version" content="0.1.dev1+gf79f9fd1e" />
   
     
     <script src="../../../_static/searchtools.js"></script>
@@ -1221,6 +1221,9 @@
             <span class="c1"># two jax.lax.cond branches disagree on output shapes. A rank-d metric</span>
             <span class="c1"># equals the full dense metric, so this clamp is lossless.</span>
             <span class="k">nonlocal</span> <span class="n">low_rank_k</span>
+            <span class="c1"># Guaranteed non-None: set to a concrete int above, in the same</span>
+            <span class="c1"># `low_rank_rank is not None` branch this is nested under.</span>
+            <span class="k">assert</span> <span class="n">low_rank_k</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="n">low_rank_k</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">low_rank_k</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
             <span class="n">init_lrd_accum</span> <span class="o">=</span> <span class="n">MomentBlock</span><span class="p">(</span>
                 <span class="n">count</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(()),</span> <span class="n">mean</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">d</span><span class="p">,)),</span> <span class="n">m2</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">d</span><span class="p">,</span> <span class="n">d</span><span class="p">))</span>
@@ -1251,6 +1254,10 @@
             <span class="c1"># low_rank_k is set to a non-None int whenever low_rank_rank is</span>
             <span class="c1"># not None (validated above); assert narrows it for mypy.</span>
             <span class="k">assert</span> <span class="n">low_rank_k</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="c1"># last_lrd_accum mirrors init_lrd_accum, which is only ever a</span>
+            <span class="c1"># MomentBlock (never None) in this same low_rank_rank is not</span>
+            <span class="c1"># None branch.</span>
+            <span class="k">assert</span> <span class="n">last_lrd_accum</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="n">d_final</span> <span class="o">=</span> <span class="n">flat_final_pos</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
             <span class="n">use_accumulated_final</span> <span class="o">=</span> <span class="n">last_lrd_accum</span><span class="o">.</span><span class="n">count</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">d_final</span>
             <span class="n">final_sigma</span><span class="p">,</span> <span class="n">final_U</span><span class="p">,</span> <span class="n">final_lam</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>

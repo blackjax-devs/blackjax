@@ -117,7 +117,7 @@ Module Contents
              * *update* -- A function that updates the state of the dual averaging scheme.
 
 
-.. py:function:: find_reasonable_step_size(rng_key: blackjax.types.PRNGKey, kernel_generator: collections.abc.Callable[[float], collections.abc.Callable], reference_state: blackjax.mcmc.hmc.HMCState, initial_step_size: float, target_accept: float = 0.65) -> float
+.. py:function:: find_reasonable_step_size(rng_key: blackjax.types.PRNGKey, kernel_generator: collections.abc.Callable[[blackjax.types.Numeric], collections.abc.Callable], reference_state: blackjax.mcmc.hmc.HMCState, initial_step_size: float, target_accept: float = 0.65) -> blackjax.types.Numeric
 
    Find a reasonable initial step size during warmup.
 

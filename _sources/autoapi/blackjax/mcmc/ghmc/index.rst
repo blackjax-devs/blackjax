@@ -56,7 +56,7 @@ Module Contents
 
 
    .. py:attribute:: logdensity
-      :type:  float
+      :type:  blackjax.types.Numeric
 
 
    .. py:attribute:: logdensity_grad
@@ -64,7 +64,7 @@ Module Contents
 
 
    .. py:attribute:: slice
-      :type:  float
+      :type:  blackjax.types.Numeric
 
 
 .. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: collections.abc.Callable, rng_key: blackjax.types.PRNGKey) -> GHMCState

@@ -41,7 +41,7 @@ Module Contents
 
 
    .. py:attribute:: particles
-      :type:  blackjax.types.ArrayTree
+      :type:  blackjax.types.ArrayLikeTree
 
 
    .. py:attribute:: weights

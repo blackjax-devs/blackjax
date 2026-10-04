@@ -88,7 +88,7 @@ Module Contents
 
 
    .. py:attribute:: trajectory_length
-      :type:  float
+      :type:  blackjax.types.Numeric
 
 
    .. py:attribute:: log_trajectory_length_moving_average

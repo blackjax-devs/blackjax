@@ -88,14 +88,14 @@ Module Contents
 
 
    .. py:attribute:: step_size
-      :type:  float
+      :type:  blackjax.types.Numeric
 
 
    .. py:attribute:: inverse_mass_matrix
       :type:  blackjax.types.Array
 
 
-.. py:function:: build_schedule(num_steps: int, initial_buffer_size: int = 75, final_buffer_size: int = 50, first_window_size: int = 25) -> list[tuple[int, bool]]
+.. py:function:: build_schedule(num_steps: int, initial_buffer_size: int = 75, final_buffer_size: int = 50, first_window_size: int = 25) -> blackjax.types.Array
 
    Return the schedule for Stan's warmup.
 

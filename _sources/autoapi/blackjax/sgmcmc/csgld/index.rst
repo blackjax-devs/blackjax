@@ -44,7 +44,7 @@ Module Contents
 
 
    .. py:attribute:: position
-      :type:  blackjax.types.ArrayTree
+      :type:  blackjax.types.ArrayLikeTree
 
 
    .. py:attribute:: energy_pdf
@@ -52,7 +52,7 @@ Module Contents
 
 
    .. py:attribute:: energy_idx
-      :type:  int
+      :type:  blackjax.types.Numeric
 
 
 .. py:function:: init(position: blackjax.types.ArrayLikeTree, num_partitions=512) -> ContourSGLDState
