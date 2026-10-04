@@ -17,7 +17,7 @@ from typing import NamedTuple
 import jax
 import jax.numpy as jnp
 
-from blackjax.types import Array, PRNGKey
+from blackjax.types import Array, Numeric, PRNGKey
 
 TrajectoryState = NamedTuple
 
@@ -38,12 +38,12 @@ class Proposal(NamedTuple):
     """
 
     state: TrajectoryState
-    energy: float
-    weight: float
-    sum_log_p_accept: float
+    energy: Numeric
+    weight: Numeric
+    sum_log_p_accept: Numeric
 
 
-def safe_energy_diff(initial_energy: float, new_energy: float) -> float:
+def safe_energy_diff(initial_energy: Numeric, new_energy: Numeric) -> Numeric:
     delta_energy = initial_energy - new_energy
     delta_energy = jnp.where(jnp.isnan(delta_energy), -jnp.inf, delta_energy)
     return delta_energy
@@ -203,7 +203,7 @@ def compute_asymmetric_acceptance_ratio(transition_energy_fn: Callable) -> Calla
         initial_state: TrajectoryState,
         state: TrajectoryState,
         **energy_params,
-    ) -> float:
+    ) -> Numeric:
         new_energy = transition_energy_fn(initial_state, state, **energy_params)
         prev_energy = transition_energy_fn(state, initial_state, **energy_params)
         log_p_accept = safe_energy_diff(prev_energy, new_energy)
@@ -213,7 +213,7 @@ def compute_asymmetric_acceptance_ratio(transition_energy_fn: Callable) -> Calla
 
 
 def static_binomial_sampling(
-    rng_key: PRNGKey, log_p_accept: float, proposal, new_proposal
+    rng_key: PRNGKey, log_p_accept: Numeric, proposal, new_proposal
 ):
     """Accept or reject a proposal.
 
@@ -242,7 +242,7 @@ def static_binomial_sampling(
 
 
 def nonreversible_slice_sampling(
-    slice: Array, delta_energy: float, proposal, new_proposal
+    slice: Array, delta_energy: Numeric, proposal, new_proposal
 ):
     """Slice sampling for non-reversible Metropolis-Hasting update.
 
