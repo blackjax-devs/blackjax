@@ -53,7 +53,7 @@
     <link rel="search" title="Search" href="../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gac6dbea59" />
+  <meta name="docsearch:version" content="0.1.dev1+g080662f84" />
   
     
     <script src="../../_static/searchtools.js"></script>
@@ -482,7 +482,7 @@
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 <span class="sd">"""MCMC diagnostics."""</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NamedTuple</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
@@ -503,6 +503,8 @@
     <span class="s2">"divergence_concentration"</span><span class="p">,</span>
     <span class="s2">"divergence_concentration_from_counts"</span><span class="p">,</span>
     <span class="s2">"format_divergence_warning"</span><span class="p">,</span>
+    <span class="s2">"imq_kernel"</span><span class="p">,</span>
+    <span class="s2">"kernelized_stein_discrepancy"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -1678,6 +1680,118 @@
             <span class="s2">"untrustworthy."</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="imq_kernel">
+<a class="viewcode-back" href="../../autoapi/blackjax/diagnostics/index.html#blackjax.diagnostics.imq_kernel">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">imq_kernel</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Inverse multiquadric kernel ``(c² + ||x-y||²)**beta``.</span>
+
+<span class="sd">    Use ``c &gt; 0`` and ``-1 &lt; beta &lt; 0``. Bind non-default parameters with</span>
+<span class="sd">    ``functools.partial``. Convergence guarantees additionally require target</span>
+<span class="sd">    conditions; see :cite:p:`gorham2017kernels`.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">c</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">x</span> <span class="o">-</span> <span class="n">y</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span> <span class="o">**</span> <span class="n">beta</span></div>
+
+
+
+<div class="viewcode-block" id="kernelized_stein_discrepancy">
+<a class="viewcode-back" href="../../autoapi/blackjax/diagnostics/index.html#blackjax.diagnostics.kernelized_stein_discrepancy">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">kernelized_stein_discrepancy</span><span class="p">(</span>
+    <span class="n">samples</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="n">grad_logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">kernel</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">statistic</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"v"</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Estimate squared kernelized Stein discrepancy with a V- or U-statistic.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    samples</span>
+<span class="sd">        Floating-point array of shape ``(num_samples, num_dimensions)``. Chain</span>
+<span class="sd">        dimensions must be pooled explicitly before calling this function.</span>
+<span class="sd">    grad_logdensity_fn</span>
+<span class="sd">        Target score function, mapping one sample vector to the gradient of its</span>
+<span class="sd">        log density with the same shape. For example, ``jax.grad(logdensity_fn)``.</span>
+<span class="sd">        The normalizing constant is not required.</span>
+<span class="sd">    kernel</span>
+<span class="sd">        Scalar-valued, twice differentiable positive semidefinite kernel taking two</span>
+<span class="sd">        sample vectors. Bind kernel parameters such as bandwidth with</span>
+<span class="sd">        ``functools.partial``. The kernel must satisfy the target's Stein boundary</span>
+<span class="sd">        conditions; choosing an appropriate kernel is the caller's responsibility.</span>
+
+<span class="sd">    statistic</span>
+<span class="sd">        ``"v"`` includes diagonal pairs; ``"u"`` excludes them and requires at</span>
+<span class="sd">        least two draws. The U-statistic can be negative, even in exact arithmetic.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Estimate of squared KSD, not a calibrated p-value or convergence certificate.</span>
+<span class="sd">    The V-statistic has a sample-dependent diagonal bias of order ``1/n``.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Complements rather than replaces R-hat. Approximately independent draws are</span>
+<span class="sd">    assumed; autocorrelation and an unvisited mode can make the result misleading.</span>
+<span class="sd">    A positive semidefinite kernel alone does not identify every distribution:</span>
+<span class="sd">    this requires additional conditions, including integral strict positive</span>
+<span class="sd">    definiteness :cite:p:`liu2016kernelized`. Gaussian RBF kernels do not in</span>
+<span class="sd">    general detect non-convergence in dimension three or higher. IMQ kernels</span>
+<span class="sd">    have convergence guarantees for suitable targets, but targets with bounded</span>
+<span class="sd">    scores, including some heavy-tailed targets, remain a gap</span>
+<span class="sd">    :cite:p:`gorham2017kernels`.</span>
+
+<span class="sd">    Uses the score/kernel derivative expression in :cite:p:`liu2016kernelized`.</span>
+<span class="sd">    Rows are processed sequentially and columns are vectorized. The computation</span>
+<span class="sd">    has quadratic cost in sample count and mixed Hessians with ``d²`` entries;</span>
+<span class="sd">    temporary pairwise storage scales as ``O(n*d²)`` rather than ``O(n²*d²)``.</span>
+<span class="sd">    The supplied functions must support JAX differentiation and transformations.</span>
+<span class="sd">    Flatten PyTree positions explicitly with ``jax.flatten_util.ravel_pytree``</span>
+<span class="sd">    before stacking samples; this function accepts a flat floating-point array.</span>
+<span class="sd">    No clipping is applied to either statistic.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"samples must be a flat array; ravel PyTree positions first"</span><span class="p">)</span>
+    <span class="n">samples</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">samples</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"samples must have shape (num_samples, num_dimensions)"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">min</span><span class="p">(</span><span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"samples must have nonempty sample and dimension axes"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">statistic</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"v"</span><span class="p">,</span> <span class="s2">"u"</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"statistic must be v or u"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">statistic</span> <span class="o">==</span> <span class="s2">"u"</span> <span class="ow">and</span> <span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"the U-statistic requires at least two samples"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">jnp</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">samples</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">floating</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"samples must have a floating-point dtype"</span><span class="p">)</span>
+    <span class="n">scores</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">grad_logdensity_fn</span><span class="p">)(</span><span class="n">samples</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">scores</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"grad_logdensity_fn must return a vector matching each sample"</span><span class="p">)</span>
+    <span class="n">kernel_value_and_grad</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">value_and_grad</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">argnums</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">mixed_derivative</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jacfwd</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">argnums</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">argnums</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">stein_kernel</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">score_x</span><span class="p">,</span> <span class="n">score_y</span><span class="p">):</span>
+        <span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="n">grad_x</span><span class="p">,</span> <span class="n">grad_y</span><span class="p">)</span> <span class="o">=</span> <span class="n">kernel_value_and_grad</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">value</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">score_x</span><span class="p">,</span> <span class="n">score_y</span><span class="p">)</span>
+            <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">score_x</span><span class="p">,</span> <span class="n">grad_y</span><span class="p">)</span>
+            <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">grad_x</span><span class="p">,</span> <span class="n">score_y</span><span class="p">)</span>
+            <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="n">mixed_derivative</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">row_sum</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+        <span class="n">index</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">score_x</span> <span class="o">=</span> <span class="n">args</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">stein_kernel</span><span class="p">,</span> <span class="n">in_axes</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">))(</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">samples</span><span class="p">,</span> <span class="n">score_x</span><span class="p">,</span> <span class="n">scores</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">statistic</span> <span class="o">==</span> <span class="s2">"u"</span><span class="p">:</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">values</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+    <span class="n">n</span> <span class="o">=</span> <span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">row_sum</span><span class="p">,</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">samples</span><span class="p">,</span> <span class="n">scores</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">total</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">statistic</span> <span class="o">==</span> <span class="s2">"u"</span> <span class="k">else</span> <span class="n">n</span> <span class="o">*</span> <span class="n">n</span><span class="p">)</span></div>
 
 </pre></div>
 

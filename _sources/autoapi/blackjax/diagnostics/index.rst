@@ -32,6 +32,8 @@ Functions
    blackjax.diagnostics.divergence_concentration
    blackjax.diagnostics.divergence_concentration_from_counts
    blackjax.diagnostics.format_divergence_warning
+   blackjax.diagnostics.imq_kernel
+   blackjax.diagnostics.kernelized_stein_discrepancy
 
 
 Module Contents
@@ -446,5 +448,55 @@ Module Contents
                   :func:`divergence_concentration_from_counts`.
 
    :rtype: ``str``, empty when there is nothing to warn about.
+
+
+.. py:function:: imq_kernel(x: blackjax.types.Array, y: blackjax.types.Array, c: float = 1.0, beta: float = -0.5) -> blackjax.types.Array
+
+   Inverse multiquadric kernel ``(c² + ||x-y||²)**beta``.
+
+   Use ``c > 0`` and ``-1 < beta < 0``. Bind non-default parameters with
+   ``functools.partial``. Convergence guarantees additionally require target
+   conditions; see :cite:p:`gorham2017kernels`.
+
+
+.. py:function:: kernelized_stein_discrepancy(samples: blackjax.types.ArrayLike, grad_logdensity_fn: Callable, kernel: Callable, *, statistic: str = 'v') -> blackjax.types.Array
+
+   Estimate squared kernelized Stein discrepancy with a V- or U-statistic.
+
+   :param samples: Floating-point array of shape ``(num_samples, num_dimensions)``. Chain
+                   dimensions must be pooled explicitly before calling this function.
+   :param grad_logdensity_fn: Target score function, mapping one sample vector to the gradient of its
+                              log density with the same shape. For example, ``jax.grad(logdensity_fn)``.
+                              The normalizing constant is not required.
+   :param kernel: Scalar-valued, twice differentiable positive semidefinite kernel taking two
+                  sample vectors. Bind kernel parameters such as bandwidth with
+                  ``functools.partial``. The kernel must satisfy the target's Stein boundary
+                  conditions; choosing an appropriate kernel is the caller's responsibility.
+   :param statistic: ``"v"`` includes diagonal pairs; ``"u"`` excludes them and requires at
+                     least two draws. The U-statistic can be negative, even in exact arithmetic.
+
+   :returns: * *Estimate of squared KSD, not a calibrated p-value or convergence certificate.*
+             * The V-statistic has a sample-dependent diagonal bias of order ``1/n``.
+
+   .. rubric:: Notes
+
+   Complements rather than replaces R-hat. Approximately independent draws are
+   assumed; autocorrelation and an unvisited mode can make the result misleading.
+   A positive semidefinite kernel alone does not identify every distribution:
+   this requires additional conditions, including integral strict positive
+   definiteness :cite:p:`liu2016kernelized`. Gaussian RBF kernels do not in
+   general detect non-convergence in dimension three or higher. IMQ kernels
+   have convergence guarantees for suitable targets, but targets with bounded
+   scores, including some heavy-tailed targets, remain a gap
+   :cite:p:`gorham2017kernels`.
+
+   Uses the score/kernel derivative expression in :cite:p:`liu2016kernelized`.
+   Rows are processed sequentially and columns are vectorized. The computation
+   has quadratic cost in sample count and mixed Hessians with ``d²`` entries;
+   temporary pairwise storage scales as ``O(n*d²)`` rather than ``O(n²*d²)``.
+   The supplied functions must support JAX differentiation and transformations.
+   Flatten PyTree positions explicitly with ``jax.flatten_util.ravel_pytree``
+   before stacking samples; this function accepts a flat floating-point array.
+   No clipping is applied to either statistic.
 
 

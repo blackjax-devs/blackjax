@@ -73,7 +73,7 @@ Module Contents
       :type:  blackjax.types.Array
 
 
-.. py:function:: approximate(rng_key: blackjax.types.PRNGKey, logdensity_fn: Callable, initial_position: blackjax.types.ArrayLikeTree, num_samples: int = 200, *, maxiter=30, maxcor=10, maxls=1000, gtol=1e-08, ftol=1e-05, **lbfgs_kwargs) -> tuple[PathfinderState, PathfinderInfo]
+.. py:function:: approximate(rng_key: blackjax.types.PRNGKey, logdensity_fn: Callable, initial_position: blackjax.types.ArrayLikeTree, num_samples: int = 200, *, batch_size: int = 0, maxiter=30, maxcor=10, maxls=1000, gtol=1e-08, ftol=1e-05, **lbfgs_kwargs) -> tuple[PathfinderState, PathfinderInfo]
 
    Pathfinder variational inference algorithm.
 
@@ -88,6 +88,13 @@ Module Contents
                          approximate samples from
    :param initial_position: starting point of the L-BFGS optimization routine
    :param num_samples: number of samples to draw to estimate ELBO
+   :param batch_size: Batch size for optimization-path entries and, within each entry,
+                      log-density evaluations when estimating ELBOs. A positive value uses
+                      ``jax.lax.map`` to trade parallelism for lower intermediate memory;
+                      ``0`` (the default) keeps fully vectorized evaluation. This must be
+                      static when using ``jax.jit``. Sampling and the dense inverse-Hessian
+                      representation are unchanged. Memory savings are not guaranteed when
+                      path length and ELBO sample count differ substantially.
    :param maxiter: Maximum number of iterations of the L-BFGS algorithm.
    :param maxcor: Maximum number of metric corrections of the L-BFGS algorithm ("history
                   size")

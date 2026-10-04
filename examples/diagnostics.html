@@ -57,7 +57,7 @@
     <link rel="prev" title="A Quick Introduction to Blackjax" href="quickstart.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gac6dbea59" />
+  <meta name="docsearch:version" content="0.1.dev1+g080662f84" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -484,6 +484,7 @@
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pareto-smoothed-importance-sampling-psis">Pareto Smoothed Importance Sampling (PSIS)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#kernelized-stein-discrepancy">Kernelized Stein discrepancy</a></li>
 </ul>
             </nav>
         </div>
@@ -664,6 +665,50 @@
 </div>
 </div>
 </section>
+<section id="kernelized-stein-discrepancy">
+<h2>Kernelized Stein discrepancy<a class="headerlink" href="#kernelized-stein-discrepancy" title="Link to this heading">#</a></h2>
+<p>KSD uses the target score (gradient of its log density), so its normalizing
+constant is not needed :cite:p:<code class="docutils literal notranslate"><span class="pre">liu2016kernelized</span></code>. It complements R-hat rather
+than replacing it. Use approximately independent draws (for example, thinned
+chain draws). Autocorrelation can inflate it, and even IMQ KSD can fail to reveal
+an unvisited mode. A small value alone does not certify convergence.</p>
+<p><code class="docutils literal notranslate"><span class="pre">blackjax.diagnostics.kernelized_stein_discrepancy</span></code> returns <strong>squared KSD</strong>.
+<code class="docutils literal notranslate"><span class="pre">statistic=&quot;v&quot;</span></code> includes diagonal pairs and has a sample-dependent bias of order
+<code class="docutils literal notranslate"><span class="pre">1/n</span></code>, even for exact draws. <code class="docutils literal notranslate"><span class="pre">statistic=&quot;u&quot;</span></code> excludes the diagonal; it can be
+negative. Neither option returns a calibrated p-value or automatic stopping rule.
+Compare values only with attention to the kernel, sample count and dependence.</p>
+<p>A Gaussian RBF kernel is not suitable for detecting non-convergence in dimension
+three or higher. Here we use the inverse multiquadric (IMQ) kernel with <code class="docutils literal notranslate"><span class="pre">c=1</span></code> and
+<code class="docutils literal notranslate"><span class="pre">beta=-0.5</span></code>. IMQ convergence guarantees require suitable target conditions;
+heavy-tailed targets with bounded scores remain a known gap
+:cite:p:<code class="docutils literal notranslate"><span class="pre">gorham2017kernels</span></code>. A positive semidefinite kernel by itself is not enough
+to identify distributions; integral strict positive definiteness and the target’s
+Stein boundary conditions are additional requirements.</p>
+<p>Rows are processed sequentially, with vectorized columns. Pairwise work is
+quadratic in sample count, and mixed Hessians have <code class="docutils literal notranslate"><span class="pre">d²</span></code> entries; temporary
+pairwise storage scales as <code class="docutils literal notranslate"><span class="pre">O(n*d²)</span></code>. Flatten PyTree positions explicitly with
+<code class="docutils literal notranslate"><span class="pre">jax.flatten_util.ravel_pytree</span></code> before stacking. This example pools a thinned
+subset from each chain:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.diagnostics</span><span class="w"> </span><span class="kn">import</span> <span class="n">imq_kernel</span>
+
+<span class="n">ksd_samples</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[:,</span> <span class="p">::</span><span class="mi">20</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">ksd_squared</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span>
+    <span class="n">blackjax</span><span class="o">.</span><span class="n">diagnostics</span><span class="o">.</span><span class="n">kernelized_stein_discrepancy</span><span class="p">,</span>
+    <span class="n">grad_logdensity_fn</span><span class="o">=</span><span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">),</span>
+    <span class="n">kernel</span><span class="o">=</span><span class="n">imq_kernel</span><span class="p">,</span>
+    <span class="n">statistic</span><span class="o">=</span><span class="s2">"u"</span><span class="p">,</span>
+<span class="p">))(</span><span class="n">ksd_samples</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Squared KSD U-statistic: </span><span class="si">{</span><span class="n">ksd_squared</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>This printed value is illustrative, not evidence of convergence. Even exact iid
+samples give a range of empirical values; no null calibration is performed here.</p>
+</section>
 </section>
 
 
@@ -726,6 +771,7 @@
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pareto-smoothed-importance-sampling-psis">Pareto Smoothed Importance Sampling (PSIS)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#kernelized-stein-discrepancy">Kernelized Stein discrepancy</a></li>
 </ul>
   </nav></div>
 

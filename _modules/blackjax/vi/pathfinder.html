@@ -53,7 +53,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gac6dbea59" />
+  <meta name="docsearch:version" content="0.1.dev1+g080662f84" />
   
     
     <script src="../../../_static/searchtools.js"></script>
@@ -562,7 +562,9 @@
     <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">initial_position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
     <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
-    <span class="o">*</span><span class="p">,</span>  <span class="c1"># lgbfs parameters</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="c1"># lbfgs parameters</span>
     <span class="n">maxiter</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
     <span class="n">maxcor</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
     <span class="n">maxls</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
@@ -589,6 +591,14 @@
 <span class="sd">        starting point of the L-BFGS optimization routine</span>
 <span class="sd">    num_samples</span>
 <span class="sd">        number of samples to draw to estimate ELBO</span>
+<span class="sd">    batch_size</span>
+<span class="sd">        Batch size for optimization-path entries and, within each entry,</span>
+<span class="sd">        log-density evaluations when estimating ELBOs. A positive value uses</span>
+<span class="sd">        ``jax.lax.map`` to trade parallelism for lower intermediate memory;</span>
+<span class="sd">        ``0`` (the default) keeps fully vectorized evaluation. This must be</span>
+<span class="sd">        static when using ``jax.jit``. Sampling and the dense inverse-Hessian</span>
+<span class="sd">        representation are unchanged. Memory savings are not guaranteed when</span>
+<span class="sd">        path length and ELBO sample count differ substantially.</span>
 <span class="sd">    maxiter</span>
 <span class="sd">        Maximum number of iterations of the L-BFGS algorithm.</span>
 <span class="sd">    maxcor</span>
@@ -668,7 +678,10 @@
             <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="n">logp</span> <span class="o">=</span> <span class="o">-</span><span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">objective_fn</span><span class="p">)(</span><span class="n">phi</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">batch_size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">logp</span> <span class="o">=</span> <span class="o">-</span><span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">objective_fn</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logp</span> <span class="o">=</span> <span class="o">-</span><span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">objective_fn</span><span class="p">)(</span><span class="n">phi</span><span class="p">)</span>
         <span class="n">elbo</span> <span class="o">=</span> <span class="p">(</span><span class="n">logp</span> <span class="o">-</span> <span class="n">logq</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
 
         <span class="k">return</span> <span class="n">elbo</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">gamma</span>
@@ -677,7 +690,12 @@
     <span class="n">rng_keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">path_size</span><span class="p">)</span>
     <span class="n">path_indices</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">path_size</span><span class="p">)</span>
 
-    <span class="n">elbo</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">gamma</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">path_finder_body_fn</span><span class="p">)((</span><span class="n">path_indices</span><span class="p">,</span> <span class="n">rng_keys</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">batch_size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">elbo</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">gamma</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+            <span class="n">path_finder_body_fn</span><span class="p">,</span> <span class="p">(</span><span class="n">path_indices</span><span class="p">,</span> <span class="n">rng_keys</span><span class="p">),</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">elbo</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">gamma</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">path_finder_body_fn</span><span class="p">)((</span><span class="n">path_indices</span><span class="p">,</span> <span class="n">rng_keys</span><span class="p">))</span>
 
     <span class="n">elbo</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
         <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">path_size</span><span class="p">)</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">status</span><span class="o">.</span><span class="n">iter_num</span><span class="p">))</span> <span class="o">&amp;</span> <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">elbo</span><span class="p">),</span>
