@@ -63,7 +63,7 @@ class CheckTurning(Protocol):
         momentum_sum: ArrayLikeTree,
         position_left: ArrayLikeTree | None = None,
         position_right: ArrayLikeTree | None = None,
-    ) -> bool: ...
+    ) -> Array: ...
 
 
 class Scale(Protocol):
@@ -74,11 +74,11 @@ class Scale(Protocol):
         *,
         inv: bool,
         trans: bool,
-    ) -> ArrayLikeTree: ...
+    ) -> ArrayTree: ...
 
 
 class Metric(NamedTuple):
-    sample_momentum: Callable[[PRNGKey, ArrayLikeTree], ArrayLikeTree]
+    sample_momentum: Callable[[PRNGKey, ArrayLikeTree], ArrayTree]
     kinetic_energy: KineticEnergy
     check_turning: CheckTurning
     scale: Scale
@@ -274,7 +274,7 @@ def gaussian_euclidean(
         momentum_sum: ArrayLikeTree,
         position_left: ArrayLikeTree | None = None,
         position_right: ArrayLikeTree | None = None,
-    ) -> bool:
+    ) -> Array:
         """Generalized U-turn criterion :cite:p:`betancourt2013generalizing,nuts_uturn`.
 
         Parameters
@@ -308,7 +308,7 @@ def gaussian_euclidean(
         *,
         inv: bool,
         trans: bool,
-    ) -> ArrayLikeTree:
+    ) -> ArrayTree:
         """Scale elements by the mass matrix.
 
         Parameters
@@ -412,7 +412,7 @@ def gaussian_euclidean_low_rank(
         momentum_sum: ArrayLikeTree,
         position_left: ArrayLikeTree | None = None,
         position_right: ArrayLikeTree | None = None,
-    ) -> bool:
+    ) -> Array:
         del position_left, position_right
         m_left, _ = ravel_pytree(momentum_left)
         m_right, _ = ravel_pytree(momentum_right)
@@ -433,7 +433,7 @@ def gaussian_euclidean_low_rank(
         *,
         inv: bool,
         trans: bool,
-    ) -> ArrayLikeTree:
+    ) -> ArrayTree:
         """Scale an element by the (inverse) (transposed) square-root mass matrix.
 
         M = D^{-1} C D^{-1} where C = I+U(Λ^{-1}-I)U^T and D = diag(σ).
@@ -483,7 +483,7 @@ def gaussian_riemannian(
     ``check_turning``, and ``scale`` fields.
     """
 
-    def momentum_generator(rng_key: PRNGKey, position: ArrayLikeTree) -> ArrayLikeTree:
+    def momentum_generator(rng_key: PRNGKey, position: ArrayLikeTree) -> ArrayTree:
         mass_matrix = mass_matrix_fn(position)
         mass_matrix_sqrt, *_ = _format_covariance(mass_matrix, is_inv=False)
 
@@ -513,7 +513,7 @@ def gaussian_riemannian(
         momentum_sum: ArrayLikeTree,
         position_left: ArrayLikeTree | None = None,
         position_right: ArrayLikeTree | None = None,
-    ) -> bool:
+    ) -> Array:
         del momentum_left, momentum_right, momentum_sum, position_left, position_right
         raise NotImplementedError(
             "NUTS sampling is not yet implemented for Riemannian manifolds"
@@ -545,7 +545,7 @@ def gaussian_riemannian(
         *,
         inv: bool,
         trans: bool,
-    ) -> ArrayLikeTree:
+    ) -> ArrayTree:
         """Scale elements by the mass matrix.
 
         Parameters

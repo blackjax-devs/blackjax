@@ -57,7 +57,7 @@ from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.mcmc.composed import _seam as seam
 from blackjax.mcmc.integrators import IntegratorState
 from blackjax.mcmc.proposal import safe_energy_diff
-from blackjax.types import Array, PRNGKey
+from blackjax.types import Array, ArrayTree, PRNGKey
 
 __all__ = [
     "GISTStepSizeInfo",
@@ -128,7 +128,7 @@ class GISTStepSizeInfo(NamedTuple):
         actually used to build the proposal.
     """
 
-    momentum: Array
+    momentum: ArrayTree
     tuning_parameter: StepSizeTuningParameter
     is_accepted: Array
     is_divergent: Array

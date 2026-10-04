@@ -87,7 +87,7 @@ class SliceState(NamedTuple):
 
     """
 
-    position: ArrayTree
+    position: ArrayLikeTree
     logdensity: float
 
 

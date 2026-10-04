@@ -99,6 +99,7 @@ known-first-party = ["blackjax"]
 [dependency-groups]
 dev = [
     "chex>=0.1.83",
+    "mypy>=2.4",
     "pre-commit",
     "pytest",
     "pytest-benchmark",

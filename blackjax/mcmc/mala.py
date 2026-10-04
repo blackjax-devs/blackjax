@@ -38,7 +38,7 @@ class MALAState(NamedTuple):
 
     """
 
-    position: ArrayTree
+    position: ArrayLikeTree
     logdensity: float
     logdensity_grad: ArrayTree
 

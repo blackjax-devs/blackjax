@@ -274,7 +274,7 @@ def base(
 
         return warmup_state
 
-    def final(warmup_state: WindowAdaptationState) -> tuple[float, Array]:
+    def final(warmup_state: WindowAdaptationState) -> tuple[Array, Array]:
         """Return the final values for the step size and mass matrix."""
         step_size = jnp.exp(warmup_state.ss_state.log_step_size_avg)
         inverse_mass_matrix = warmup_state.imm_state.inverse_mass_matrix

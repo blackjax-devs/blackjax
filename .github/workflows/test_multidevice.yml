@@ -12,10 +12,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v5
       with:
         python-version: 3.13
-    - uses: pre-commit/action@v3.0.0
+    - name: Set up the dev environment (pre-commit and mypy run in it)
+      # mypy runs in the project env so it sees the real jax/numpy types.
+      # --extra progress: blackjax.progress_bar imports jaxtap behind a
+      # try/except ImportError, and mypy still needs it to resolve the import.
+      run: uv sync --group dev --extra progress
+    - name: Cache pre-commit hook environments
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pre-commit
+        key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+    # Not pre-commit/action: it runs `python -m pip install pre-commit`, and
+    # setup-uv activates the uv venv, which has no pip. pre-commit is in the
+    # dev group, so run it through uv instead.
+    - name: Run pre-commit
+      run: uv run --frozen pre-commit run --show-diff-on-failure --color=always --all-files
 
   test-multidevice:
     name: Multi-device tests (shard_map)

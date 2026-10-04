@@ -232,7 +232,9 @@ def _check_paired_positions(first_position, second_position) -> None:
     """
     first_structure = jax.tree.structure(first_position)
     second_structure = jax.tree.structure(second_position)
-    if first_structure != second_structure:
+    # jax's stub for PyTreeDef does not declare __eq__/__ne__, even though it
+    # supports equality comparison at runtime.
+    if first_structure != second_structure:  # type: ignore[operator]
         raise ValueError(
             "paired positions must share one pytree structure, got "
             f"{first_structure} and {second_structure}"

@@ -177,7 +177,7 @@ def step(
     )
 
 
-def extend_params(params: Array) -> Array:
+def extend_params(params: ArrayLikeTree) -> ArrayTree:
     """Extend parameters to be used for all particles in SMC.
 
     Given a dictionary of params, repeats them for every single particle. The
@@ -186,12 +186,12 @@ def extend_params(params: Array) -> Array:
 
     Parameters
     ----------
-    params: Array
+    params: ArrayLikeTree
         Parameters to extend for all particles.
 
     Returns
     -------
-    Array
+    ArrayTree
         Extended parameters with an additional dimension for particles.
     """
 
