@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "blackjax"
 authors= [{name = "The Blackjax team", email = "remi@thetypicalset.com"}]
 description = "Flexible and fast sampling in Python"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 keywords=[
     "probability",
     "machine learning",
@@ -22,9 +22,8 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: MacOS",
     "Operating System :: POSIX",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Education",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
