@@ -141,9 +141,7 @@ def test_kernel_reverts_and_flags_nonfinite_step():
 
     assert not bool(info.nonans), f"expected nonans=False, got {info.nonans}"
     assert jnp.isfinite(new_state.logdensity), "reverted logdensity must be finite"
-    assert jnp.all(
-        jnp.isfinite(new_state.position)
-    ), "reverted position must be finite"
+    assert jnp.all(jnp.isfinite(new_state.position)), "reverted position must be finite"
 
 
 def test_kernel_flags_finite_state_with_nonfinite_logdensity():
