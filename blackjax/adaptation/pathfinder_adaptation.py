@@ -29,7 +29,7 @@ from blackjax.adaptation.step_size import (
 )
 from blackjax.base import AdaptationAlgorithm
 from blackjax.optimizers.lbfgs import lbfgs_inverse_hessian_formula_1
-from blackjax.types import Array, ArrayLikeTree, PRNGKey
+from blackjax.types import Array, ArrayLikeTree, Numeric, PRNGKey
 from blackjax.vi.multipathfinder import (
     MultipathfinderState,
     multi_approximate,
@@ -41,7 +41,7 @@ __all__ = ["PathfinderAdaptationState", "base", "pathfinder_adaptation"]
 
 class PathfinderAdaptationState(NamedTuple):
     ss_state: DualAveragingAdaptationState
-    step_size: float
+    step_size: Numeric
     inverse_mass_matrix: Array
 
 
@@ -251,7 +251,7 @@ def base(
             new_ss_state, new_step_size, adaptation_state.inverse_mass_matrix
         )
 
-    def final(warmup_state: PathfinderAdaptationState) -> tuple[float, Array]:
+    def final(warmup_state: PathfinderAdaptationState) -> tuple[Array, Array]:
         """Return the final values for the step size and inverse mass matrix."""
         step_size = jnp.exp(warmup_state.ss_state.log_step_size_avg)
         inverse_mass_matrix = warmup_state.inverse_mass_matrix

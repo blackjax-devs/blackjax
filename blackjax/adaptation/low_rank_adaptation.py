@@ -110,7 +110,7 @@ from blackjax.adaptation.staged_adaptation import (
 from blackjax.adaptation.step_size import DualAveragingAdaptationState
 from blackjax.adaptation.window_adaptation import build_schedule
 from blackjax.base import AdaptationAlgorithm
-from blackjax.types import Array, ArrayLikeTree, PRNGKey
+from blackjax.types import Array, ArrayLikeTree, Numeric, PRNGKey
 from blackjax.util import pytree_size
 
 __all__ = [
@@ -165,9 +165,9 @@ class LowRankAdaptationState(NamedTuple):
     mu_star: Array
     U: Array
     lam: Array
-    step_size: float
-    draws_buffer: Array
-    grads_buffer: Array
+    step_size: Numeric
+    draws_buffer: Array | None
+    grads_buffer: Array | None
     buffer_idx: int
     background_split: int
     recompute_counter: int

@@ -38,7 +38,7 @@ class SGNHTState(NamedTuple):
 
     """
 
-    position: ArrayTree
+    position: ArrayLikeTree
     momentum: ArrayTree
     xi: float
 
@@ -59,7 +59,7 @@ def build_kernel(alpha: float = 0.01, beta: float = 0) -> Callable:
         minibatch: ArrayLikeTree,
         step_size: float,
         temperature: float = 1.0,
-    ) -> ArrayTree:
+    ) -> SGNHTState:
         position, momentum, xi = state
         logdensity_grad = grad_estimator(position, minibatch)
         position, momentum, xi = integrator(

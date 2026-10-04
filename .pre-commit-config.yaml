@@ -11,10 +11,24 @@ repos:
     -   id: end-of-file-fixer
     -   id: requirements-txt-fixer
     -   id: trailing-whitespace
-- repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v2.4.0
+- repo: local
   hooks:
     - id: mypy
+      name: mypy (project env, real jax types)
+      # mirrors-mypy runs in an isolated env with no jax/numpy installed, so
+      # every jax type resolved to Any and the hook checked almost nothing
+      # (Issue#1278). Running mypy inside the project's own uv env instead
+      # checks against the real jax/numpy stubs.
+      # pass_filenames: false + explicit targets (not per-changed-file) so
+      # the hook always runs the exact invocation verified to be clean
+      # (`mypy --config-file mypy.ini blackjax tests`), independent of which
+      # files happen to be staged.
+      entry: uv run --frozen mypy --config-file mypy.ini blackjax tests
+      language: system
+      pass_filenames: false
+      types: [python]
+      files: ^(blackjax|tests)/
+      require_serial: true
 - repo: https://github.com/astral-sh/ruff-pre-commit
   rev: v0.16.10
   hooks:

@@ -78,7 +78,7 @@ import blackjax.mcmc.metrics as metrics
 from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.mcmc.composed import _seam as seam
 from blackjax.mcmc.integrators import IntegratorState
-from blackjax.types import Array, PRNGKey
+from blackjax.types import Array, ArrayTree, PRNGKey
 
 __all__ = [
     "GISTTrajectoryLengthInfo",
@@ -121,7 +121,7 @@ class GISTTrajectoryLengthInfo(NamedTuple):
         rejection.
     """
 
-    momentum: Array
+    momentum: ArrayTree
     tuning_parameter: Array
     is_accepted: Array
     is_divergent: Array
@@ -424,13 +424,14 @@ def build_kernel(
             inverse_mass_matrix,
             divergence_threshold,
         )
-        # `raw_extra_info` is declared as the generic `ArrayTree` in the
-        # general spine (opaque to it by design); cast back to the concrete
-        # type this kernel actually produces.
+        # `raw_extra_info`/`info.tuning_parameter` are declared as the
+        # generic `ArrayTree` in the general spine (opaque to it by design);
+        # cast back to the concrete types this kernel actually produces --
+        # `tuning_parameter` is `L` itself here (see the class docstring).
         extra_info = cast(_TrajectoryLengthExtra, raw_extra_info)
         trajectory_length_info = GISTTrajectoryLengthInfo(
             info.momentum,
-            info.tuning_parameter,
+            cast(Array, info.tuning_parameter),
             info.is_accepted,
             info.is_divergent,
             info.acceptance_rate,

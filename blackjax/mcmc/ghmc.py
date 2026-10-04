@@ -14,7 +14,7 @@
 """Public API for the Generalized (Non-reversible w/ persistent momentum) HMC Kernel"""
 
 from collections.abc import Callable
-from typing import NamedTuple
+from typing import Any, NamedTuple, cast
 
 import jax
 import jax.numpy as jnp
@@ -25,7 +25,7 @@ import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
 from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.mcmc.proposal import nonreversible_slice_sampling
-from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import ArrayLikeTree, ArrayTree, Numeric, PRNGKey
 from blackjax.util import generate_gaussian_noise
 
 __all__ = ["GHMCState", "init", "build_kernel", "as_top_level_api"]
@@ -47,9 +47,9 @@ class GHMCState(NamedTuple):
 
     position: ArrayTree
     momentum: ArrayTree
-    logdensity: float
+    logdensity: Numeric
     logdensity_grad: ArrayTree
-    slice: float
+    slice: Numeric
 
 
 def init(
@@ -63,7 +63,11 @@ def init(
     momentum = generate_gaussian_noise(key_momentum, position)
     slice = jax.random.uniform(key_slice, minval=-1.0, maxval=1.0)
 
-    return GHMCState(position, momentum, logdensity, logdensity_grad, slice)
+    # position is stored unconverted, like hmc.HMCState: build_kernel below
+    # re-feeds GHMCState.position straight into an IntegratorState.
+    return GHMCState(
+        cast(ArrayTree, position), momentum, logdensity, logdensity_grad, slice
+    )
 
 
 def _metric_from_momentum_inverse_scale(
@@ -82,9 +86,14 @@ def _metric_from_momentum_inverse_scale(
     if (
         isinstance(x, (metrics.Metric, metrics.LowRankInverseMassMatrix))
         or callable(x)
-        or (hasattr(x, "ndim") and x.ndim >= 2)
+        # mypy cannot narrow a hasattr() check against ArrayLikeTree's
+        # recursive Iterable/Mapping branches, so the runtime check below
+        # is what actually rules out non-array pytrees here, not the type
+        # system; the cast documents that once ndim is present, x is a rich
+        # MetricTypes value (a dense array), not an arbitrary pytree.
+        or (hasattr(x, "ndim") and cast(Any, x).ndim >= 2)
     ):
-        return metrics.default_metric(x)
+        return metrics.default_metric(cast(metrics.MetricTypes, x))
     return metrics.default_metric(ravel_pytree(x)[0] ** 2)
 
 

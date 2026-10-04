@@ -22,7 +22,7 @@ class PartialPosteriorsSMCState(NamedTuple):
         in the computation of the observed likelihood.
     """
 
-    particles: ArrayTree
+    particles: ArrayLikeTree
     weights: Array
     data_mask: Array
 

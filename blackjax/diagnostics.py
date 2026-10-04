@@ -14,15 +14,21 @@
 """MCMC diagnostics."""
 
 from collections.abc import Callable
-from typing import NamedTuple
+from typing import NamedTuple, TypeAlias
 
 import jax
 import jax.numpy as jnp
 import numpy as np
 from jax.flatten_util import ravel_pytree
-from scipy.fftpack import next_fast_len  # type: ignore
+from scipy.fftpack import next_fast_len
 
 from blackjax.types import Array, ArrayLike, ArrayLikeTree
+
+#: A real multi-dimensional array -- unlike ArrayLike, excludes the bare
+#: Python/numpy scalar branches, since every diagnostic in this module calls
+#: .shape/.mean/.var directly on its input (tests pass both jax Arrays and
+#: plain numpy arrays, never a bare scalar).
+ChainArray: TypeAlias = Array | np.ndarray
 
 __all__ = [
     "potential_scale_reduction",
@@ -42,7 +48,7 @@ __all__ = [
 
 
 def potential_scale_reduction(
-    input_array: ArrayLike, chain_axis: int = 0, sample_axis: int = 1
+    input_array: ChainArray, chain_axis: int = 0, sample_axis: int = 1
 ) -> Array:
     """Gelman and Rubin (1992)'s potential scale reduction for computing multiple MCMC chain convergence.
 
@@ -94,7 +100,7 @@ def potential_scale_reduction(
     return rhat_value.squeeze()
 
 
-def rhat(input_array: ArrayLike, chain_axis: int = 0, sample_axis: int = 1) -> Array:
+def rhat(input_array: ChainArray, chain_axis: int = 0, sample_axis: int = 1) -> Array:
     """Rank-normalized split-R̂ (Vehtari et al. 2021).
 
     The modern improved R̂ diagnostic.  Combines two split-chain R̂ values —
@@ -172,7 +178,7 @@ def rhat(input_array: ArrayLike, chain_axis: int = 0, sample_axis: int = 1) -> A
 
 
 def effective_sample_size(
-    input_array: ArrayLike, chain_axis: int = 0, sample_axis: int = 1
+    input_array: ChainArray, chain_axis: int = 0, sample_axis: int = 1
 ) -> Array:
     """Compute estimate of the effective sample size (ess).
 
@@ -290,10 +296,12 @@ def effective_sample_size(
         positive_sequence_body_fn, (0, carry_cond, max_t), mask0
     )
     indices = jnp.indices(max_t_next.shape)
-    indices = tuple([max_t_next + 1] + [indices[i] for i in range(max_t_next.ndim)])
+    # Renamed from `indices` (the tuple result shadowed the Array above
+    # under a different, incompatible type).
+    index_tuple = tuple([max_t_next + 1] + [indices[i] for i in range(max_t_next.ndim)])
     rho_hat_odd = jnp.where(mask, rho_hat_odd, jnp.zeros_like(rho_hat_odd))
     # improve estimation
-    mask_even = mask.at[indices].set(rho_hat_even[indices] > 0)
+    mask_even = mask.at[index_tuple].set(rho_hat_even[index_tuple] > 0)
     rho_hat_even = jnp.where(mask_even, rho_hat_even, jnp.zeros_like(rho_hat_even))
 
     # Geyer's initial monotone sequence
@@ -315,7 +323,7 @@ def effective_sample_size(
     tau_hat = (
         -1.0
         + 2.0 * jnp.sum(rho_hat_even_final + rho_hat_odd_final, axis=0)
-        - rho_hat_even_final[indices]
+        - rho_hat_even_final[index_tuple]
     )
 
     tau_hat = jnp.maximum(tau_hat, 1 / np.log10(ess_raw))
@@ -556,7 +564,7 @@ def _rank_normalize(x: Array) -> Array:
 
 
 def ess_bulk(
-    input_array: ArrayLike, chain_axis: int = 0, sample_axis: int = 1
+    input_array: ChainArray, chain_axis: int = 0, sample_axis: int = 1
 ) -> Array:
     """Bulk effective sample size (rank-normalized split-chain ESS).
 
@@ -600,7 +608,7 @@ def ess_bulk(
 
 
 def ess_tail(
-    input_array: ArrayLike,
+    input_array: ChainArray,
     chain_axis: int = 0,
     sample_axis: int = 1,
     prob: float = 0.90,
@@ -1127,8 +1135,8 @@ def format_divergence_warning(report: DivergenceConcentrationReport) -> str:
 
     lines = []
     flagged = np.asarray(report.flagged)
-    for k in np.flatnonzero(flagged):
-        k = int(k)
+    for k_np in np.flatnonzero(flagged):
+        k = int(k_np)
         pct = "%.1f" % (float(report.rates[k]) * 100.0)
         median = "%.1f" % (float(report.median_other_rate[k]) * 100.0)
         early = float(report.early_rate[k])

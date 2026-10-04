@@ -152,8 +152,8 @@ def run_inference_algorithm(
     rng_key: PRNGKey,
     inference_algorithm: SamplingAlgorithm | VIAlgorithm,
     num_steps: int,
-    initial_state: ArrayLikeTree = None,
-    initial_position: ArrayLikeTree = None,
+    initial_state: ArrayLikeTree | None = None,
+    initial_position: ArrayLikeTree | None = None,
     transform: Callable = lambda state, info: (state, info),
 ) -> tuple:
     """Wrapper to run an inference algorithm.
@@ -198,6 +198,8 @@ def run_inference_algorithm(
         )
 
     if initial_state is None:
+        # Guaranteed non-None by the "exactly one must be provided" check above.
+        assert initial_position is not None
         rng_key, init_key = split(rng_key, 2)
         initial_state = inference_algorithm.init(initial_position, init_key)
 

@@ -23,6 +23,7 @@ from collections.abc import Callable
 from typing import NamedTuple
 
 import jax
+import jax.flatten_util
 import jax.numpy as jnp
 
 from blackjax.adaptation.metric_buffers import (
@@ -409,9 +410,7 @@ def welford_algorithm(is_diagonal_matrix: bool) -> tuple[Callable, Callable, Cal
             m2 = jnp.zeros((n_dims, n_dims))
         return WelfordAlgorithmState(mean, m2, sample_size)
 
-    def update(
-        wa_state: WelfordAlgorithmState, value: ArrayLike
-    ) -> WelfordAlgorithmState:
+    def update(wa_state: WelfordAlgorithmState, value: Array) -> WelfordAlgorithmState:
         """Update the M2 matrix using the new value.
 
         Parameters

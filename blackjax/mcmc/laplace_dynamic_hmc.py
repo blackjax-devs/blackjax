@@ -47,7 +47,7 @@ Typical usage::
 """
 
 from collections.abc import Callable
-from typing import NamedTuple
+from typing import NamedTuple, cast
 
 import jax
 
@@ -118,8 +118,14 @@ def init(
     (logdensity, theta_star), logdensity_grad = jax.value_and_grad(
         laplace, has_aux=True
     )(position)
+    # position is stored unconverted, like hmc.HMCState: build_kernel below
+    # re-feeds LaplaceDynamicHMCState.position into a DynamicHMCState.
     return LaplaceDynamicHMCState(
-        position, logdensity, logdensity_grad, theta_star, random_generator_arg
+        cast(ArrayTree, position),
+        logdensity,
+        logdensity_grad,
+        theta_star,
+        random_generator_arg,
     )
 
 
