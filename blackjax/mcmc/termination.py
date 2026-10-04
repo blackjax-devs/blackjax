@@ -63,9 +63,13 @@ def iterative_uturn_numpyro(is_turning: CheckTurning):
         ckpt_idx_min, ckpt_idx_max = _leaf_idx_to_ckpt_idxs(step)
         r, _ = jax.flatten_util.ravel_pytree(momentum)
         r_sum, _ = jax.flatten_util.ravel_pytree(momentum_sum)
+        # jax.lax.cond still supports the deprecated
+        # (pred, true_operand, true_fun, false_operand, false_fun) calling
+        # convention below at runtime, but its modern type stub only
+        # declares (pred, true_fun, false_fun, *operands).
         r_ckpts, r_sum_ckpts = jax.lax.cond(
             step % 2 == 0,
-            (r_ckpts, r_sum_ckpts),
+            (r_ckpts, r_sum_ckpts),  # type: ignore[arg-type]
             lambda x: (x[0].at[ckpt_idx_max].set(r), x[1].at[ckpt_idx_max].set(r_sum)),
             (r_ckpts, r_sum_ckpts),
             lambda x: x,
