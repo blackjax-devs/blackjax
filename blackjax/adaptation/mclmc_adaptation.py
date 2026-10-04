@@ -21,6 +21,7 @@ import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
 
 from blackjax.diagnostics import effective_sample_size
+from blackjax.types import Numeric
 from blackjax.util import generate_unit_vector, incremental_value_update, pytree_size
 
 
@@ -35,8 +36,8 @@ class MCLMCAdaptationState(NamedTuple):
         A matrix used for preconditioning.
     """
 
-    L: float
-    step_size: float
+    L: Numeric
+    step_size: Numeric
     inverse_mass_matrix: float
 
 
