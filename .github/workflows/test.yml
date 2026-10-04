@@ -15,6 +15,12 @@ jobs:
     - uses: actions/setup-python@v4
       with:
         python-version: 3.13
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        python-version: 3.13
+    - name: Set up the dev environment (mypy runs in it, not in an isolated hook env)
+      run: uv sync --group dev
     - uses: pre-commit/action@v3.0.0
 
   test:
