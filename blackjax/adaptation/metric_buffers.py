@@ -102,7 +102,8 @@ is a follow-up work item; the data type is here so the D-layer can
 accumulate gradient moments alongside position moments when needed.
 """
 
-from typing import Callable, NamedTuple
+from collections.abc import Callable
+from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp

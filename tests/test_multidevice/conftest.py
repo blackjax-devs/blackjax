@@ -34,6 +34,7 @@ Limitation: a machine with >=2 physical GPUs but a CPU-only ``jaxlib`` install i
 not auto-handled (nvidia-smi reports the GPUs, yet JAX exposes 1 CPU device, so
 the tests skip). Install a CUDA ``jaxlib`` or set ``XLA_FLAGS`` explicitly.
 """
+
 import os
 import subprocess
 

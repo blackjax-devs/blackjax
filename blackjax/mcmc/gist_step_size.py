@@ -23,6 +23,7 @@
     - ``from blackjax.mcmc.composed.step_size import GISTStepSizeInfo``
     - ``from blackjax.mcmc.composed.step_size import StepSizeTuningParameter``
 """
+
 from __future__ import annotations
 
 import warnings as _warnings

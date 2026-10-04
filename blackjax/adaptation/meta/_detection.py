@@ -25,6 +25,7 @@ Functions
 :func:`_compute_chain_consistency_psi` — cross-chain consistency Ψ.
 :func:`_compute_lag1_autocorr_top_dir` — pooled lag-1 autocorrelation.
 """
+
 from __future__ import annotations
 
 import jax

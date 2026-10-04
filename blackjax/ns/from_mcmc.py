@@ -13,8 +13,10 @@
 # limitations under the License.
 """NS particle-update strategies that wrap a generic MCMC kernel under the
 likelihood constraint."""
+
+from collections.abc import Callable
 from functools import partial
-from typing import Callable, NamedTuple
+from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp

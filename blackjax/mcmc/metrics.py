@@ -28,7 +28,9 @@ For a Newtonian hamiltonian dynamic the kinetic energy is given by:
 We can also generate a relativistic dynamic :cite:p:`lu2017relativistic`.
 
 """
-from typing import Callable, NamedTuple, Protocol, TypeAlias
+
+from collections.abc import Callable
+from typing import NamedTuple, Protocol, TypeAlias
 
 import jax.numpy as jnp
 import jax.scipy as jscipy
@@ -50,8 +52,7 @@ __all__ = [
 class KineticEnergy(Protocol):
     def __call__(
         self, momentum: ArrayLikeTree, position: ArrayLikeTree | None = None
-    ) -> Numeric:
-        ...
+    ) -> Numeric: ...
 
 
 class CheckTurning(Protocol):
@@ -62,8 +63,7 @@ class CheckTurning(Protocol):
         momentum_sum: ArrayLikeTree,
         position_left: ArrayLikeTree | None = None,
         position_right: ArrayLikeTree | None = None,
-    ) -> bool:
-        ...
+    ) -> bool: ...
 
 
 class Scale(Protocol):
@@ -74,8 +74,7 @@ class Scale(Protocol):
         *,
         inv: bool,
         trans: bool,
-    ) -> ArrayLikeTree:
-        ...
+    ) -> ArrayLikeTree: ...
 
 
 class Metric(NamedTuple):

@@ -1,7 +1,8 @@
 """Utility functions for BlackJax."""
 
+from collections.abc import Callable
 from functools import partial
-from typing import Callable, NamedTuple
+from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -224,6 +225,8 @@ def store_only_expectation_values(
     """Takes a sampling algorithm and constructs from it a new sampling algorithm object. The new sampling algorithm has the same
      kernel but only stores the streaming expectation values of some observables, not the full states; to save memory.
 
+    The first ``burn_in`` kernel steps are excluded from the running average.
+
     It saves incremental_value_transform(E[state_transform(x)]) at each step i, where expectation is computed with samples up to i-th sample.
 
     Example:
@@ -268,14 +271,16 @@ def store_only_expectation_values(
         state, info = sampling_algorithm.step(
             rng_key, state
         )  # update the state with the sampling algorithm
-        averaging_state = incremental_value_update(
+        step_count, average = averaging_state
+        # The burn-in clock advances even when no sample enters the average.
+        sample_count = jnp.maximum(step_count - burn_in, 0)
+        _, average = incremental_value_update(
             state_transform(state),
-            averaging_state,
-            weight=(
-                averaging_state[0] >= burn_in
-            ),  # If we want to eliminate some number of steps as a burn-in
+            (sample_count, average),
+            weight=step_count >= burn_in,
             zero_prevention=1e-10 * (burn_in > 0),
         )
+        averaging_state = (step_count + 1, average)
         # update the expectation value with the running average
         return (state, averaging_state), info
 

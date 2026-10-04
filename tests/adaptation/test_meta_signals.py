@@ -17,6 +17,7 @@ Coverage:
 - TestCriterionR2Gate: R² gate separates linear-residual from curvature geometry.
 - TestCriterionSGap: S_gap ordering agrees with measured payoff ordering.
 """
+
 import jax.numpy as jnp
 import numpy as np
 

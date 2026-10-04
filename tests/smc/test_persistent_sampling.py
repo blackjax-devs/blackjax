@@ -1,7 +1,7 @@
 """Test the Persistent Sampling steps and routine"""
 
+from collections.abc import Callable
 from functools import partial
-from typing import Callable
 
 import chex
 import jax
@@ -429,9 +429,9 @@ class PersistentSamplingStateUpdateTest(chex.TestCase):
         assert state.tempering_schedule[0] == 0.0, "Initial lambda should be 0.0"
         assert state.persistent_log_Z[0] == 0.0, "Initial log_Z should be 0.0"
         initial_log_liks = state.persistent_log_likelihoods[0]
-        assert jnp.all(
-            jnp.isfinite(initial_log_liks)
-        ), "Initial log-likelihoods should be finite"
+        assert jnp.all(jnp.isfinite(initial_log_liks)), (
+            "Initial log-likelihoods should be finite"
+        )
 
         # Run multiple steps with different lambda values
         lambda_schedule = jnp.array([0.1, 0.3, 0.5, 0.7, 0.9, 1.0])
@@ -445,23 +445,23 @@ class PersistentSamplingStateUpdateTest(chex.TestCase):
             expected_iteration = step_idx + 1
 
             # 1. Check that iteration is incremented
-            assert (
-                state.iteration == expected_iteration
-            ), f"Iteration should be {expected_iteration}, got {state.iteration}"
+            assert state.iteration == expected_iteration, (
+                f"Iteration should be {expected_iteration}, got {state.iteration}"
+            )
 
             # 2. Check that the ensemble grows - verify persistent particles are
             # populated at the new iteration index
             state_particles = jax.tree.leaves(state.persistent_particles)[0]
-            assert (
-                jnp.count_nonzero(state_particles[expected_iteration]) > 0
-            ), f"Particles at iteration {expected_iteration} should be non-zero"
+            assert jnp.count_nonzero(state_particles[expected_iteration]) > 0, (
+                f"Particles at iteration {expected_iteration} should be non-zero"
+            )
 
             # Verify particles from previous iterations are preserved
             for prev_iter in range(expected_iteration):
                 prev_particles = state_particles[prev_iter]
-                assert (
-                    jnp.count_nonzero(prev_particles) > 0
-                ), f"Particles from iteration {prev_iter} should still be present"
+                assert jnp.count_nonzero(prev_particles) > 0, (
+                    f"Particles from iteration {prev_iter} should still be present"
+                )
 
             # 3. Check that lambda is set correctly in the schedule
             np.testing.assert_allclose(
@@ -489,9 +489,9 @@ class PersistentSamplingStateUpdateTest(chex.TestCase):
 
             # Verify weights are finite for all iterations up to current
             active_weights = weights[: expected_iteration + 1]
-            assert jnp.all(
-                jnp.isfinite(active_weights)
-            ), f"Weights up to iteration {expected_iteration} should be finite"
+            assert jnp.all(jnp.isfinite(active_weights)), (
+                f"Weights up to iteration {expected_iteration} should be finite"
+            )
 
             # Verify weights are non-negative
             assert jnp.all(active_weights >= 0), "Weights should be non-negative"
@@ -512,9 +512,9 @@ class PersistentSamplingStateUpdateTest(chex.TestCase):
             ess = compute_persistent_ess(log_weights, normalize_weights=True)
 
             # ESS should be positive and finite
-            assert jnp.isfinite(
-                ess
-            ), f"ESS should be finite at iteration {expected_iteration}"
+            assert jnp.isfinite(ess), (
+                f"ESS should be finite at iteration {expected_iteration}"
+            )
             assert ess > 0, f"ESS should be positive at iteration {expected_iteration}"
 
             # ESS should not exceed the total number of persistent particles
@@ -528,9 +528,9 @@ class PersistentSamplingStateUpdateTest(chex.TestCase):
             current_log_liks = state.persistent_log_likelihoods[expected_iteration]
 
             # Log-likelihoods should be finite
-            assert jnp.all(
-                jnp.isfinite(current_log_liks)
-            ), f"Log-likelihoods at iteration {expected_iteration} should be finite"
+            assert jnp.all(jnp.isfinite(current_log_liks)), (
+                f"Log-likelihoods at iteration {expected_iteration} should be finite"
+            )
 
             # Verify log-likelihoods are computed for current particles
             current_particles = state.particles
@@ -559,18 +559,18 @@ class PersistentSamplingStateUpdateTest(chex.TestCase):
             current_log_Z = state.log_Z
 
             # log_Z should be finite
-            assert jnp.isfinite(
-                current_log_Z
-            ), f"log_Z should be finite at iteration {expected_iteration}"
+            assert jnp.isfinite(current_log_Z), (
+                f"log_Z should be finite at iteration {expected_iteration}"
+            )
 
             # For this problem with Gaussian prior/likelihood, log_Z should generally
             # increase (or stay similar) as we incorporate more data
             # NOTE: This is not a strict requirement, but helps catch obvious bugs
             if lmbda > 0:
                 # Just check it's not wildly different (within a reasonable range)
-                assert (
-                    jnp.abs(current_log_Z - prev_log_Z) < 100
-                ), f"log_Z change seems unreasonable: {prev_log_Z} -> {current_log_Z}"
+                assert jnp.abs(current_log_Z - prev_log_Z) < 100, (
+                    f"log_Z change seems unreasonable: {prev_log_Z} -> {current_log_Z}"
+                )
 
             prev_log_Z = current_log_Z
 
@@ -588,16 +588,16 @@ class PersistentSamplingStateUpdateTest(chex.TestCase):
             if expected_iteration < n_schedule:
                 future_particles = state_particles[expected_iteration + 1 :]
                 # Future particles should be zeros (padding)
-                assert jnp.allclose(
-                    future_particles, 0.0
-                ), "Future iterations should still be zero-padded"
+                assert jnp.allclose(future_particles, 0.0), (
+                    "Future iterations should still be zero-padded"
+                )
 
                 future_log_liks = state.persistent_log_likelihoods[
                     expected_iteration + 1 :
                 ]
-                assert jnp.allclose(
-                    future_log_liks, 0.0
-                ), "Future log-likelihoods should still be zero-padded"
+                assert jnp.allclose(future_log_liks, 0.0), (
+                    "Future log-likelihoods should still be zero-padded"
+                )
 
 
 def inference_loop_adaptive(
@@ -842,7 +842,12 @@ class NormalizingConstantTest(chex.TestCase):
 
     def _setup_test_problem(
         self, num_dim: int
-    ) -> tuple[PRNGKey, jax.Array, Callable, Callable,]:
+    ) -> tuple[
+        PRNGKey,
+        jax.Array,
+        Callable,
+        Callable,
+    ]:
         """Setup common test problem: random covariance and log functions."""
         rng_key, cov_key = jax.random.split(self.key, 2)
         chol_cov = jax.random.uniform(cov_key, shape=(num_dim, num_dim))

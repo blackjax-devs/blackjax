@@ -1,4 +1,5 @@
 """Analytic reference checks for the squared KSD V-statistic."""
+
 import functools
 from typing import NamedTuple
 
