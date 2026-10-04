@@ -323,7 +323,7 @@ def effective_sample_size(
     tau_hat = (
         -1.0
         + 2.0 * jnp.sum(rho_hat_even_final + rho_hat_odd_final, axis=0)
-        - rho_hat_even_final[indices]
+        - rho_hat_even_final[index_tuple]
     )
 
     tau_hat = jnp.maximum(tau_hat, 1 / np.log10(ess_raw))
