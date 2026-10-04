@@ -31,6 +31,7 @@ outputs.  The shim parity guarantee is enforced by the existing adaptation
 tests (``test_adaptation.py``, ``test_window_adaptation_fisher_diag.py``)
 which now run through the shim path.
 """
+
 import warnings
 
 import jax

@@ -36,8 +36,10 @@ Laplace approximation", NeurIPS 2020. arXiv:2004.12550.
 Margossian, "General adjoint-differentiated Laplace approximation", 2023.
 arXiv:2306.14976.
 """
+
 import dataclasses
-from typing import Any, Callable, NamedTuple
+from collections.abc import Callable
+from typing import Any, NamedTuple
 
 import jax
 import jax.numpy as jnp

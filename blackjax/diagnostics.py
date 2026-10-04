@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """MCMC diagnostics."""
-from typing import Callable, NamedTuple
+
+from collections.abc import Callable
+from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -70,9 +72,9 @@ def potential_scale_reduction(
     greater than one indicate that one or more chains have not yet converged :cite:p:`stan_rhat,gelman1992inference`.
 
     """
-    assert (
-        input_array.shape[chain_axis] > 1
-    ), "potential_scale_reduction as implemented only works for two or more chains."
+    assert input_array.shape[chain_axis] > 1, (
+        "potential_scale_reduction as implemented only works for two or more chains."
+    )
 
     num_samples = input_array.shape[sample_axis]
     # Compute stats for each chain
@@ -214,9 +216,9 @@ def effective_sample_size(
     sample_axis = sample_axis if sample_axis >= 0 else len(input_shape) + sample_axis
     num_chains = input_shape[chain_axis]
     num_samples = input_shape[sample_axis]
-    assert (
-        num_samples > 1
-    ), f"The input array must have at least 2 samples, got only {num_samples}."
+    assert num_samples > 1, (
+        f"The input array must have at least 2 samples, got only {num_samples}."
+    )
 
     first_sample = jnp.take(input_array, jnp.array([0]), axis=sample_axis)
     has_within_chain_variation = jnp.any(
@@ -247,8 +249,9 @@ def effective_sample_size(
     weighted_var = mean_var0 * (num_samples - 1.0) / num_samples
     weighted_var = jax.lax.cond(
         num_chains > 1,
-        lambda mean_across_chain: weighted_var
-        + mean_across_chain.var(axis=chain_axis, ddof=1, keepdims=True),
+        lambda mean_across_chain: (
+            weighted_var + mean_across_chain.var(axis=chain_axis, ddof=1, keepdims=True)
+        ),
         lambda _: weighted_var,
         operand=mean_across_chain,
     )
@@ -1133,10 +1136,7 @@ def format_divergence_warning(report: DivergenceConcentrationReport) -> str:
         if np.isfinite(early) and np.isfinite(late):
             early_str = "%.1f" % (early * 100.0)
             late_str = "%.1f" % (late * 100.0)
-            quarters = " ({}% in the first quarter, {}% in the last)".format(
-                early_str,
-                late_str,
-            )
+            quarters = f" ({early_str}% in the first quarter, {late_str}% in the last)"
         else:
             quarters = ""
         lines.append(

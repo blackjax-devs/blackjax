@@ -83,7 +83,9 @@ allocation ``jax.lax.scan`` would otherwise stack for no benefit); pass
 ``adaptation_info_fn=blackjax.adaptation.base.return_all_adapt_info``
 explicitly to keep them.
 """
-from typing import Callable, NamedTuple
+
+from collections.abc import Callable
+from typing import NamedTuple
 
 import jax.flatten_util as fu
 import jax.numpy as jnp

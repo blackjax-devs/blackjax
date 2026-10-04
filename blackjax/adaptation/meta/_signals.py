@@ -22,6 +22,7 @@ Functions
 :func:`_compute_r2_score_linearity` — held-out score-linearity R².
 :func:`_compute_transient_mixing_signal` — split-half mean-diff mixing proxy.
 """
+
 from __future__ import annotations
 
 import jax

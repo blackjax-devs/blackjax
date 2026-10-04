@@ -64,7 +64,9 @@ References
    Algorithm 2 (p.21), eq. 33 (the no-U-turn condition), eq. 34-35 (the step
    distributions).
 """
-from typing import Callable, NamedTuple, cast
+
+from collections.abc import Callable
+from typing import NamedTuple, cast
 
 import jax
 import jax.numpy as jnp

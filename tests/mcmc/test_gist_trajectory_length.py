@@ -8,7 +8,9 @@ pytest-benchmark x xdist under this project's ``filterwarnings = error``
 issue in this module; the documented blackjax test command already
 includes ``--benchmark-disable``.
 """
-from typing import Callable, NamedTuple
+
+from collections.abc import Callable
+from typing import NamedTuple
 
 import chex
 import jax
@@ -243,10 +245,9 @@ class DrawIdentityRegressionTest(chex.TestCase):
             "dense_metric",
             jnp.zeros(2),
             jnp.array([[2.0, 1.2], [1.2, 1.0]]),
-            lambda x: -0.5
-            * x
-            @ jnp.linalg.inv(jnp.array([[2.0, 1.2], [1.2, 1.0]]))
-            @ x,
+            lambda x: (
+                -0.5 * x @ jnp.linalg.inv(jnp.array([[2.0, 1.2], [1.2, 1.0]])) @ x
+            ),
         ),
         (
             "dict_pytree_position",

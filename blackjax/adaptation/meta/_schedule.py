@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Window schedule for the multi-chain meta-adaptation controller."""
+
 from __future__ import annotations
 
 from blackjax.adaptation.meta._calibration import _MIN_TRAIN_K_RATIO

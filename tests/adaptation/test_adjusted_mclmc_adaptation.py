@@ -355,9 +355,9 @@ class TestAdjustedMclmcHighDimAcceptance(BlackJAXTest):
         # the clamp; with the bug the d=500 step over-shrinks toward zero).
         step = float(params.step_size)
         step_floor = 0.01 * float(jnp.sqrt(dim))
-        assert (
-            step > step_floor
-        ), f"d={dim}: step collapsed (step={step}, floor={step_floor})"
+        assert step > step_floor, (
+            f"d={dim}: step collapsed (step={step}, floor={step_floor})"
+        )
 
         # 3. Run a short chain and check acceptance is near target (no collapse).
         info = _run_chain(
@@ -368,9 +368,9 @@ class TestAdjustedMclmcHighDimAcceptance(BlackJAXTest):
             f"d={dim}: acceptance={acc} collapsed (< 0.45). "
             f"Before fix d=300 gave 0.22, d=500 gave 0.21"
         )
-        assert (
-            acc <= 0.97
-        ), f"d={dim}: acceptance={acc} suspiciously high (> 0.97), step likely too small"
+        assert acc <= 0.97, (
+            f"d={dim}: acceptance={acc} suspiciously high (> 0.97), step likely too small"
+        )
         return ratio, step, acc
 
     def test_high_d_no_collapse_d10(self):
@@ -439,6 +439,6 @@ class TestAdjustedMclmcLUpdateOrderBugRegression(BlackJAXTest):
 
         # Regression: with the bug, params_out.L == params_in.L (L-update dead).
         # With the fix, params_out.L should move (L tracks step under fix_L=False).
-        assert not jnp.allclose(
-            params_out.L, params_in.L, rtol=1e-3
-        ), f"L did not update: in={float(params_in.L)}, out={float(params_out.L)} (ORDER BUG)"
+        assert not jnp.allclose(params_out.L, params_in.L, rtol=1e-3), (
+            f"L did not update: in={float(params_in.L)}, out={float(params_out.L)} (ORDER BUG)"
+        )

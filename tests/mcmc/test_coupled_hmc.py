@@ -22,6 +22,7 @@ primitives (``trajectory.static_integration``, ``hmc.flip_momentum``,
 prescribed helper a second time, so agreement is evidence about the module
 instead of a tautology.
 """
+
 import chex
 import jax
 import jax.flatten_util

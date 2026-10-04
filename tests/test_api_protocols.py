@@ -19,6 +19,7 @@ The ``InitFn`` protocol is ``(position, rng_key=None) -> State`` and
 that each algorithm can be called through the ``SamplingAlgorithm`` interface
 without errors.
 """
+
 import inspect
 
 import jax
@@ -182,9 +183,9 @@ class TestSamplingAlgorithmProtocol:
         alg = _make_algorithm(name)
         if alg is None:
             pytest.skip(f"{name} not covered by generic factory")
-        assert isinstance(
-            alg, SamplingAlgorithm
-        ), f"{name} factory did not return a SamplingAlgorithm"
+        assert isinstance(alg, SamplingAlgorithm), (
+            f"{name} factory did not return a SamplingAlgorithm"
+        )
 
     def test_init_step_roundtrip(self, name):
         """init -> step should execute without error and return (state, info)."""
@@ -211,9 +212,9 @@ class TestSamplingAlgorithmProtocol:
         sig = inspect.signature(alg.init)
         params = list(sig.parameters.keys())
         assert len(params) >= 1, f"{name}.init has no parameters"
-        assert (
-            params[0] == "position"
-        ), f"{name}.init first param is '{params[0]}', expected 'position'"
+        assert params[0] == "position", (
+            f"{name}.init first param is '{params[0]}', expected 'position'"
+        )
 
     def test_step_fn_first_two_params(self, name):
         """The step function should accept (rng_key, state) as first two params."""
@@ -224,9 +225,9 @@ class TestSamplingAlgorithmProtocol:
         sig = inspect.signature(alg.step)
         params = list(sig.parameters.keys())
         assert len(params) >= 2, f"{name}.step has fewer than 2 parameters"
-        assert (
-            params[0] == "rng_key"
-        ), f"{name}.step first param is '{params[0]}', expected 'rng_key'"
-        assert (
-            params[1] == "state"
-        ), f"{name}.step second param is '{params[1]}', expected 'state'"
+        assert params[0] == "rng_key", (
+            f"{name}.step first param is '{params[0]}', expected 'rng_key'"
+        )
+        assert params[1] == "state", (
+            f"{name}.step second param is '{params[1]}', expected 'state'"
+        )

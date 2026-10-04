@@ -11,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, NamedTuple
+from collections.abc import Callable
+from typing import Any, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -339,9 +340,7 @@ def lbfgs_recover_alpha(alpha_lm1, s_l, z_l, epsilon=1e-12):
         b = jnp.dot(z_l, s_l)
         c = jnp.sum(s_l**2 / alpha_lm1)
         inv_alpha_l = (
-            a / (b * alpha_lm1)
-            + z_l**2 / b
-            - (a * s_l**2) / (b * c * alpha_lm1**2)
+            a / (b * alpha_lm1) + z_l**2 / b - (a * s_l**2) / (b * c * alpha_lm1**2)
         )
         return 1.0 / inv_alpha_l
 

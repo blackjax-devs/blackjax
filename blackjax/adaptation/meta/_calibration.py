@@ -40,6 +40,7 @@ Swappable calibration functions
 :func:`_mc_detection_edge`, :func:`_mc_unimodality_threshold`,
 :func:`_w_branch_null_edge`, :func:`_w_branch_psi_threshold`.
 """
+
 from __future__ import annotations
 
 import jax.numpy as jnp
