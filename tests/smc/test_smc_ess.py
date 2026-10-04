@@ -54,6 +54,36 @@ class SMCEffectiveSampleSizeTest(chex.TestCase):
             )
 
     @chex.all_variants(with_pmap=False)
+    @parameterized.product(
+        dtype=[np.float32, np.float64],
+        log_weights=[[-2.0, -1.0, 0.0, 0.5], [-1.0, 0.0, 0.0, -2.0]],
+    )
+    def test_log_ess_derivatives(self, dtype, log_weights):
+        values = np.asarray(log_weights, dtype=np.float64)
+        weights = np.exp(values - values.max())
+        p = weights / weights.sum()
+        q = weights**2 / np.square(weights).sum()
+        expected_gradient = 2 * (p - q)
+        expected_hessian = 2 * (np.diag(p) - np.outer(p, p)) - 4 * (
+            np.diag(q) - np.outer(q, q)
+        )
+        tolerance = 1e-6 if dtype == np.float32 else 1e-12
+        with jax.enable_x64(dtype == np.float64):
+            inputs = jnp.asarray(log_weights, dtype=dtype)
+            np.testing.assert_allclose(
+                self.variant(jax.grad(ess.log_ess))(inputs),
+                expected_gradient,
+                rtol=tolerance,
+                atol=tolerance,
+            )
+            np.testing.assert_allclose(
+                self.variant(jax.hessian(ess.log_ess))(inputs),
+                expected_hessian,
+                rtol=tolerance,
+                atol=tolerance,
+            )
+
+    @chex.all_variants(with_pmap=False)
     @parameterized.parameters([0.2, 0.95])
     def test_ess_solver(self, target_ess):
         # NOTE: ``ess_solver`` expects a log-density (positive sign — same as
