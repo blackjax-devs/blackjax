@@ -31,7 +31,7 @@ Fisher-diagonal adaptation is accessible via
 """
 
 import warnings
-from typing import Callable
+from collections.abc import Callable
 
 import jax
 import jax.numpy as jnp
@@ -41,10 +41,8 @@ from blackjax.adaptation.base import return_all_adapt_info
 from blackjax.adaptation.mass_matrix import mass_matrix_adaptation
 from blackjax.adaptation.metric_recipes import lookup_recipe
 from blackjax.adaptation.staged_adaptation import (
-    build_schedule,  # canonical definition in staged_adaptation; re-exported here
-)
-from blackjax.adaptation.staged_adaptation import (
     StagedAdaptationState,
+    build_schedule,  # canonical definition in staged_adaptation; re-exported here
     staged_adaptation,
 )
 from blackjax.adaptation.step_size import dual_averaging_adaptation

@@ -14,7 +14,8 @@
 """Implementation of the Pathfinder warmup for the HMC family of sampling algorithms."""
 
 import warnings
-from typing import Callable, Literal, NamedTuple
+from collections.abc import Callable
+from typing import Literal, NamedTuple
 
 import jax
 import jax.numpy as jnp

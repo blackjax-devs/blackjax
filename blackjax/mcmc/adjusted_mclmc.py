@@ -18,7 +18,7 @@ NOTE: For best performance, we recommend using adjusted_mclmc_dynamic instead of
 """
 
 import warnings
-from typing import Callable
+from collections.abc import Callable
 
 import jax
 import jax.numpy as jnp

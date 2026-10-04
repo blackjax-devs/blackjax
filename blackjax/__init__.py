@@ -1,6 +1,6 @@
 import dataclasses
 import functools
-from typing import Callable
+from collections.abc import Callable
 
 from blackjax._version import __version__
 
@@ -26,10 +26,9 @@ from .mcmc import hmc as _hmc
 from .mcmc import laplace_dynamic_hmc as _laplace_dynamic_hmc
 from .mcmc import laplace_hmc as _laplace_hmc
 from .mcmc import mala as _mala
-from .mcmc import marginal_latent_gaussian
+from .mcmc import marginal_latent_gaussian, periodic_orbital, random_walk
 from .mcmc import mclmc as _mclmc
 from .mcmc import nuts as _nuts
-from .mcmc import periodic_orbital, random_walk
 from .mcmc import rmhmc as _rmhmc
 from .mcmc import slice as _slice
 from .mcmc.composed import step_size as _gist_step_size
@@ -47,12 +46,15 @@ from .sgmcmc import csgld as _csgld
 from .sgmcmc import sghmc as _sghmc
 from .sgmcmc import sgld as _sgld
 from .sgmcmc import sgnht as _sgnht
-from .smc import adaptive_persistent_sampling, adaptive_tempered
+from .smc import (
+    adaptive_persistent_sampling,
+    adaptive_tempered,
+    persistent_sampling,
+    tempered,
+)
 from .smc import inner_kernel_tuning as _inner_kernel_tuning
 from .smc import partial_posteriors_path as _partial_posteriors_smc
-from .smc import persistent_sampling
 from .smc import pretuning as _pretuning
-from .smc import tempered
 from .vi import fullrank_vi as _fullrank_vi
 from .vi import meanfield_vi as _meanfield_vi
 from .vi import multipathfinder as _multipathfinder

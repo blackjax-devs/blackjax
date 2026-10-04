@@ -13,7 +13,8 @@
 # limitations under the License.
 """All things solving for adaptive tempering."""
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import jax
 import jax.numpy as jnp

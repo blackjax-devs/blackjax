@@ -84,7 +84,8 @@ all recipe families.  Import directly from ``blackjax.adaptation.metric_recipes`
 """
 
 import dataclasses
-from typing import Callable, NamedTuple
+from collections.abc import Callable
+from typing import NamedTuple
 
 import jax
 import jax.flatten_util as fu

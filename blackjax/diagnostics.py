@@ -13,7 +13,8 @@
 # limitations under the License.
 """MCMC diagnostics."""
 
-from typing import Callable, NamedTuple
+from collections.abc import Callable
+from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -1135,10 +1136,7 @@ def format_divergence_warning(report: DivergenceConcentrationReport) -> str:
         if np.isfinite(early) and np.isfinite(late):
             early_str = "%.1f" % (early * 100.0)
             late_str = "%.1f" % (late * 100.0)
-            quarters = " ({}% in the first quarter, {}% in the last)".format(
-                early_str,
-                late_str,
-            )
+            quarters = f" ({early_str}% in the first quarter, {late_str}% in the last)"
         else:
             quarters = ""
         lines.append(

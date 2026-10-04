@@ -13,7 +13,7 @@
 # limitations under the License.
 """Public API for the Stochastic gradient Hamiltonian Monte Carlo kernel."""
 
-from typing import Callable
+from collections.abc import Callable
 
 import jax
 

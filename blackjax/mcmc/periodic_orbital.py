@@ -13,7 +13,8 @@
 # limitations under the License.
 """Public API for Periodic Orbital Kernel"""
 
-from typing import Callable, NamedTuple
+from collections.abc import Callable
+from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp

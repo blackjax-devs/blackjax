@@ -24,7 +24,8 @@ References
        Bayesian Analysis, 1(4), 833-859. https://doi.org/10.1214/06-BA127
 """
 
-from typing import Callable, NamedTuple
+from collections.abc import Callable
+from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp

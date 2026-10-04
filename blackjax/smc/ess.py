@@ -13,7 +13,7 @@
 # limitations under the License.
 """All things related to SMC effective sample size"""
 
-from typing import Callable
+from collections.abc import Callable
 
 import jax.numpy as jnp
 from jax.scipy.special import logsumexp

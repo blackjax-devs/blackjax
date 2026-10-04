@@ -29,7 +29,8 @@ We can also generate a relativistic dynamic :cite:p:`lu2017relativistic`.
 
 """
 
-from typing import Callable, NamedTuple, Protocol, TypeAlias
+from collections.abc import Callable
+from typing import NamedTuple, Protocol, TypeAlias
 
 import jax.numpy as jnp
 import jax.scipy as jscipy

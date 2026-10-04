@@ -46,7 +46,8 @@ Typical usage::
     # new_state.random_generator_arg  — advanced Halton index
 """
 
-from typing import Callable, NamedTuple
+from collections.abc import Callable
+from typing import NamedTuple
 
 import jax
 

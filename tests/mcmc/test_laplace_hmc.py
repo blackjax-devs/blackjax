@@ -361,9 +361,7 @@ class TestLaplaceHMCFunnel(BlackJAXTest):
             mean_phi_laplace,
             mean_phi_ncp,
             atol=0.15,
-            err_msg="phi mean: laplace_hmc {:.3f} vs NCP-NUTS {:.3f}".format(
-                mean_phi_laplace, mean_phi_ncp
-            ),
+            err_msg=f"phi mean: laplace_hmc {mean_phi_laplace:.3f} vs NCP-NUTS {mean_phi_ncp:.3f}",
         )
         # Allow up to 40% relative deviation — Laplace underestimates variance,
         # especially for small n.
@@ -371,9 +369,7 @@ class TestLaplaceHMCFunnel(BlackJAXTest):
             std_phi_laplace,
             std_phi_ncp,
             rtol=0.4,
-            err_msg="phi std: laplace_hmc {:.3f} vs NCP-NUTS {:.3f}".format(
-                std_phi_laplace, std_phi_ncp
-            ),
+            err_msg=f"phi std: laplace_hmc {std_phi_laplace:.3f} vs NCP-NUTS {std_phi_ncp:.3f}",
         )
 
         # --- theta (pooled across components) ---
@@ -389,17 +385,13 @@ class TestLaplaceHMCFunnel(BlackJAXTest):
             mean_theta_laplace,
             mean_theta_ncp,
             atol=0.2,
-            err_msg="theta mean: laplace_hmc {:.3f} vs NCP-NUTS {:.3f}".format(
-                mean_theta_laplace, mean_theta_ncp
-            ),
+            err_msg=f"theta mean: laplace_hmc {mean_theta_laplace:.3f} vs NCP-NUTS {mean_theta_ncp:.3f}",
         )
         np.testing.assert_allclose(
             std_theta_laplace,
             std_theta_ncp,
             rtol=0.3,
-            err_msg="theta std: laplace_hmc {:.3f} vs NCP-NUTS {:.3f}".format(
-                std_theta_laplace, std_theta_ncp
-            ),
+            err_msg=f"theta std: laplace_hmc {std_theta_laplace:.3f} vs NCP-NUTS {std_theta_ncp:.3f}",
         )
 
 

@@ -43,7 +43,8 @@ References
    only -- can get stuck near the mode/in the tails).
 """
 
-from typing import Callable, NamedTuple, cast
+from collections.abc import Callable
+from typing import NamedTuple, cast
 
 import jax
 import jax.numpy as jnp

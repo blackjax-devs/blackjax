@@ -9,7 +9,8 @@ issue in this module; the documented blackjax test command already
 includes ``--benchmark-disable``.
 """
 
-from typing import Callable, NamedTuple
+from collections.abc import Callable
+from typing import NamedTuple
 
 import chex
 import jax

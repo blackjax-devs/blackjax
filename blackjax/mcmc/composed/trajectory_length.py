@@ -65,7 +65,8 @@ References
    distributions).
 """
 
-from typing import Callable, NamedTuple, cast
+from collections.abc import Callable
+from typing import NamedTuple, cast
 
 import jax
 import jax.numpy as jnp

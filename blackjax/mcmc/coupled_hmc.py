@@ -88,7 +88,8 @@ nothing is broadcast or inferred.
 
 """
 
-from typing import Callable, NamedTuple, Sequence
+from collections.abc import Callable, Sequence
+from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp

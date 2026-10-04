@@ -400,9 +400,7 @@ class TestLaplacePoissonQuadrature(BlackJAXTest):
                 float(approx),
                 exact,
                 atol=0.1,
-                err_msg="phi={}: Laplace={:.4f}, quadrature={:.4f}".format(
-                    phi_val, float(approx), exact
-                ),
+                err_msg=f"phi={phi_val}: Laplace={float(approx):.4f}, quadrature={exact:.4f}",
             )
 
 

@@ -45,7 +45,8 @@ References
    Ann. Statist. 31(3), 705-767, (June 2003).
 """
 
-from typing import Callable, NamedTuple, TypeAlias
+from collections.abc import Callable
+from typing import NamedTuple, TypeAlias
 
 import jax
 import jax.flatten_util

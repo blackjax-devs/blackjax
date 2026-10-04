@@ -13,7 +13,8 @@
 # limitations under the License.
 """Symplectic, time-reversible, integrators for Hamiltonian trajectories."""
 
-from typing import Any, Callable, NamedTuple, TypeAlias
+from collections.abc import Callable
+from typing import Any, NamedTuple, TypeAlias
 
 import jax
 import jax.numpy as jnp

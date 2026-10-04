@@ -13,8 +13,8 @@
 # limitations under the License.
 """All things resampling."""
 
+from collections.abc import Callable
 from functools import partial
-from typing import Callable
 
 import jax
 import jax.numpy as jnp

@@ -45,15 +45,13 @@ from blackjax.adaptation.base import return_all_adapt_info
 from blackjax.adaptation.low_rank_adaptation import (
     LowRankAdaptationState,
     _accumulating_buffer_capacity,
-)
-from blackjax.adaptation.low_rank_adaptation import _compute_low_rank_metric as lra_clrm
-from blackjax.adaptation.low_rank_adaptation import (
     _default_low_rank_adaptation_info_fn,
     _engine_state_to_low_rank_adaptation_state,
     _make_low_rank_bridge_info_fn,
     build_growing_window_schedule,
     window_adaptation_low_rank,
 )
+from blackjax.adaptation.low_rank_adaptation import _compute_low_rank_metric as lra_clrm
 from blackjax.adaptation.metric_estimators import _compute_low_rank_metric
 from blackjax.adaptation.metric_recipes import (
     REGISTRY,

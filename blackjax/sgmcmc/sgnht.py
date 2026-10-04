@@ -13,7 +13,8 @@
 # limitations under the License.
 """Public API for the Stochastic gradient Nosé-Hoover Thermostat kernel."""
 
-from typing import Callable, NamedTuple
+from collections.abc import Callable
+from typing import NamedTuple
 
 import blackjax.sgmcmc.diffusions as diffusions
 from blackjax.base import SamplingAlgorithm
