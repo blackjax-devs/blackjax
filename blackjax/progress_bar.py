@@ -32,6 +32,7 @@ Import cost: ``import blackjax`` does **not** import ``jaxtap``.  The
 import happens lazily inside :func:`progress_bar`'s ``__enter__`` so a
 plain ``pip install blackjax`` install continues to work.
 """
+
 import os
 import threading
 import time

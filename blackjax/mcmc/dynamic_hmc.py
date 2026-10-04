@@ -13,7 +13,8 @@
 # limitations under the License.
 """Public API for the Dynamic HMC Kernel"""
 
-from typing import Callable, NamedTuple
+from collections.abc import Callable
+from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -21,9 +22,8 @@ import jax.numpy as jnp
 import blackjax.mcmc.integrators as integrators
 from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.mcmc.adjusted_mclmc import rescale
-from blackjax.mcmc.hmc import HMCInfo, HMCState
+from blackjax.mcmc.hmc import HMCInfo, HMCState, hmc_proposal
 from blackjax.mcmc.hmc import build_kernel as build_static_hmc_kernel
-from blackjax.mcmc.hmc import hmc_proposal
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = [

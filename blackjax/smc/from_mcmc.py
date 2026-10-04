@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from functools import partial
-from typing import Callable
 
 from blackjax import smc
 from blackjax.smc.base import SMCState, map_fn, update_and_take_last

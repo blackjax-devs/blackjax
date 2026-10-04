@@ -87,7 +87,9 @@ nothing is broadcast or inferred.
     state, info = algorithm.step(rng_key, state)
 
 """
-from typing import Callable, NamedTuple, Sequence
+
+from collections.abc import Callable, Sequence
+from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp

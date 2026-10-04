@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for laplace_dhmc and laplace_dmhmc."""
+
 import chex
 import jax
 import jax.numpy as jnp

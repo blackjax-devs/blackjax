@@ -60,7 +60,9 @@ Examples
         new_state, info = step(rng_key, state)
 
 """
-from typing import Callable, NamedTuple
+
+from collections.abc import Callable
+from typing import NamedTuple
 
 import jax
 from jax import numpy as jnp

@@ -27,6 +27,7 @@ Available modules:
 - `utils`: Utility functions for processing nested sampling results.
 - `from_mcmc`: Utilities to build nested sampling algorithms from MCMC kernels.
 """
+
 from . import adaptive, base, from_mcmc, integrator, nss, utils
 
 __all__ = [

@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for the Stochastic gradient Nosé-Hoover Thermostat kernel."""
-from typing import Callable, NamedTuple
+
+from collections.abc import Callable
+from typing import NamedTuple
 
 import blackjax.sgmcmc.diffusions as diffusions
 from blackjax.base import SamplingAlgorithm
@@ -35,6 +37,7 @@ class SGNHTState(NamedTuple):
         Scalar thermostat controlling kinetic energy.
 
     """
+
     position: ArrayTree
     momentum: ArrayTree
     xi: float

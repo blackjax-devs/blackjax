@@ -18,8 +18,9 @@ integration via ``NSIntegrator`` -- with inner-kernel tuning, wrapping the live
 particles, the integrator, and the inner-kernel parameters into ``AdaptiveNSState``.
 """
 
+from collections.abc import Callable
 from functools import partial
-from typing import Callable, NamedTuple
+from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp

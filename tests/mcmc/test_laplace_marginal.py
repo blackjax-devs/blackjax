@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for the Laplace-approximated marginal log-density."""
+
 import chex
 import jax
 import jax.numpy as jnp
@@ -399,9 +400,7 @@ class TestLaplacePoissonQuadrature(BlackJAXTest):
                 float(approx),
                 exact,
                 atol=0.1,
-                err_msg="phi={}: Laplace={:.4f}, quadrature={:.4f}".format(
-                    phi_val, float(approx), exact
-                ),
+                err_msg=f"phi={phi_val}: Laplace={float(approx):.4f}, quadrature={exact:.4f}",
             )
 
 

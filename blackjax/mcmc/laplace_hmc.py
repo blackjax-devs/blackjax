@@ -46,7 +46,9 @@ Typical usage::
         num_integration_steps=10,
     )
 """
-from typing import Callable, NamedTuple
+
+from collections.abc import Callable
+from typing import NamedTuple
 
 import jax
 

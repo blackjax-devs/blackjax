@@ -1,4 +1,5 @@
 """Test MCMC diagnostics."""
+
 import functools
 import itertools
 
@@ -162,9 +163,9 @@ class RhatTest(chex.TestCase):
     def test_converged_chains_near_one(self):
         # IID samples → R̂ should be very close to 1.
         result = float(diagnostics.rhat(self._iid_normal()))
-        assert (
-            abs(result - 1.0) < 0.05
-        ), f"rhat for iid samples should be ≈1, got {round(result, 4)}"
+        assert abs(result - 1.0) < 0.05, (
+            f"rhat for iid samples should be ≈1, got {round(result, 4)}"
+        )
 
     def test_non_converged_chains_above_one(self):
         # Chains with distinct means → R̂ >> 1.
@@ -177,9 +178,9 @@ class RhatTest(chex.TestCase):
             ]
         )
         result = float(diagnostics.rhat(chains))
-        assert (
-            result > 1.1
-        ), f"rhat for non-converged chains should be > 1.1, got {round(result, 4)}"
+        assert result > 1.1, (
+            f"rhat for non-converged chains should be > 1.1, got {round(result, 4)}"
+        )
 
     def test_scale_nonconvergence_detected(self):
         # Chains with same mean but very different variances (scale non-convergence).
@@ -190,9 +191,9 @@ class RhatTest(chex.TestCase):
         chains = jnp.concatenate([chain_narrow, chain_wide], axis=0)
         result = float(diagnostics.rhat(chains))
         # Scale non-convergence → R̂ should be clearly above 1.
-        assert (
-            result > 1.05
-        ), f"rhat should detect scale non-convergence (> 1.05), got {round(result, 4)}"
+        assert result > 1.05, (
+            f"rhat should detect scale non-convergence (> 1.05), got {round(result, 4)}"
+        )
 
     def test_axis_invariance(self):
         # Swapped chain/sample axes must give the same result.
@@ -463,9 +464,9 @@ class EssTailTest(chex.TestCase):
         bj_80 = float(diagnostics.ess_tail(samples, prob=0.80))
         # prob=0.80 → 10th/90th percentiles (less extreme tail); ESS can differ.
         assert bj_80 > 0 and bj_90 > 0, "ess_tail must be positive for any prob"
-        assert (
-            bj_80 != bj_90
-        ), f"Different prob values must give different ESS, got same value {bj_90}"
+        assert bj_80 != bj_90, (
+            f"Different prob values must give different ESS, got same value {bj_90}"
+        )
 
     def test_funnel_tail_ess(self):
         # Neal's funnel: x[0] ~ N(0,9), x[1:] ~ N(0, exp(x[0]/2)).
@@ -664,9 +665,9 @@ class RankNormalizeTiesTest(chex.TestCase):
     def test_nan_component_cannot_be_ranked(self):
         pooled = jnp.array([1.0, jnp.nan, 0.0, 2.0, 0.0])
         ranks = np.asarray(diagnostics._average_ranks(pooled))
-        assert np.all(
-            np.isnan(ranks)
-        ), f"a component holding a missing observation has no ranking: {ranks}"
+        assert np.all(np.isnan(ranks)), (
+            f"a component holding a missing observation has no ranking: {ranks}"
+        )
 
     def test_nan_does_not_poison_a_finite_sibling_component(self):
         draws = self._contaminated()
@@ -687,9 +688,9 @@ class RankNormalizeTiesTest(chex.TestCase):
         fn = getattr(diagnostics, name)
         draws = self._contaminated()
         result = np.asarray(fn(draws))
-        assert np.isnan(
-            result[0]
-        ), f"{name} reported {result[0]} for a NaN-contaminated component"
+        assert np.isnan(result[0]), (
+            f"{name} reported {result[0]} for a NaN-contaminated component"
+        )
         # The clean sibling must equal what it would give computed alone.
         alone = np.asarray(fn(draws[..., 1]))
         assert np.isfinite(result[1]), f"{name} poisoned a clean sibling"
@@ -713,9 +714,9 @@ class RankNormalizeTiesTest(chex.TestCase):
             dirty = base.copy()
             dirty[position] = np.nan
             results.append(float(diagnostics.ess_bulk(jnp.asarray(dirty))))
-        assert all(
-            np.isnan(r) for r in results
-        ), f"NaN handling depends on position in the pool: {results}"
+        assert all(np.isnan(r) for r in results), (
+            f"NaN handling depends on position in the pool: {results}"
+        )
 
     def test_raw_ess_does_not_invent_a_sample_size_for_nan(self):
         # Geyer's truncation gates on partial sums being > 0; every such
@@ -846,9 +847,9 @@ class RankNormalizeTiesTest(chex.TestCase):
         )
         total = 8 * 96
         result = np.asarray(diagnostics.ess_bulk(draws))
-        assert np.all(
-            result > 0.5 * total
-        ), f"bulk ESS for iid Bernoulli draws collapsed: {result} (N={total})"
+        assert np.all(result > 0.5 * total), (
+            f"bulk ESS for iid Bernoulli draws collapsed: {result} (N={total})"
+        )
 
     def test_binary_draws_match_arviz(self):
         az = pytest.importorskip("arviz")
@@ -915,9 +916,9 @@ class RankNormalizeTiesTest(chex.TestCase):
             jnp.tile(jnp.array([0.0, 1.0]), nsamples // 2)[None, :], (4, 1)
         )
         result = float(diagnostics.ess_bulk(draws))
-        assert (
-            result > 4 * nsamples
-        ), f"antithetic bulk ESS was capped: {result} <= {4 * nsamples}"
+        assert result > 4 * nsamples, (
+            f"antithetic bulk ESS was capped: {result} <= {4 * nsamples}"
+        )
 
     # -- axes, dtypes, transformations ----------------------------------
 
@@ -1004,9 +1005,9 @@ class ParetoKhatTest(chex.TestCase):
         x_cauchy = jax.random.cauchy(self.rng, shape=(2000,))
         k_norm = float(diagnostics.pareto_khat(x_norm))
         k_cauchy = float(diagnostics.pareto_khat(x_cauchy))
-        assert (
-            k_cauchy > k_norm
-        ), f"Cauchy k={round(k_cauchy, 4)} should exceed normal k={round(k_norm, 4)}"
+        assert k_cauchy > k_norm, (
+            f"Cauchy k={round(k_cauchy, 4)} should exceed normal k={round(k_norm, 4)}"
+        )
 
     def test_both_is_max_of_upper_lower(self):
         x = jax.random.normal(self.rng, shape=(1000,))
@@ -1041,12 +1042,12 @@ class ParetoKhatTest(chex.TestCase):
         x = np.array(jax.random.normal(self.rng, shape=(1000,)))
         bj_k = float(diagnostics.pareto_khat(jnp.asarray(x)))
         got_k = round(bj_k, 4)
-        assert np.isfinite(
-            bj_k
-        ), f"pareto_khat must be finite for normal samples, got {got_k}"
-        assert (
-            bj_k < 0.3
-        ), f"pareto_khat for normal should be <0.3 (light tail), got {got_k}"
+        assert np.isfinite(bj_k), (
+            f"pareto_khat must be finite for normal samples, got {got_k}"
+        )
+        assert bj_k < 0.3, (
+            f"pareto_khat for normal should be <0.3 (light tail), got {got_k}"
+        )
 
     def test_arviz_calibration_cauchy(self):
         # For Cauchy samples (extreme tails), both should give k > 0.3.
@@ -1054,9 +1055,9 @@ class ParetoKhatTest(chex.TestCase):
         x = np.array(jax.random.cauchy(self.rng, shape=(1000,)))
         bj_k = float(diagnostics.pareto_khat(jnp.asarray(x)))
         got_k = round(bj_k, 4)
-        assert (
-            bj_k > 0.3
-        ), f"pareto_khat for Cauchy heavy tail expected >0.3 got {got_k}"
+        assert bj_k > 0.3, (
+            f"pareto_khat for Cauchy heavy tail expected >0.3 got {got_k}"
+        )
 
 
 def _build_is_divergent(chain_specs, n_draws):

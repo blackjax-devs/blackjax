@@ -132,13 +132,13 @@ class TestRankGuard:
         assert isinstance(result, MCLMCLRDAdaptationState)
         diag = result.diagnostics
         # k_used must be ≤ k_safe
-        assert (
-            diag["k_used"] <= diag["k_safe"]
-        ), f"k_used={diag['k_used']} > k_safe={diag['k_safe']}"
+        assert diag["k_used"] <= diag["k_safe"], (
+            f"k_used={diag['k_used']} > k_safe={diag['k_safe']}"
+        )
         # Should have emitted a UserWarning about clamping
-        assert any(
-            issubclass(w.category, UserWarning) for w in caught
-        ), "Expected a UserWarning about rank clamping but none was emitted"
+        assert any(issubclass(w.category, UserWarning) for w in caught), (
+            "Expected a UserWarning about rank clamping but none was emitted"
+        )
 
     def test_non_finite_pilot_ess_is_refused_before_rank_selection(self, monkeypatch):
         """An invalid pilot fails with a descriptive error, before the SVD.
@@ -196,9 +196,9 @@ class TestRankGuard:
             if issubclass(w.category, UserWarning)
             and "rank-safety" in str(w.message).lower()
         ]
-        assert (
-            len(clamp_warnings) == 0
-        ), f"Unexpected rank-clamp warning for k=1: {clamp_warnings}"
+        assert len(clamp_warnings) == 0, (
+            f"Unexpected rank-clamp warning for k=1: {clamp_warnings}"
+        )
         assert result.diagnostics["k_used"] == 1
 
     def test_k_safe_at_least_one(self):
@@ -274,12 +274,12 @@ class TestMCLMCLRDWarmupSmoke:
             num_chains=4,
         )
 
-        assert (
-            jnp.ndim(result.L) == 0
-        ), f"Expected scalar L after multi-chain mean, got shape {jnp.shape(result.L)}"
-        assert (
-            jnp.ndim(result.step_size) == 0
-        ), f"Expected scalar step_size, got shape {jnp.shape(result.step_size)}"
+        assert jnp.ndim(result.L) == 0, (
+            f"Expected scalar L after multi-chain mean, got shape {jnp.shape(result.L)}"
+        )
+        assert jnp.ndim(result.step_size) == 0, (
+            f"Expected scalar step_size, got shape {jnp.shape(result.step_size)}"
+        )
 
     def test_diagnostics_keys_and_types(self):
         """diagnostics dict must contain n_eff, k_safe, k_used, pilot_num_grad_evals."""
@@ -437,9 +437,9 @@ class TestDACeilingWarning:
             _check_da_ceiling_warning(step_size, L_init, floor_factor=1.15)
 
         ceiling_warnings = [w for w in caught if issubclass(w.category, UserWarning)]
-        assert (
-            len(ceiling_warnings) > 0
-        ), "Expected DA-ceiling UserWarning but none was emitted"
+        assert len(ceiling_warnings) > 0, (
+            "Expected DA-ceiling UserWarning but none was emitted"
+        )
         assert "ceiling" in str(ceiling_warnings[0].message).lower()
 
     def test_warning_fires_near_ceiling(self):
@@ -452,9 +452,9 @@ class TestDACeilingWarning:
             warnings.simplefilter("always")
             _check_da_ceiling_warning(step_size, L_init, floor_factor=1.15)
 
-        assert any(
-            issubclass(w.category, UserWarning) for w in caught
-        ), "Expected warning at ratio=0.9995 but none fired"
+        assert any(issubclass(w.category, UserWarning) for w in caught), (
+            "Expected warning at ratio=0.9995 but none fired"
+        )
 
     def test_no_warning_when_well_below_ceiling(self):
         """No warning when step_size is well below DA ceiling."""
@@ -467,9 +467,9 @@ class TestDACeilingWarning:
             _check_da_ceiling_warning(step_size, L_init, floor_factor=1.15)
 
         ceiling_warnings = [w for w in caught if issubclass(w.category, UserWarning)]
-        assert (
-            len(ceiling_warnings) == 0
-        ), f"Unexpected DA-ceiling warning at ratio=0.8: {ceiling_warnings}"
+        assert len(ceiling_warnings) == 0, (
+            f"Unexpected DA-ceiling warning at ratio=0.8: {ceiling_warnings}"
+        )
 
     def test_warning_mentions_floor_factor(self):
         """Warning message must reference floor_factor for actionable guidance."""
@@ -482,9 +482,9 @@ class TestDACeilingWarning:
 
         assert len(caught) > 0
         msg = str(caught[0].message).lower()
-        assert (
-            "floor_factor" in msg
-        ), "Warning message should mention floor_factor for actionable guidance"
+        assert "floor_factor" in msg, (
+            "Warning message should mention floor_factor for actionable guidance"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -579,9 +579,9 @@ class TestMCLMCLRDAdjustedSmoke:
                 inner_kernel="adjusted_mclmc",
             )
         for key in ("pilot_L", "pilot_step_size", "lrd_L", "lrd_step_size"):
-            assert (
-                key in result.diagnostics
-            ), f"Missing provenance key {key!r} in adjusted path diagnostics"
+            assert key in result.diagnostics, (
+                f"Missing provenance key {key!r} in adjusted path diagnostics"
+            )
 
     def test_adjusted_path_l_init_and_floor_active_in_diagnostics(self):
         """Adjusted path must expose L_init and floor_active in diagnostics."""
@@ -681,9 +681,9 @@ class TestMCLMCLRDAdjustedSmoke:
                 floor_factor=1000.0,  # guarantee floor triggers
             )
         diag = result.diagnostics
-        assert (
-            diag["floor_active"] is True
-        ), "Expected floor_active=True with factor=1000"
+        assert diag["floor_active"] is True, (
+            "Expected floor_active=True with factor=1000"
+        )
         # L_init should equal floor_factor * lrd_step_size (within float precision)
         expected = 1000.0 * diag["lrd_step_size"]
         assert abs(diag["L_init"] - expected) < 1e-5 * expected
@@ -709,9 +709,9 @@ class TestMCLMCLRDAdjustedSmoke:
                 floor_factor=0.0,  # floor never triggers
             )
         diag = result.diagnostics
-        assert (
-            diag["floor_active"] is False
-        ), "Expected floor_active=False with factor=0"
+        assert diag["floor_active"] is False, (
+            "Expected floor_active=False with factor=0"
+        )
         # L_init should equal lrd_L exactly (no floor applied)
         assert abs(diag["L_init"] - diag["lrd_L"]) < 1e-9
 
@@ -755,12 +755,12 @@ class TestAdjustedFracTune2Invariant:
             )
 
         assert "frac_tune2" in captured_kwargs, "frac_tune2 not passed as kwarg"
-        assert (
-            captured_kwargs["frac_tune2"] == 0.0
-        ), f"Expected frac_tune2=0.0, got {captured_kwargs['frac_tune2']}"
-        assert (
-            captured_kwargs.get("diagonal_preconditioning") is False
-        ), "diagonal_preconditioning must be False to preserve LRD IMM"
+        assert captured_kwargs["frac_tune2"] == 0.0, (
+            f"Expected frac_tune2=0.0, got {captured_kwargs['frac_tune2']}"
+        )
+        assert captured_kwargs.get("diagonal_preconditioning") is False, (
+            "diagonal_preconditioning must be False to preserve LRD IMM"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -832,19 +832,17 @@ class TestKappaEffPilot:
         # k = d (full rank): all directions captured → κ_eff should be ≈ 1
         _, _, _, lam_all_full = _extract_lrd_from_samples(flat_test, k=d_test)
         kappa_full = _kappa_eff_pilot(lam_all_sorted=lam_all_full, k=d_test)
-        assert (
-            kappa_full < 2.0
-        ), "Full-rank IMM on ill-cond target should give kappa_eff < 2, got " + str(
-            round(kappa_full, 3)
+        assert kappa_full < 2.0, (
+            "Full-rank IMM on ill-cond target should give kappa_eff < 2, got "
+            + str(round(kappa_full, 3))
         )
 
         # k = 1 (rank-1): only one direction captured → κ_eff should be large
         _, _, _, lam_all_k1 = _extract_lrd_from_samples(flat_test, k=1)
         kappa_k1 = _kappa_eff_pilot(lam_all_sorted=lam_all_k1, k=1)
-        assert (
-            kappa_k1 > 5.0
-        ), "Rank-1 IMM on ill-cond target should give kappa_eff > 5, got " + str(
-            round(kappa_k1, 3)
+        assert kappa_k1 > 5.0, (
+            "Rank-1 IMM on ill-cond target should give kappa_eff > 5, got "
+            + str(round(kappa_k1, 3))
         )
 
 
@@ -1057,26 +1055,26 @@ class TestE1WarmStart:
                 warmup_step_init=mode,
             )
             diag = result.diagnostics
-            assert (
-                "e1_fired" in diag
-            ), f"Missing 'e1_fired' key in diagnostics for warmup_step_init={mode!r}"
-            assert (
-                "kappa_eff_pilot" in diag
-            ), f"Missing 'kappa_eff_pilot' key in diagnostics for warmup_step_init={mode!r}"
-            assert isinstance(
-                diag["e1_fired"], bool
-            ), f"e1_fired must be bool, got {type(diag['e1_fired'])}"
-            assert isinstance(
-                diag["kappa_eff_pilot"], float
-            ), f"kappa_eff_pilot must be float, got {type(diag['kappa_eff_pilot'])}"
-            assert (
-                diag["kappa_eff_pilot"] >= 1.0
-            ), f"kappa_eff_pilot={diag['kappa_eff_pilot']} must be >= 1.0 (condition number)"
+            assert "e1_fired" in diag, (
+                f"Missing 'e1_fired' key in diagnostics for warmup_step_init={mode!r}"
+            )
+            assert "kappa_eff_pilot" in diag, (
+                f"Missing 'kappa_eff_pilot' key in diagnostics for warmup_step_init={mode!r}"
+            )
+            assert isinstance(diag["e1_fired"], bool), (
+                f"e1_fired must be bool, got {type(diag['e1_fired'])}"
+            )
+            assert isinstance(diag["kappa_eff_pilot"], float), (
+                f"kappa_eff_pilot must be float, got {type(diag['kappa_eff_pilot'])}"
+            )
+            assert diag["kappa_eff_pilot"] >= 1.0, (
+                f"kappa_eff_pilot={diag['kappa_eff_pilot']} must be >= 1.0 (condition number)"
+            )
             # "default" mode must never fire E1
             if mode == "default":
-                assert (
-                    diag["e1_fired"] is False
-                ), "warmup_step_init='default' must have e1_fired=False, got True"
+                assert diag["e1_fired"] is False, (
+                    "warmup_step_init='default' must have e1_fired=False, got True"
+                )
 
     def test_invalid_warmup_step_init_raises(self):
         """Passing an unknown warmup_step_init must raise ValueError immediately."""

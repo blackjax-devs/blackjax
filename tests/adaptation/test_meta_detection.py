@@ -21,6 +21,7 @@ Coverage:
 - TestWBranchSpectrum, TestChainConsistencyPsi: W-branch signal gates.
 - TestNullEdgeFormula, TestUnimodality2WindowConfirmation: calibration correctness.
 """
+
 import warnings
 
 import jax

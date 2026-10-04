@@ -3,10 +3,9 @@ from functools import partial
 import chex
 import numpy as np
 from absl.testing import absltest, parameterized
-from jax import jit
+from jax import jit, tree, vmap
 from jax import numpy as jnp
 from jax import random as jr
-from jax import tree, vmap
 
 import blackjax
 from blackjax.base import SamplingAlgorithm

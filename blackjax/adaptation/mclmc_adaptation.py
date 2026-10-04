@@ -178,8 +178,9 @@ def mclmc_find_L_and_step_size(
     part1_key, part2_key = jax.random.split(rng_key, 2)
     total_num_tuning_integrator_steps = 0
 
-    num_steps1, num_steps2 = round(num_steps * frac_tune1), round(
-        num_steps * frac_tune2
+    num_steps1, num_steps2 = (
+        round(num_steps * frac_tune1),
+        round(num_steps * frac_tune2),
     )
     num_steps2 += diagonal_preconditioning * (num_steps2 // 3)
     num_steps3 = round(num_steps * frac_tune3)
@@ -269,9 +270,10 @@ def make_L_step_size_adaptation(
         step_size = jnp.power(
             x_average / time, -1.0 / 6.0
         )  # invert the Var[E] = O(eps^6) relation to obtain the optimal step size
-        step_size = (step_size < step_size_max) * step_size + (
-            step_size > step_size_max
-        ) * step_size_max  # if the proposed stepsize is above the stepsize where we have seen divergences
+        step_size = (
+            (step_size < step_size_max) * step_size
+            + (step_size > step_size_max) * step_size_max
+        )  # if the proposed stepsize is above the stepsize where we have seen divergences
         params_new = params._replace(step_size=step_size)
 
         adaptive_state = (time, x_average, step_size_max)
@@ -315,8 +317,9 @@ def make_L_step_size_adaptation(
         return carry, div_flags
 
     def L_step_size_adaptation(state, params, num_steps, rng_key):
-        num_steps1, num_steps2 = round(num_steps * frac_tune1), round(
-            num_steps * frac_tune2
+        num_steps1, num_steps2 = (
+            round(num_steps * frac_tune1),
+            round(num_steps * frac_tune2),
         )
 
         L_step_size_adaptation_keys = jax.random.split(

@@ -16,7 +16,7 @@ jobs:
     - name: Set up uv
       uses: astral-sh/setup-uv@v5
       with:
-        python-version: "3.12"
+        python-version: "3.13"
     - name: Build sdist and wheel
       run: uv build
     - name: Check that the package version matches the Release name
@@ -48,7 +48,7 @@ jobs:
     - name: Set up uv
       uses: astral-sh/setup-uv@v5
       with:
-        python-version: "3.12"
+        python-version: "3.13"
     - name: Give PyPI some time to update the index
       run: sleep 240
     - name: Attempt install from PyPI

@@ -1,4 +1,5 @@
 """Test the ess function"""
+
 import functools
 
 import chex
@@ -205,9 +206,9 @@ class SMCEffectiveSampleSizeTest(chex.TestCase):
         # (one-step reweighting from prior to posterior).
         ll = loglikelihood_fn(particles)
         ess_posterior = float(jnp.exp(2 * logsumexp(ll) - logsumexp(2 * ll)))
-        assert (
-            ess_posterior > target_ess * N
-        ), "Test premise broken: prior-IS ESS must already exceed target."
+        assert ess_posterior > target_ess * N, (
+            "Test premise broken: prior-IS ESS must already exceed target."
+        )
 
         # The bisection should return (close to) max_delta.
         np.testing.assert_allclose(float(delta), 1.0, atol=1e-2)
