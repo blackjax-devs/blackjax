@@ -982,8 +982,6 @@ class LowRankBridgeFnTest(BlackJAXTest):
     """_engine_state_to_low_rank_adaptation_state and _make_low_rank_bridge_info_fn."""
 
     def _make_engine_state(self, n_dims=4, max_rank=3):
-        from blackjax.adaptation.step_size import dual_averaging_adaptation
-
         da_init, _, _ = dual_averaging_adaptation(0.80)
         ss_state = da_init(0.5)
         imm = LowRankInverseMassMatrix(

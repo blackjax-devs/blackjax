@@ -10,6 +10,7 @@ import pytest
 from absl.testing import absltest, parameterized
 from scipy.stats import norm, rankdata
 
+import blackjax
 import blackjax.diagnostics as diagnostics
 
 test_cases = [
@@ -209,8 +210,6 @@ class RhatTest(chex.TestCase):
 
     def test_top_level_api(self):
         # blackjax.rhat must be the rank-normalized version, not the classic one.
-        import blackjax
-
         samples = self._iid_normal()
         bj = float(blackjax.rhat(samples))
         direct = float(diagnostics.rhat(samples))

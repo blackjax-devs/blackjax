@@ -6,6 +6,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from absl.testing import absltest, parameterized
+from jax.scipy.special import logsumexp
 from jax.scipy.stats.multivariate_normal import logpdf as multivariate_logpdf
 from jax.scipy.stats.norm import logpdf as univariate_logpdf
 
@@ -145,8 +146,6 @@ class SMCEffectiveSampleSizeTest(chex.TestCase):
 
         # Cross-check via the closed-form posterior IS ESS estimator
         # (one-step reweighting from prior to posterior).
-        from jax.scipy.special import logsumexp
-
         ll = loglikelihood_fn(particles)
         ess_posterior = float(jnp.exp(2 * logsumexp(ll) - logsumexp(2 * ll)))
         assert (
