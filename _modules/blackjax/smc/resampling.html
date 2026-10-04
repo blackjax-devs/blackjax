@@ -53,7 +53,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g0ee193e0a" />
+  <meta name="docsearch:version" content="0.1.dev1+g50818d9c4" />
   
     
     <script src="../../../_static/searchtools.js"></script>
@@ -554,11 +554,8 @@
     <span class="c1"># O(N) loop as our code is meant to work on GPU where searchsorted is</span>
     <span class="c1"># O(log(N)) anyway.</span>
 
-    <span class="n">n</span> <span class="o">=</span> <span class="n">weights</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">linspace</span> <span class="o">=</span> <span class="n">_sorted_uniforms</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span>
-    <span class="n">cumsum</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
-    <span class="n">idx</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">cumsum</span><span class="p">,</span> <span class="n">linspace</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span></div>
+    <span class="n">queries</span> <span class="o">=</span> <span class="n">_sorted_uniforms</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_inverse_cdf</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">queries</span><span class="p">)</span></div>
 
 
 
@@ -640,6 +637,29 @@
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_sorted_uniforms_from</span><span class="p">(</span><span class="n">us</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Compute sorted uniforms from explicit uniform draws.</span>
+
+<span class="sd">    Given uniform draws in [0, 1), computes sorted uniforms via exponential-order</span>
+<span class="sd">    statistics without numerical issues. Uses -log1p(-u) instead of -log(u) to</span>
+<span class="sd">    handle u == 0.0 gracefully (which occurs at probability 2^-23 per draw).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    us: Array</span>
+<span class="sd">        Array of uniform random variables in [0, 1).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Array</span>
+<span class="sd">        Array of size len(us) - 1 containing sorted uniform random variables in [0, 1).</span>
+<span class="sd">    """</span>
+    <span class="c1"># -log1p(-u) ~ Exp(1) and is finite on u in [0, 1);</span>
+    <span class="c1"># -log(u) is inf at u == 0</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="o">-</span><span class="n">us</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">z</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">z</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_sorted_uniforms</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Generate sorted uniform random variables.</span>
 
@@ -658,8 +678,34 @@
 <span class="sd">        Array of size n containing sorted uniform random variables.</span>
 <span class="sd">    """</span>
     <span class="n">us</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,))</span>
-    <span class="n">z</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">us</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">z</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">z</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">_sorted_uniforms_from</span><span class="p">(</span><span class="n">us</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_inverse_cdf</span><span class="p">(</span><span class="n">weights</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">queries</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Map queries to particle indices via inverse CDF.</span>
+
+<span class="sd">    Given normalized weights and query values in [0, 1), returns indices via</span>
+<span class="sd">    the inverse CDF on half-open intervals. Ensures a zero-weight particle is</span>
+<span class="sd">    never selected by clipping queries strictly below the total mass.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    weights: Array</span>
+<span class="sd">        Normalized weights (non-negative, sum to 1).</span>
+<span class="sd">    queries: Array</span>
+<span class="sd">        Query values in [0, 1).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Array</span>
+<span class="sd">        Particle indices corresponding to each query.</span>
+<span class="sd">    """</span>
+    <span class="n">cumsum</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
+    <span class="c1"># Keep queries strictly below the total mass so a rounded-up query cannot</span>
+    <span class="c1"># be clipped onto a trailing zero-weight particle.</span>
+    <span class="n">queries</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">queries</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">nextafter</span><span class="p">(</span><span class="n">cumsum</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">))</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">cumsum</span><span class="p">,</span> <span class="n">queries</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="s2">"right"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">weights</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
 </pre></div>
 
                 </article>
