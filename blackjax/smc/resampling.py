@@ -145,15 +145,17 @@ def _systematic_or_stratified(
     idx: Array
         Array of size `num_samples` to use for resampling.
     """
-    n = weights.shape[0]
     if is_systematic:
         u = jax.random.uniform(rng_key, ())
     else:
         u = jax.random.uniform(rng_key, (num_samples,))
-    cumsum = jnp.cumsum(weights)
-    linspace = (jnp.arange(num_samples, dtype=weights.dtype) + u) / num_samples
-    idx = jnp.searchsorted(cumsum, linspace)
-    return jnp.clip(idx, 0, n - 1)
+    return _inverse_cdf_indices(weights, u, num_samples)
+
+
+def _inverse_cdf_indices(weights: Array, u: Array, num_samples: int) -> Array:
+    """Map explicit systematic or stratified uniforms to particle indices."""
+    queries = (jnp.arange(num_samples, dtype=weights.dtype) + u) / num_samples
+    return _inverse_cdf(weights, queries)
 
 
 def _sorted_uniforms_from(us: Array) -> Array:

@@ -30,6 +30,29 @@ def integrand(x):
 
 class ResamplingTest(chex.TestCase):
     @chex.variants(with_jit=True, without_jit=True)
+    @parameterized.parameters(itertools.product([False, True], [False, True]))
+    def test_zero_weight_boundaries(self, is_systematic, upper_boundary):
+        if upper_boundary:
+            weights = jax.nn.softmax(
+                jnp.array([0.0, -1.0, -2.0, -3.0, -4.0, -jnp.inf], dtype=jnp.float32)
+            )
+            self.assertLess(float(jnp.cumsum(weights)[-1]), 1.0)
+            offset = jnp.array(1 - 2**-23, dtype=jnp.float32)
+        else:
+            weights = jnp.array([0.0, 0.5, 0.0, 0.5, 0.0], dtype=jnp.float32)
+            offset = jnp.array(0.0, dtype=jnp.float32)
+        num_samples = weights.shape[0] if upper_boundary else 4
+        u = offset if is_systematic else jnp.full((num_samples,), offset)
+        indices = self.variant(resampling._inverse_cdf_indices, static_argnums=(2,))(
+            weights, u, num_samples
+        )
+        self.assertTrue(np.all(np.asarray(weights[indices]) > 0))
+        counts = np.bincount(np.asarray(indices), minlength=weights.shape[0])
+        expected_counts = num_samples * np.asarray(weights, dtype=np.float64)
+        self.assertTrue(np.all(counts >= np.floor(expected_counts)))
+        self.assertTrue(np.all(counts <= np.ceil(expected_counts)))
+
+    @chex.variants(with_jit=True, without_jit=True)
     @parameterized.parameters(
         itertools.product([100, 1000, 2000], resampling_methods.keys())
     )
