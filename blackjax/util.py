@@ -228,6 +228,7 @@ def store_only_expectation_values(
      kernel but only stores the streaming expectation values of some observables, not the full states; to save memory.
 
     The first ``burn_in`` kernel steps are excluded from the running average.
+    During burn-in, the stored average is zero after each kernel step.
 
     It saves incremental_value_transform(E[state_transform(x)]) at each step i, where expectation is computed with samples up to i-th sample.
 

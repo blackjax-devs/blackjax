@@ -95,8 +95,8 @@ class RunInferenceAlgorithmTest(chex.TestCase):
         assert jnp.allclose(trace_at_every_step[0][-1], samples.mean(axis=0))
 
     @chex.all_variants(with_pmap=False)
-    @parameterized.parameters(0, 1, 3, 5)
-    def test_streaming_with_burn_in(self, burn_in):
+    @parameterized.product(burn_in=[0, 1, 3, 5], initial_value=[0.0, 3.0])
+    def test_streaming_with_burn_in(self, burn_in, initial_value):
         algorithm = SamplingAlgorithm(
             lambda value: value, lambda key, value: (value + 1, None)
         )
@@ -105,12 +105,12 @@ class RunInferenceAlgorithmTest(chex.TestCase):
             state_transform=lambda value: {"value": value, "square": value**2},
             burn_in=burn_in,
         )
-        state = streaming.init(jnp.array(0.0))
+        state = streaming.init(jnp.array(initial_value))
         step = self.variant(streaming.step)
         for index in range(1, 7):
             state, info = step(jr.fold_in(self.key, index), state)
             average, _ = transform(state, info)
-            kept = np.arange(burn_in + 1, index + 1, dtype=float)
+            kept = initial_value + np.arange(burn_in + 1, index + 1, dtype=float)
             expected = {
                 "value": kept.mean() if kept.size else 0.0,
                 "square": (kept**2).mean() if kept.size else 0.0,
