@@ -325,7 +325,11 @@ def _univariate_slice(
     ``t``.
     """
     level_key, interval_key, shrink_key = random.split(rng_key, 3)
-    level = current_state.logdensity + jnp.log(random.uniform(level_key))
+    # Neal's height is y ~ U(0, f(x0)), i.e. log y = log f(x0) - Exp(1). Using
+    # log(U[0, 1)) instead admits log(0) = -inf (~2^-23 per draw in float32),
+    # and a -inf level accepts any candidate, since -inf >= -inf: one such step
+    # leaves the support, after which the chain's own level stays -inf.
+    level = current_state.logdensity - random.exponential(level_key)
 
     # ``slice_fn(t) -> (state, is_valid)`` is the slice function: it builds the
     # candidate state at coordinate ``t`` (computing whatever it records) and
