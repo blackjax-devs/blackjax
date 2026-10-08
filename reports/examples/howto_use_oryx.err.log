@@ -28,30 +28,57 @@ Traceback (most recent call last):
     raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
 nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
 ------------------
+from oryx.core.ppl import random_variable
+
 from tensorflow_probability.substrates import jax as tfp
 tfd = tfp.distributions
-jdc = tfd.JointDistributionCoroutineAutoBatched
 
-@jdc
-def model():
-    mu = yield tfd.Normal(0.0, 10.0, name="avg_effect")
-    log_tau = yield tfd.Normal(5.0, 1.0, name="avg_stddev")
-    theta_prime = yield tfd.Sample(tfd.Normal(0, 1),
-                                   num_schools,
-                                   name="school_effects_standard")
-    yhat = mu + jnp.exp(log_tau) * theta_prime
-    yield tfd.Normal(yhat, treatment_stddevs, name="treatment_effects")
+
+def dense(dim_out, activation=jax.nn.relu):
+
+    def forward(key, x):
+        dim_in = x.shape[-1]
+        w_key, b_key = jax.random.split(key)
+        w = random_variable(
+            tfd.Sample(tfd.Normal(0., 1.), sample_shape=(dim_out, dim_in)),
+            name='w'
+        )(w_key)
+        b = random_variable(
+            tfd.Sample(tfd.Normal(0., 1.), sample_shape=(dim_out,)),
+            name='b'
+        )(b_key)
+
+        return activation(jnp.dot(w, x) + b)
+
+    return forward
 ------------------
 
 
 [31m---------------------------------------------------------------------------[39m
 [31mAttributeError[39m                            Traceback (most recent call last)
-[36mCell[39m[36m [39m[32mIn[3][39m[32m, line 2[39m
-[32m      1[39m [38;5;28;01mfrom[39;00m tensorflow_probability.substrates [38;5;28;01mimport[39;00m jax [38;5;28;01mas[39;00m tfp
-[32m----> [39m[32m2[39m tfd = tfp.distributions
-[32m      3[39m jdc = tfd.JointDistributionCoroutineAutoBatched
-[32m      4[39m 
-[32m      5[39m @jdc
+[36mCell[39m[36m [39m[32mIn[4][39m[32m, line 1[39m
+[32m----> [39m[32m1[39m [38;5;28;01mfrom[39;00m oryx.core.ppl [38;5;28;01mimport[39;00m random_variable
+[32m      2[39m 
+[32m      3[39m [38;5;28;01mfrom[39;00m tensorflow_probability.substrates [38;5;28;01mimport[39;00m jax [38;5;28;01mas[39;00m tfp
+[32m      4[39m tfd = tfp.distributions
+
+[36mFile [39m[32m~/work/blackjax/blackjax/.venv/lib/python3.13/site-packages/oryx/__init__.py:16[39m
+[32m      1[39m [38;5;66;03m# Copyright 2026 The oryx Authors.[39;00m
+[32m      2[39m [38;5;66;03m#[39;00m
+[32m      3[39m [38;5;66;03m# Licensed under the Apache License, Version 2.0 (the "License");[39;00m
+[32m   (...)[39m[32m     12[39m [38;5;66;03m# See the License for the specific language governing permissions and[39;00m
+[32m     13[39m [38;5;66;03m# limitations under the License.[39;00m
+[32m     15[39m [33;03m"""Oryx imports."""[39;00m
+[32m---> [39m[32m16[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01moryx[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m bijectors
+[32m     17[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01moryx[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m core
+[32m     18[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01moryx[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m distributions
+
+[36mFile [39m[32m~/work/blackjax/blackjax/.venv/lib/python3.13/site-packages/oryx/bijectors/__init__.py:20[39m
+[32m     16[39m [38;5;28;01mimport[39;00m[38;5;250m [39m[34;01minspect[39;00m
+[32m     18[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01mtensorflow_probability[39;00m[34;01m.[39;00m[34;01msubstrates[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m jax [38;5;28;01mas[39;00m tfp  [38;5;66;03m# pylint: disable=g-importing-member[39;00m
+[32m---> [39m[32m20[39m tfb = [30;43mtfp[39;49m[30;43m.[39;49m[30;43mbijectors[39;49m
+[32m     22[39m __all__ = tfb.__all__
+[32m     23[39m [38;5;28;01mfor[39;00m name [38;5;129;01min[39;00m __all__:
 
 [36mFile [39m[32m~/work/blackjax/blackjax/.venv/lib/python3.13/site-packages/tensorflow_probability/python/internal/lazy_loader.py:56[39m, in [36mLazyLoader.__getattr__[39m[34m(self, item)[39m
 [32m     55[39m [38;5;28;01mdef[39;00m[38;5;250m [39m[34m__getattr__[39m([38;5;28mself[39m, item):
@@ -69,18 +96,6 @@ def model():
 [32m     86[39m             [38;5;28;01mbreak[39;00m
 [32m     87[39m         level += [32m1[39m
 [32m---> [39m[32m88[39m [38;5;28;01mreturn[39;00m [30;43m_bootstrap[39;49m[30;43m.[39;49m[30;43m_gcd_import[39;49m[30;43m([39;49m[30;43mname[39;49m[30;43m[[39;49m[30;43mlevel[39;49m[30;43m:[39;49m[30;43m][39;49m[30;43m,[39;49m[30;43m [39;49m[30;43mpackage[39;49m[30;43m,[39;49m[30;43m [39;49m[30;43mlevel[39;49m[30;43m)[39;49m
-
-[36mFile [39m[32m<frozen importlib._bootstrap>:1404[39m, in [36m_gcd_import[39m[34m(name, package, level)[39m
-
-[36mFile [39m[32m<frozen importlib._bootstrap>:1369[39m, in [36m_find_and_load[39m[34m(name, import_)[39m
-
-[36mFile [39m[32m<frozen importlib._bootstrap>:1343[39m, in [36m_find_and_load_unlocked[39m[34m(name, import_)[39m
-
-[36mFile [39m[32m<frozen importlib._bootstrap>:950[39m, in [36m_load_unlocked[39m[34m(spec)[39m
-
-[36mFile [39m[32m<frozen importlib._bootstrap_external>:1027[39m, in [36m_LoaderBasics.exec_module[39m[34m(self, module)[39m
-
-[36mFile [39m[32m<frozen importlib._bootstrap>:488[39m, in [36m_call_with_frames_removed[39m[34m(f, *args, **kwds)[39m
 
 [36mFile [39m[32m~/work/blackjax/blackjax/.venv/lib/python3.13/site-packages/tensorflow_probability/substrates/jax/__init__.py:42[39m
 [32m     39[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01mtensorflow_probability[39;00m[34;01m.[39;00m[34;01mpython[39;00m[34;01m.[39;00m[34;01mversion[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m __version__
