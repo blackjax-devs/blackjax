@@ -4,6 +4,7 @@ from collections.abc import Callable
 
 from blackjax._version import __version__
 
+from . import rejection_sampling
 from .adaptation.adjusted_mclmc_adaptation import adjusted_mclmc_find_L_and_step_size
 from .adaptation.chees_adaptation import chees_adaptation
 from .adaptation.low_rank_adaptation import window_adaptation_low_rank
@@ -314,6 +315,7 @@ __all__ = [
     "ess_tail",
     "pareto_khat",
     "rhat",
+    "rejection_sampling",
     "SamplingAlgorithm",  # base
     "VIAlgorithm",
     "progress_bar",  # progress bar context manager
