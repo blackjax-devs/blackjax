@@ -103,7 +103,7 @@ marked *Sampling Book* are covered in depth at
 | `additive_step_random_walk` / `normal_random_walk` | Additive-step random walk (Gaussian or custom) | — | [API](autoapi/blackjax/mcmc/random_walk/index) |
 | `mgrad_gaussian` | Marginal latent Gaussian sampler | — | [API](autoapi/blackjax/mcmc/marginal_latent_gaussian/index) |
 | `elliptical_slice` | Elliptical slice sampling | — | [API](autoapi/blackjax/mcmc/elliptical_slice/index) |
-| `ensemble` | Affine-invariant ensemble sampler with the stretch move (`emcee`) | — | [API](autoapi/blackjax/mcmc/ensemble/index) |
+| `ensemble` | Ensemble sampler | — | [API](autoapi/blackjax/mcmc/ensemble/index) |
 | `orbital_hmc` | Periodic orbital / periodic HMC | — | [API](autoapi/blackjax/mcmc/periodic_orbital/index) |
 
 ## MCMC — MCLMC family

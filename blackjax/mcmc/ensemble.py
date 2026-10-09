@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Public API for the ensemble sampler."""
+"""Public API for the ensemble sampler and its moves."""
 
 from collections.abc import Callable
 from functools import partial
@@ -19,6 +19,7 @@ from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp
+from jax.flatten_util import ravel_pytree
 
 import blackjax.mcmc.proposal as proposal
 from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
@@ -33,6 +34,10 @@ __all__ = [
     "as_top_level_api",
     "red_blue_update",
     "stretch_move",
+    "walk_move",
+    "differential_evolution_move",
+    "snooker_move",
+    "kde_move",
 ]
 
 
@@ -96,6 +101,158 @@ def stretch_move(a: float = 2.0) -> Callable:
             lambda x, y: y + z.astype(x.dtype) * (x - y), position, partner
         )
         return new_position, (pytree_size(position) - 1) * jnp.log(z)
+
+    return move
+
+
+def walk_move(num_helpers: int | None = None) -> Callable:
+    """The walk move :cite:p:`goodman2010ensemble`.
+
+    Parameters
+    ----------
+    num_helpers
+        The number of complementary walkers, at least two, whose covariance is
+        that of the proposal; all of them by default.
+
+    Returns
+    -------
+    A move ``(rng_key, position, complementary_positions) -> (new_position,
+    log_hastings_ratio)``.
+
+    """
+
+    def move(rng_key, position, complementary_positions):
+        key_helpers, key_step = jax.random.split(rng_key)
+        helpers = complementary_positions
+        if num_helpers is not None:
+            helpers = jax.tree.map(
+                lambda x: jax.random.choice(
+                    key_helpers, x, (num_helpers,), replace=False
+                ),
+                complementary_positions,
+            )
+        flat_helpers = jax.vmap(lambda x: ravel_pytree(x)[0])(helpers)
+        flat_position, unravel_fn = ravel_pytree(position)
+        covariance = jnp.atleast_2d(jnp.cov(flat_helpers, rowvar=False))
+        step = jax.random.multivariate_normal(
+            key_step, jnp.zeros_like(flat_position), covariance, method="svd"
+        )
+        return unravel_fn(flat_position + step), jnp.zeros(())
+
+    return move
+
+
+def differential_evolution_move(
+    sigma: float = 1e-5, gamma0: float | None = None
+) -> Callable:
+    """The differential evolution move :cite:p:`terbraak2006markov,nelson2013run`.
+
+    The ensemble needs at least two walkers in each half.
+
+    Parameters
+    ----------
+    sigma
+        The relative standard deviation of the scale of the difference vector.
+    gamma0
+        The mean scale of the difference vector; ``2.38 / sqrt(2 d)`` in ``d``
+        dimensions by default.
+
+    Returns
+    -------
+    A move ``(rng_key, position, complementary_positions) -> (new_position,
+    log_hastings_ratio)``.
+
+    """
+
+    def move(rng_key, position, complementary_positions):
+        key_pair, key_gamma = jax.random.split(rng_key)
+        pair = jax.tree.map(
+            lambda x: jax.random.choice(key_pair, x, (2,), replace=False),
+            complementary_positions,
+        )
+        mean_gamma = gamma0
+        if gamma0 is None:
+            mean_gamma = 2.38 / jnp.sqrt(2 * pytree_size(position))
+        gamma = mean_gamma * (1.0 + sigma * jax.random.normal(key_gamma))
+        new_position = jax.tree.map(
+            lambda x, y: x + gamma.astype(x.dtype) * (y[0] - y[1]), position, pair
+        )
+        return new_position, jnp.zeros(())
+
+    return move
+
+
+def snooker_move(gamma: float = 1.7) -> Callable:
+    """The differential evolution snooker move :cite:p:`terbraak2008differential`.
+
+    The ensemble needs at least three walkers in each half.
+
+    Parameters
+    ----------
+    gamma
+        The scale of the projected difference vector.
+
+    Returns
+    -------
+    A move ``(rng_key, position, complementary_positions) -> (new_position,
+    log_hastings_ratio)``.
+
+    """
+
+    def move(rng_key, position, complementary_positions):
+        helpers = jax.tree.map(
+            lambda x: jax.random.choice(rng_key, x, (3,), replace=False),
+            complementary_positions,
+        )
+        z, z1, z2 = jax.vmap(lambda x: ravel_pytree(x)[0])(helpers)
+        flat_position, unravel_fn = ravel_pytree(position)
+
+        distance = jnp.linalg.norm(flat_position - z)
+        u = (flat_position - z) / distance
+        new_flat_position = flat_position + gamma * jnp.dot(u, z1 - z2) * u
+
+        new_distance = jnp.linalg.norm(new_flat_position - z)
+        log_hastings_ratio = (flat_position.shape[0] - 1) * (
+            jnp.log(new_distance) - jnp.log(distance)
+        )
+        return unravel_fn(new_flat_position), log_hastings_ratio
+
+    return move
+
+
+def kde_move(bw_method: str | float | None = None) -> Callable:
+    """An independent proposal from a Gaussian kernel density estimate of the
+    complementary walkers.
+
+    The complementary walkers must span the space: each half needs more
+    walkers than the target has dimensions.
+
+    Parameters
+    ----------
+    bw_method
+        The bandwidth of the kernel density estimate, as for
+        :class:`jax.scipy.stats.gaussian_kde`.
+
+    Returns
+    -------
+    A move ``(rng_key, position, complementary_positions) -> (new_position,
+    log_hastings_ratio)``.
+
+    """
+
+    def move(rng_key, position, complementary_positions):
+        flat_complementary = jax.vmap(lambda x: ravel_pytree(x)[0])(
+            complementary_positions
+        )
+        flat_position, unravel_fn = ravel_pytree(position)
+        kde = jax.scipy.stats.gaussian_kde(flat_complementary.T, bw_method)
+
+        new_flat_position = kde.resample(rng_key, (1,))[:, 0]
+        log_hastings_ratio = (
+            kde.logpdf(flat_position[:, None])[0]
+            - kde.logpdf(new_flat_position[:, None])[0]
+        )
+        return unravel_fn(new_flat_position), log_hastings_ratio
 
     return move
 
@@ -230,13 +387,31 @@ def as_top_level_api(
        step = jax.jit(ensemble.step)
        new_state, info = step(rng_key, state)
 
+    Moves can be mixed by choosing one at random at each step:
+
+    .. code::
+
+        moves = [
+            blackjax.mcmc.ensemble.stretch_move(),
+            blackjax.mcmc.ensemble.differential_evolution_move(),
+        ]
+        weights = jnp.array([0.8, 0.2])
+        steps = [blackjax.ensemble(logdensity_fn, move).step for move in moves]
+
+        def step(rng_key, state):
+            key_choice, key_step = jax.random.split(rng_key)
+            index = jax.random.choice(key_choice, len(steps), p=weights)
+            return jax.lax.switch(index, steps, key_step, state)
+
     Parameters
     ----------
     logdensity_fn
         The log-density function of a single walker's position.
     move
-        The move that proposes a new position for each walker,
-        :func:`stretch_move` by default.
+        The move that proposes a new position for each walker:
+        :func:`stretch_move` (the default), :func:`walk_move`,
+        :func:`differential_evolution_move`, :func:`snooker_move` or
+        :func:`kde_move`.
 
     Returns
     -------

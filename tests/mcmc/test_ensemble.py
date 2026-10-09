@@ -22,7 +22,16 @@ import numpy as np
 from absl.testing import absltest, parameterized
 
 import blackjax
-from blackjax.mcmc.ensemble import EnsembleInfo, EnsembleState, stretch_move
+from blackjax.base import SamplingAlgorithm
+from blackjax.mcmc.ensemble import (
+    EnsembleInfo,
+    EnsembleState,
+    differential_evolution_move,
+    kde_move,
+    snooker_move,
+    stretch_move,
+    walk_move,
+)
 from blackjax.util import run_inference_algorithm
 from tests.fixtures import (
     BlackJAXTest,
@@ -40,6 +49,11 @@ from tests.fixtures import (
 
 MOVES = [
     dict(testcase_name="stretch", move=stretch_move()),
+    dict(testcase_name="walk", move=walk_move()),
+    dict(testcase_name="walk_with_helpers", move=walk_move(6)),
+    dict(testcase_name="differential_evolution", move=differential_evolution_move()),
+    dict(testcase_name="snooker", move=snooker_move()),
+    dict(testcase_name="kde", move=kde_move()),
 ]
 
 
@@ -135,10 +149,44 @@ class EnsembleTest(BlackJAXTest):
         moved = np.any(new_state.position != state.position, axis=1)
         np.testing.assert_array_equal(moved, ~rejected)
 
+    def test_rank_deficient_covariance(self):
+        keys = jax.random.split(self.next_key(), 100)
+        complementary_positions = jax.random.normal(self.next_key(), (8, 3))
+        move = jax.vmap(walk_move(2), in_axes=(0, None, None))
+        new_positions, _ = move(keys, jnp.zeros(3), complementary_positions)
+        self.assertTrue(np.all(np.isfinite(new_positions)))
+
+    def test_mixture_of_moves(self):
+        moves = [stretch_move(), differential_evolution_move()]
+        steps = [blackjax.ensemble(std_normal_logdensity, m).step for m in moves]
+        weights = jnp.array([0.7, 0.3])
+
+        def step(rng_key, state):
+            key_choice, key_step = jax.random.split(rng_key)
+            index = jax.random.choice(key_choice, len(steps), p=weights)
+            return jax.lax.switch(index, steps, key_step, state)
+
+        algorithm = SamplingAlgorithm(
+            blackjax.ensemble(std_normal_logdensity).init, step
+        )
+        initial_state = algorithm.init(jax.random.normal(self.next_key(), (16, 2)))
+        _, positions = run_inference_algorithm(
+            self.next_key(),
+            algorithm,
+            20_000,
+            initial_state=initial_state,
+            transform=lambda state, info: state.position,
+        )
+        assert_chain_mean(positions[2_000:], 0.0, 0.05)
+        assert_chain_mean(positions[2_000:] ** 2, 1.0, 0.05)
+
 
 class EnsembleAffineInvarianceTest(BlackJAXTest):
     @parameterized.named_parameters(
         dict(testcase_name="stretch", move=stretch_move()),
+        dict(
+            testcase_name="differential_evolution", move=differential_evolution_move()
+        ),
     )
     def test_trajectory_commutes_with_affine_map(self, move):
         with jax.enable_x64():
