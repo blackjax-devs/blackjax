@@ -1265,6 +1265,14 @@ class UnivariateNormalTest(chex.TestCase):
             inference_algorithm, self.key, initial_state, 20000, 2_000
         )
 
+    @chex.all_variants(with_pmap=False)
+    def test_ensemble(self):
+        inference_algorithm = blackjax.ensemble(self.normal_logprob)
+        initial_state = inference_algorithm.init(jnp.linspace(-1.0, 3.0, 16))
+        self.univariate_normal_test_case(
+            inference_algorithm, self.key, initial_state, 5_000, 1_000
+        )
+
 
 class GHMCRichMetricTest(chex.TestCase):
     """Test blackjax.ghmc with dense and low-rank momentum metrics.

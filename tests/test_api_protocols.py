@@ -128,6 +128,7 @@ def _make_algorithm(name):
             std_normal_logdensity,
             max_expansions=5,
         ),
+        "ensemble": lambda: blackjax.ensemble(std_normal_logdensity),
         "gist_step_size": lambda: blackjax.gist_step_size(
             std_normal_logdensity,
             inverse_mass_matrix=inv_mass,
@@ -168,6 +169,7 @@ _MCMC_ALGORITHMS = [
     "irmh",
     "slice_sampling",
     "coordinate_slice",
+    "ensemble",
     "gist_step_size",
     "gist_trajectory_length",
 ]
