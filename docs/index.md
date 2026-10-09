@@ -104,6 +104,7 @@ marked *Sampling Book* are covered in depth at
 | `mgrad_gaussian` | Marginal latent Gaussian sampler | — | [API](autoapi/blackjax/mcmc/marginal_latent_gaussian/index) |
 | `elliptical_slice` | Elliptical slice sampling | — | [API](autoapi/blackjax/mcmc/elliptical_slice/index) |
 | `ensemble` | Ensemble sampler | — | [API](autoapi/blackjax/mcmc/ensemble/index) |
+| `ensemble_slice` | Ensemble slice sampling | — | [API](autoapi/blackjax/mcmc/ensemble_slice/index) |
 | `orbital_hmc` | Periodic orbital / periodic HMC | — | [API](autoapi/blackjax/mcmc/periodic_orbital/index) |
 
 ## MCMC — MCLMC family

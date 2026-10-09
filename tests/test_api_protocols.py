@@ -129,6 +129,7 @@ def _make_algorithm(name):
             max_expansions=5,
         ),
         "ensemble": lambda: blackjax.ensemble(std_normal_logdensity),
+        "ensemble_slice": lambda: blackjax.ensemble_slice(std_normal_logdensity),
         "gist_step_size": lambda: blackjax.gist_step_size(
             std_normal_logdensity,
             inverse_mass_matrix=inv_mass,
@@ -148,6 +149,9 @@ def _make_algorithm(name):
 
 # Algorithms whose init requires rng_key (not None)
 _NEEDS_RNG_KEY = {"mclmc", "ghmc", "adjusted_mclmc_dynamic", "dhmc", "dmhmc"}
+
+# Ensembles whose moves need more walkers than _POSITION provides
+_ENSEMBLE_POSITIONS = {"ensemble_slice": jnp.arange(8.0)}
 
 # All MCMC algorithms we test
 _MCMC_ALGORITHMS = [
@@ -170,6 +174,7 @@ _MCMC_ALGORITHMS = [
     "slice_sampling",
     "coordinate_slice",
     "ensemble",
+    "ensemble_slice",
     "gist_step_size",
     "gist_trajectory_length",
 ]
@@ -196,10 +201,11 @@ class TestSamplingAlgorithmProtocol:
             pytest.skip(f"{name} not covered by generic factory")
 
         init_key, step_key = jax.random.split(jax.random.key(0))
+        position = _ENSEMBLE_POSITIONS.get(name, _POSITION)
         if name in _NEEDS_RNG_KEY:
-            state = alg.init(_POSITION, init_key)
+            state = alg.init(position, init_key)
         else:
-            state = alg.init(_POSITION)
+            state = alg.init(position)
 
         new_state, info = alg.step(step_key, state)
         assert new_state is not None
