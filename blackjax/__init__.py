@@ -21,6 +21,7 @@ from .mcmc import adjusted_mclmc_dynamic as _adjusted_mclmc_dynamic
 from .mcmc import barker as _barker
 from .mcmc import dynamic_hmc as _dynamic_hmc
 from .mcmc import elliptical_slice as _elliptical_slice
+from .mcmc import ensemble as _ensemble
 from .mcmc import ghmc as _ghmc
 from .mcmc import hmc as _hmc
 from .mcmc import laplace_dynamic_hmc as _laplace_dynamic_hmc
@@ -138,6 +139,7 @@ slice_sampling = generate_top_level_api_from(_slice)
 coordinate_slice = GenerateSamplingAPI(
     _slice.coordinate_slice, _slice.init, _slice.build_coordinate_kernel
 )
+ensemble = generate_top_level_api_from(_ensemble)
 ghmc = generate_top_level_api_from(_ghmc)
 barker = generate_top_level_api_from(_barker)
 barker_proposal = barker  # backwards-compatible alias
@@ -266,6 +268,7 @@ __all__ = [
     "elliptical_slice",
     "slice_sampling",
     "coordinate_slice",
+    "ensemble",
     "gist_step_size",
     "gist_trajectory_length",
     "mclmc",
