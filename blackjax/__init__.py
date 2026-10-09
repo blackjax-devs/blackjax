@@ -6,6 +6,7 @@ from blackjax._version import __version__
 
 from .adaptation.adjusted_mclmc_adaptation import adjusted_mclmc_find_L_and_step_size
 from .adaptation.chees_adaptation import chees_adaptation
+from .adaptation.ensemble_slice_adaptation import ensemble_slice_adaptation
 from .adaptation.low_rank_adaptation import window_adaptation_low_rank
 from .adaptation.mclmc_adaptation import mclmc_find_L_and_step_size
 from .adaptation.mclmc_lrd_adaptation import mclmc_lrd_warmup
@@ -293,6 +294,7 @@ __all__ = [
     "window_adaptation",  # mcmc adaptation
     "window_adaptation_low_rank",
     "meads_adaptation",
+    "ensemble_slice_adaptation",
     "chees_adaptation",
     "pathfinder_adaptation",
     "mclmc_find_L_and_step_size",  # mclmc adaptation

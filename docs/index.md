@@ -165,6 +165,7 @@ marked *Sampling Book* are covered in depth at
 | `adjusted_mclmc_find_L_and_step_size` | Adjusted MCLMC tuning | [Sampling Book](https://blackjax-devs.github.io/sampling-book) | [API](autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index) |
 | `chees_adaptation` | CHEES (chain-ensemble adaptation) | — | [API](autoapi/blackjax/adaptation/chees_adaptation/index) |
 | `meads_adaptation` | MEADS (mass-matrix via ensemble) | — | [API](autoapi/blackjax/adaptation/meads_adaptation/index) |
+| `ensemble_slice_adaptation` | Bracket-width tuning for ensemble slice sampling | — | [API](autoapi/blackjax/adaptation/ensemble_slice_adaptation/index) |
 | `pathfinder_adaptation` | Pathfinder-based warmup | — | [API](autoapi/blackjax/adaptation/pathfinder_adaptation/index) |
 | `window_adaptation_low_rank` | Window adaptation with low-rank mass matrix | — | [API](autoapi/blackjax/adaptation/low_rank_adaptation/index) |
 
