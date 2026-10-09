@@ -104,7 +104,7 @@ marked *Sampling Book* are covered in depth at
 | `mgrad_gaussian` | Marginal latent Gaussian sampler | — | [API](autoapi/blackjax/mcmc/marginal_latent_gaussian/index) |
 | `elliptical_slice` | Elliptical slice sampling | — | [API](autoapi/blackjax/mcmc/elliptical_slice/index) |
 | `ensemble` | Ensemble sampler | — | [API](autoapi/blackjax/mcmc/ensemble/index) |
-| `ensemble_slice` | Ensemble slice sampling | — | [API](autoapi/blackjax/mcmc/ensemble_slice/index) |
+| `ensemble_slice` | Ensemble slice sampling | [How-to](examples/howto_ensemble_global_move.md) | [API](autoapi/blackjax/mcmc/ensemble_slice/index) |
 | `orbital_hmc` | Periodic orbital / periodic HMC | — | [API](autoapi/blackjax/mcmc/periodic_orbital/index) |
 
 ## MCMC — MCLMC family
@@ -214,6 +214,7 @@ Use custom gradients?<examples/howto_custom_gradients.md>
 Use non-JAX log-prob functions?<examples/howto_other_frameworks.md>
 Build a Metropolis-Within-Gibbs sampler?<examples/howto_metropolis_within_gibbs.md>
 Use Laplace-preconditioned HMC?<examples/howto_laplace_hmc.md>
+Jump between modes with ensemble slice sampling?<examples/howto_ensemble_global_move.md>
 Sample from the word BlackJAX using BlackJAX?<examples/howto_reproduce_the_blackjax_image.md>
 ```
 
