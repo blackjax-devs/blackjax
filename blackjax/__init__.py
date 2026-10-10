@@ -6,6 +6,7 @@ from blackjax._version import __version__
 
 from .adaptation.adjusted_mclmc_adaptation import adjusted_mclmc_find_L_and_step_size
 from .adaptation.chees_adaptation import chees_adaptation
+from .adaptation.ensemble_slice_adaptation import ensemble_slice_adaptation
 from .adaptation.low_rank_adaptation import window_adaptation_low_rank
 from .adaptation.mclmc_adaptation import mclmc_find_L_and_step_size
 from .adaptation.mclmc_lrd_adaptation import mclmc_lrd_warmup
@@ -21,6 +22,8 @@ from .mcmc import adjusted_mclmc_dynamic as _adjusted_mclmc_dynamic
 from .mcmc import barker as _barker
 from .mcmc import dynamic_hmc as _dynamic_hmc
 from .mcmc import elliptical_slice as _elliptical_slice
+from .mcmc import ensemble as _ensemble
+from .mcmc import ensemble_slice as _ensemble_slice
 from .mcmc import ghmc as _ghmc
 from .mcmc import hmc as _hmc
 from .mcmc import laplace_dynamic_hmc as _laplace_dynamic_hmc
@@ -138,6 +141,8 @@ slice_sampling = generate_top_level_api_from(_slice)
 coordinate_slice = GenerateSamplingAPI(
     _slice.coordinate_slice, _slice.init, _slice.build_coordinate_kernel
 )
+ensemble = generate_top_level_api_from(_ensemble)
+ensemble_slice = generate_top_level_api_from(_ensemble_slice)
 ghmc = generate_top_level_api_from(_ghmc)
 barker = generate_top_level_api_from(_barker)
 barker_proposal = barker  # backwards-compatible alias
@@ -266,6 +271,8 @@ __all__ = [
     "elliptical_slice",
     "slice_sampling",
     "coordinate_slice",
+    "ensemble",
+    "ensemble_slice",
     "gist_step_size",
     "gist_trajectory_length",
     "mclmc",
@@ -287,6 +294,7 @@ __all__ = [
     "window_adaptation",  # mcmc adaptation
     "window_adaptation_low_rank",
     "meads_adaptation",
+    "ensemble_slice_adaptation",
     "chees_adaptation",
     "pathfinder_adaptation",
     "mclmc_find_L_and_step_size",  # mclmc adaptation

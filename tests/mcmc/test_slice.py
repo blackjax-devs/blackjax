@@ -143,6 +143,23 @@ class SingleStepTest(chex.TestCase):
         ns, _ = jax.jit(algo.step)(jax.random.key(0), state)
         self.assertEqual(ns.position.shape, (3,))
 
+    def test_zero_level_draw(self):
+        """The level's uniform draw is exactly zero for this key."""
+
+        def logdensity_fn(x):
+            return std_normal(x / 0.01)
+
+        key = jax.random.key(10113833)
+        _, slice_key = jax.random.split(key)
+        level_key, _, _ = jax.random.split(slice_key, 3)
+        self.assertEqual(float(jax.random.uniform(level_key)), 0.0)
+
+        kernel = build_kernel(interval=stepping_out)
+        state = init(jnp.full(3, 0.01), logdensity_fn)
+        new_state, info = kernel(key, state, logdensity_fn, direction_proposal(), 1.0)
+        self.assertLess(int(info.num_expansions), 9)
+        self.assertGreater(float(new_state.logdensity), float(state.logdensity) - 88.0)
+
 
 class DirectionProposalTest(chex.TestCase):
     """``scale`` (scalar / vector / dense) shapes a unit-norm random direction."""

@@ -103,6 +103,8 @@ marked *Sampling Book* are covered in depth at
 | `additive_step_random_walk` / `normal_random_walk` | Additive-step random walk (Gaussian or custom) | — | [API](autoapi/blackjax/mcmc/random_walk/index) |
 | `mgrad_gaussian` | Marginal latent Gaussian sampler | — | [API](autoapi/blackjax/mcmc/marginal_latent_gaussian/index) |
 | `elliptical_slice` | Elliptical slice sampling | — | [API](autoapi/blackjax/mcmc/elliptical_slice/index) |
+| `ensemble` | Ensemble sampler | — | [API](autoapi/blackjax/mcmc/ensemble/index) |
+| `ensemble_slice` | Ensemble slice sampling | [How-to](examples/howto_ensemble_global_move.md) | [API](autoapi/blackjax/mcmc/ensemble_slice/index) |
 | `orbital_hmc` | Periodic orbital / periodic HMC | — | [API](autoapi/blackjax/mcmc/periodic_orbital/index) |
 
 ## MCMC — MCLMC family
@@ -163,6 +165,7 @@ marked *Sampling Book* are covered in depth at
 | `adjusted_mclmc_find_L_and_step_size` | Adjusted MCLMC tuning | [Sampling Book](https://blackjax-devs.github.io/sampling-book) | [API](autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index) |
 | `chees_adaptation` | CHEES (chain-ensemble adaptation) | — | [API](autoapi/blackjax/adaptation/chees_adaptation/index) |
 | `meads_adaptation` | MEADS (mass-matrix via ensemble) | — | [API](autoapi/blackjax/adaptation/meads_adaptation/index) |
+| `ensemble_slice_adaptation` | Bracket-width tuning for ensemble slice sampling | — | [API](autoapi/blackjax/adaptation/ensemble_slice_adaptation/index) |
 | `pathfinder_adaptation` | Pathfinder-based warmup | — | [API](autoapi/blackjax/adaptation/pathfinder_adaptation/index) |
 | `window_adaptation_low_rank` | Window adaptation with low-rank mass matrix | — | [API](autoapi/blackjax/adaptation/low_rank_adaptation/index) |
 
@@ -211,6 +214,7 @@ Use custom gradients?<examples/howto_custom_gradients.md>
 Use non-JAX log-prob functions?<examples/howto_other_frameworks.md>
 Build a Metropolis-Within-Gibbs sampler?<examples/howto_metropolis_within_gibbs.md>
 Use Laplace-preconditioned HMC?<examples/howto_laplace_hmc.md>
+Jump between modes with ensemble slice sampling?<examples/howto_ensemble_global_move.md>
 Sample from the word BlackJAX using BlackJAX?<examples/howto_reproduce_the_blackjax_image.md>
 ```
 
