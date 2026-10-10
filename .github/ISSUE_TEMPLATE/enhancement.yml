@@ -1,0 +1,88 @@
+name: Enhancement proposal
+description: Propose an improvement to an existing BlackJAX feature.
+title: "[Enhancement] "
+labels: ["enhancement"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for improvements to **existing** functionality (API changes, performance, usability).
+        For **new algorithms or samplers**, use the *New algorithm / sampler proposal* template instead.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched existing issues and this is not a duplicate.
+          required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of the library does this affect?
+      options:
+        - MCMC kernels (mcmc/)
+        - SMC (smc/)
+        - VI (vi/)
+        - SGMCMC (sgmcmc/)
+        - Adaptation (adaptation/)
+        - Base / types / API design
+        - Documentation
+        - Testing / CI
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: current
+    attributes:
+      label: Current behaviour
+      description: What does BlackJAX currently do? Include a short code example if helpful.
+      placeholder: |
+        import blackjax
+        # current behaviour that you'd like to see changed
+      render: python
+    validations:
+      required: true
+
+  - type: textarea
+    id: desired
+    attributes:
+      label: Desired behaviour
+      description: What would you like it to do instead?
+      placeholder: |
+        import blackjax
+        # how you'd like it to work
+      render: python
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Why is this change useful? What use case does it enable or simplify?
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: jit
+    attributes:
+      label: JIT compatibility
+      description: BlackJAX requires all kernels to be JIT-compatible.
+      options:
+        - label: I have considered whether this change is compatible with `jax.jit` and believe it is.
+
+  - type: dropdown
+    id: pr
+    attributes:
+      label: Are you willing to open a PR?
+      options:
+        - "Yes — I can implement this"
+        - "Yes — but I need guidance"
+        - "No — filing for discussion"
+    validations:
+      required: true

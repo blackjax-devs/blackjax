@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for the Stochastic gradient Hamiltonian Monte Carlo kernel."""
-from typing import Callable
+
+from collections.abc import Callable
 
 import jax
 
 import blackjax.sgmcmc.diffusions as diffusions
 from blackjax.base import SamplingAlgorithm
-from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import ArrayLikeTree, PRNGKey
 from blackjax.util import generate_gaussian_noise
 
 __all__ = ["init", "build_kernel", "as_top_level_api"]
@@ -40,7 +41,7 @@ def build_kernel(alpha: float = 0.01, beta: float = 0) -> Callable:
         step_size: float,
         num_integration_steps: int,
         temperature: float = 1.0,
-    ) -> ArrayTree:
+    ) -> ArrayLikeTree:
         def body_fn(state, rng_key):
             position, momentum = state
             logdensity_grad = grad_estimator(position, minibatch)
@@ -128,7 +129,7 @@ def as_top_level_api(
         minibatch: ArrayLikeTree,
         step_size: float,
         temperature: float = 1,
-    ) -> ArrayTree:
+    ) -> ArrayLikeTree:
         return kernel(
             rng_key,
             state,

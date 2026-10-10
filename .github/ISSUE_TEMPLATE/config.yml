@@ -1,4 +1,8 @@
+blank_issues_enabled: false
 contact_links:
-  - name: Question/Help/Support
+  - name: Question / Help / Support
     url: https://github.com/blackjax-devs/blackjax/discussions/new
-    about: "If you have a question about how to use Blackjax, please start a discussion."
+    about: For usage questions, please open a Discussion rather than an issue.
+  - name: Documentation
+    url: https://blackjax-mcmc.readthedocs.io
+    about: Check the docs first — your question may already be answered.

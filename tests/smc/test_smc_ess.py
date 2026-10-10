@@ -1,4 +1,5 @@
 """Test the ess function"""
+
 import functools
 
 import chex
@@ -6,6 +7,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from absl.testing import absltest, parameterized
+from jax.scipy.special import logsumexp
 from jax.scipy.stats.multivariate_normal import logpdf as multivariate_logpdf
 from jax.scipy.stats.norm import logpdf as univariate_logpdf
 
@@ -26,13 +28,75 @@ class SMCEffectiveSampleSizeTest(chex.TestCase):
         assert ess_val == 12
 
     @chex.all_variants(with_pmap=False)
+    @parameterized.product(
+        dtype=[np.float32, np.float64],
+        offset_sign=[-1, 0, 1],
+        log_weights=[
+            [0, 0, 0, 0],
+            [0, -16, -32, -np.inf],
+            [0, -np.inf, -np.inf, -np.inf],
+        ],
+    )
+    def test_ess_common_log_weight_offset(self, dtype, offset_sign, log_weights):
+        offset = offset_sign * (1e8 if dtype == np.float32 else 1e15)
+        shifted = np.asarray(log_weights, dtype=dtype) + dtype(offset)
+        weights = np.exp(shifted.astype(np.float64) - np.max(shifted))
+        expected = weights.sum() ** 2 / np.square(weights).sum()
+        with jax.enable_x64(dtype == np.float64):
+            inputs = jnp.asarray(shifted)
+            np.testing.assert_allclose(
+                self.variant(ess.ess)(inputs), expected, rtol=1e-6
+            )
+            np.testing.assert_allclose(
+                self.variant(ess.log_ess)(inputs),
+                np.log(expected),
+                rtol=1e-6,
+                atol=1e-7,
+            )
+
+    @chex.all_variants(with_pmap=False)
+    @parameterized.product(
+        dtype=[np.float32, np.float64],
+        log_weights=[[-2.0, -1.0, 0.0, 0.5], [-1.0, 0.0, 0.0, -2.0]],
+    )
+    def test_log_ess_derivatives(self, dtype, log_weights):
+        values = np.asarray(log_weights, dtype=np.float64)
+        weights = np.exp(values - values.max())
+        p = weights / weights.sum()
+        q = weights**2 / np.square(weights).sum()
+        expected_gradient = 2 * (p - q)
+        expected_hessian = 2 * (np.diag(p) - np.outer(p, p)) - 4 * (
+            np.diag(q) - np.outer(q, q)
+        )
+        tolerance = 1e-6 if dtype == np.float32 else 1e-12
+        with jax.enable_x64(dtype == np.float64):
+            inputs = jnp.asarray(log_weights, dtype=dtype)
+            np.testing.assert_allclose(
+                self.variant(jax.grad(ess.log_ess))(inputs),
+                expected_gradient,
+                rtol=tolerance,
+                atol=tolerance,
+            )
+            np.testing.assert_allclose(
+                self.variant(jax.hessian(ess.log_ess))(inputs),
+                expected_hessian,
+                rtol=tolerance,
+                atol=tolerance,
+            )
+
+    @chex.all_variants(with_pmap=False)
     @parameterized.parameters([0.2, 0.95])
     def test_ess_solver(self, target_ess):
+        # NOTE: ``ess_solver`` expects a log-density (positive sign — same as
+        # the log-likelihood passed by ``adaptive_tempered_smc``), NOT a
+        # potential. Passing ``-logpdf`` here would silently work for
+        # symmetric distributions and mask the sign bug in #914.
         num_particles = 1000
-        potential_fn = lambda pytree: -univariate_logpdf(pytree, scale=0.1)
-        potential = jax.vmap(lambda x: potential_fn(x), in_axes=[0])
+        logdensity_fn = jax.vmap(lambda x: univariate_logpdf(x, scale=0.1), in_axes=[0])
         particles = np.random.normal(0, 1, size=(num_particles, 1))
-        self.ess_solver_test_case(potential, particles, target_ess, num_particles, 1.0)
+        self.ess_solver_test_case(
+            logdensity_fn, particles, target_ess, num_particles, 1.0
+        )
 
     @chex.all_variants(with_pmap=False)
     @parameterized.parameters([0.2, 0.95])
@@ -45,11 +109,13 @@ class SMCEffectiveSampleSizeTest(chex.TestCase):
         mean = jnp.zeros((1, 2))
         cov = jnp.diag(jnp.array([1, 1]))
         _logdensity_fn = lambda pytree: multivariate_logpdf(pytree, mean=mean, cov=cov)
-        potential = jax.vmap(_logdensity_fn, in_axes=[0], out_axes=0)
+        logdensity_fn = jax.vmap(_logdensity_fn, in_axes=[0], out_axes=0)
         particles = np.random.multivariate_normal(
             mean=[0.0, 0.0], cov=[[1.0, 0.0], [0.0, 1.0]], size=num_particles
         )
-        self.ess_solver_test_case(potential, particles, target_ess, num_particles, 10.0)
+        self.ess_solver_test_case(
+            logdensity_fn, particles, target_ess, num_particles, 10.0
+        )
 
     @chex.all_variants(with_pmap=False)
     @parameterized.parameters([0.2, 0.95])
@@ -67,7 +133,7 @@ class SMCEffectiveSampleSizeTest(chex.TestCase):
                 pytree[0], mean=mean, cov=cov
             ) + multivariate_logpdf(pytree[1], mean=mean, cov=cov)
 
-        potential = jax.vmap(_logdensity_fn, in_axes=[0], out_axes=0)
+        logdensity_fn = jax.vmap(_logdensity_fn, in_axes=[0], out_axes=0)
         particles = [
             np.random.multivariate_normal(
                 mean=[0.0, 0.0], cov=[[1.0, 0.0], [0.0, 1.0]], size=num_particles
@@ -76,12 +142,14 @@ class SMCEffectiveSampleSizeTest(chex.TestCase):
                 mean=[0.0, 0.0], cov=[[1.0, 0.0], [0.0, 1.0]], size=num_particles
             ),
         ]
-        self.ess_solver_test_case(potential, particles, target_ess, num_particles, 10.0)
+        self.ess_solver_test_case(
+            logdensity_fn, particles, target_ess, num_particles, 10.0
+        )
 
-    def ess_solver_test_case(self, potential, particles, target_ess, N, max_delta):
+    def ess_solver_test_case(self, logdensity_fn, particles, target_ess, N, max_delta):
         ess_solver_fn = functools.partial(
             ess.ess_solver,
-            potential,
+            logdensity_fn,
             target_ess=target_ess,
             max_delta=max_delta,
             root_solver=solver.dichotomy,
@@ -90,8 +158,60 @@ class SMCEffectiveSampleSizeTest(chex.TestCase):
         delta = self.variant(ess_solver_fn)(particles)
         assert delta > 0
 
-        ess_val = ess.ess(-delta * potential(particles))
+        # Verify the solver's solution against the same weight expression
+        # the SMC kernel uses (``delta * loglikelihood``, see
+        # blackjax/smc/tempered.py:log_weights_fn). Using the wrong sign
+        # here would re-introduce the silent #914 cancellation.
+        ess_val = ess.ess(delta * logdensity_fn(particles))
         np.testing.assert_allclose(ess_val, target_ess * N, atol=1e-1, rtol=1e-2)
+
+    @chex.all_variants(with_pmap=False)
+    def test_ess_solver_asymmetric_loglikelihood(self):
+        """The ESS solver's bisection sign must track the correct search direction.
+
+        With a Cauchy prior and a sharply concentrated Gaussian likelihood
+        centred away from 0, the prior-IS estimator already achieves an ESS
+        well above the target with ``delta=1.0`` (one-step IS suffices, no
+        tempering needed). The bisection must therefore return
+        ``delta = max_delta = 1.0``. A wrong sign in the bisection direction
+        would instead report ``delta ~ 5e-8``, which causes
+        ``adaptive_tempered_smc`` to stall at ``lambda ~ 0``.
+
+        We choose ``max_delta = 1.0`` so the boundary case ``delta == 1.0``
+        is in-range; the asymmetric log-likelihood values (chi-squared-like,
+        not invariant under sign flip) ensure the bug cannot hide.
+        """
+        N = 8192
+        target_ess = 0.9 * 1024 / N  # ~0.1125
+
+        key = jax.random.key(0)
+        u = jax.random.uniform(key, (N,))
+        # Cauchy prior via inverse-CDF.
+        particles = jnp.tan(jnp.pi * (u - 0.5))
+        # Gaussian log-likelihood centred at mu=2, sigma=0.5 — asymmetric in
+        # the particle index, with a long left tail of very negative values.
+        loglikelihood_fn = lambda x: -0.5 * ((x - 2.0) / 0.5) ** 2
+
+        delta = self.variant(
+            functools.partial(
+                ess.ess_solver,
+                lambda _particles: loglikelihood_fn(_particles),
+                target_ess=target_ess,
+                max_delta=1.0,
+                root_solver=solver.dichotomy,
+            )
+        )(particles)
+
+        # Cross-check via the closed-form posterior IS ESS estimator
+        # (one-step reweighting from prior to posterior).
+        ll = loglikelihood_fn(particles)
+        ess_posterior = float(jnp.exp(2 * logsumexp(ll) - logsumexp(2 * ll)))
+        assert ess_posterior > target_ess * N, (
+            "Test premise broken: prior-IS ESS must already exceed target."
+        )
+
+        # The bisection should return (close to) max_delta.
+        np.testing.assert_allclose(float(delta), 1.0, atol=1e-2)
 
 
 if __name__ == "__main__":

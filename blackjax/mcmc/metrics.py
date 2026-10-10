@@ -28,7 +28,9 @@ For a Newtonian hamiltonian dynamic the kinetic energy is given by:
 We can also generate a relativistic dynamic :cite:p:`lu2017relativistic`.
 
 """
-from typing import Callable, NamedTuple, Optional, Protocol, Union
+
+from collections.abc import Callable
+from typing import NamedTuple, Protocol, TypeAlias
 
 import jax.numpy as jnp
 import jax.scipy as jscipy
@@ -37,14 +39,20 @@ from jax.flatten_util import ravel_pytree
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, Numeric, PRNGKey
 from blackjax.util import generate_gaussian_noise, linear_map
 
-__all__ = ["default_metric", "gaussian_euclidean", "gaussian_riemannian"]
+__all__ = [
+    "LowRankInverseMassMatrix",
+    "default_metric",
+    "gaussian_euclidean",
+    "gaussian_euclidean_low_rank",
+    "gaussian_riemannian",
+    "lbfgs_inverse_hessian_to_low_rank_metric",
+]
 
 
 class KineticEnergy(Protocol):
     def __call__(
-        self, momentum: ArrayLikeTree, position: Optional[ArrayLikeTree] = None
-    ) -> Numeric:
-        ...
+        self, momentum: ArrayLikeTree, position: ArrayLikeTree | None = None
+    ) -> Numeric: ...
 
 
 class CheckTurning(Protocol):
@@ -53,10 +61,9 @@ class CheckTurning(Protocol):
         momentum_left: ArrayLikeTree,
         momentum_right: ArrayLikeTree,
         momentum_sum: ArrayLikeTree,
-        position_left: Optional[ArrayLikeTree] = None,
-        position_right: Optional[ArrayLikeTree] = None,
-    ) -> bool:
-        ...
+        position_left: ArrayLikeTree | None = None,
+        position_right: ArrayLikeTree | None = None,
+    ) -> Array: ...
 
 
 class Scale(Protocol):
@@ -67,31 +74,136 @@ class Scale(Protocol):
         *,
         inv: bool,
         trans: bool,
-    ) -> ArrayLikeTree:
-        ...
+    ) -> ArrayTree: ...
 
 
 class Metric(NamedTuple):
-    sample_momentum: Callable[[PRNGKey, ArrayLikeTree], ArrayLikeTree]
+    sample_momentum: Callable[[PRNGKey, ArrayLikeTree], ArrayTree]
     kinetic_energy: KineticEnergy
     check_turning: CheckTurning
     scale: Scale
 
 
-MetricTypes = Union[Metric, Array, Callable[[ArrayLikeTree], Array]]
+class LowRankInverseMassMatrix(NamedTuple):
+    """Pure-array description of a low-rank inverse mass matrix.
+
+    The inverse mass matrix has the form
+
+    .. math::
+
+        M^{-1} = \\operatorname{diag}(\\sigma)
+                 \\bigl(I + U(\\Lambda - I)U^\\top\\bigr)
+                 \\operatorname{diag}(\\sigma)
+
+    where :math:`\\sigma \\in \\mathbb{R}^d_{>0}`, :math:`U \\in \\mathbb{R}^{d \\times k}`
+    has orthonormal columns and :math:`\\Lambda = \\operatorname{diag}(\\lambda)`.
+
+    This is the array-only payload produced by
+    :func:`~blackjax.adaptation.low_rank_adaptation.window_adaptation_low_rank`.
+    Unlike a fully-constructed :class:`Metric` (whose fields are Python closures
+    that capture these arrays), this NamedTuple is a pure JAX pytree and can be
+    safely transported across ``jax.vmap`` / ``jax.pmap`` boundaries.
+
+    :func:`default_metric` expands this into a :class:`Metric` at the kernel
+    call site via :func:`gaussian_euclidean_low_rank`.
+
+    Attributes
+    ----------
+    sigma
+        Shape ``(d,)``. Positive diagonal scaling.
+    U
+        Shape ``(d, k)``. Matrix with orthonormal columns.
+    lam
+        Shape ``(k,)``. Positive eigenvalues.
+    """
+
+    sigma: Array
+    U: Array
+    lam: Array
+
+
+MetricTypes: TypeAlias = (
+    Metric | LowRankInverseMassMatrix | Array | Callable[[ArrayLikeTree], Array]
+)
+
+
+def _low_rank_matvec(y: Array, U: Array, eigenvalue_scales: Array) -> Array:
+    r"""Apply the rank-k operator :math:`(I + U(\operatorname{diag}(s) - I)U^\top)` to ``y``.
+
+    This is the shared algebraic primitive underlying all low-rank metric
+    operations in BlackJAX.  For orthonormal
+    :math:`U \in \mathbb{R}^{d \times k}` and a per-eigenvalue scaling vector
+    :math:`s \in \mathbb{R}^k`, it computes
+
+    .. math::
+
+        y \;\mapsto\; y + U \bigl((s - 1) \odot (U^\top y)\bigr)
+
+    in :math:`O(dk)` operations.  When ``eigenvalue_scales`` equals the vector
+    of ones the operator is the identity.
+
+    The same algebraic form appears with different choices of ``eigenvalue_scales``
+    throughout the low-rank metric protocol:
+
+    - :math:`s = \lambda` — inverse mass matrix application (momentum → velocity),
+      as used in kinetic energy and the U-turn check.
+    - :math:`s = \sqrt{\lambda}` — square-root factor :math:`A^* = I+U(\sqrt\Lambda-I)U^\top`,
+      used in momentum sampling and the ESH integrator's ``forward_L`` / ``adjoint_L``
+      operators (:func:`~blackjax.mcmc.integrators.esh_dynamics_momentum_update_one_step`).
+    - :math:`s = 1/\sqrt{\lambda}` — inverse square-root factor :math:`B = I+U(\Lambda^{-1/2}-I)U^\top`,
+      used in the mass-matrix square root for momentum sampling.
+
+    Parameters
+    ----------
+    y
+        Shape ``(d,)``.  Input vector to transform.
+    U
+        Shape ``(d, k)``.  Matrix with orthonormal columns spanning the
+        low-rank correction subspace.
+    eigenvalue_scales
+        Shape ``(k,)``.  Per-eigenvalue scaling factors ``s``.
+
+    Returns
+    -------
+    Array
+        Shape ``(d,)``.  Result :math:`y + U \bigl((s-1) \odot (U^\top y)\bigr)`.
+
+    See Also
+    --------
+    gaussian_euclidean_low_rank : Full low-rank Euclidean metric built from this primitive.
+    lbfgs_inverse_hessian_to_low_rank_metric : Adapter producing a compatible representation.
+    """
+    return y + U @ ((eigenvalue_scales - 1.0) * (U.T @ y))
 
 
 def default_metric(metric: MetricTypes) -> Metric:
-    """Convert an input metric into a ``Metric`` object following sensible default rules
+    """Convert an input metric into a ``Metric`` object following sensible default rules.
 
-    The metric can be specified in three different ways:
+    The metric can be specified in four different ways:
 
     - A ``Metric`` object that implements the full interface
+    - A ``LowRankInverseMassMatrix`` NamedTuple holding ``(sigma, U, lam)``,
+      which is expanded to a full :class:`Metric` via
+      :func:`gaussian_euclidean_low_rank`. This is the form returned by
+      :func:`~blackjax.adaptation.low_rank_adaptation.window_adaptation_low_rank`
+      and is safe to transport across ``jax.vmap`` boundaries.
     - An ``Array`` which is assumed to specify the inverse mass matrix of a static
       metric
     - A function that takes a coordinate position and returns the mass matrix at that
       location
+
+    Returns
+    -------
+    A ``Metric`` object with ``sample_momentum``, ``kinetic_energy``,
+    ``check_turning``, and ``scale`` fields.
     """
+    # LowRankInverseMassMatrix must be checked before Metric because both are
+    # NamedTuples; isinstance(metric, Metric) on a LowRankInverseMassMatrix is
+    # already False (distinct types), but listing the low-rank case first keeps
+    # the dispatch order obvious.
+    if isinstance(metric, LowRankInverseMassMatrix):
+        return gaussian_euclidean_low_rank(metric.sigma, metric.U, metric.lam)
+
     if isinstance(metric, Metric):
         return metric
 
@@ -148,7 +260,7 @@ def gaussian_euclidean(
         return generate_gaussian_noise(rng_key, position, sigma=mass_matrix_sqrt)
 
     def kinetic_energy(
-        momentum: ArrayLikeTree, position: Optional[ArrayLikeTree] = None
+        momentum: ArrayLikeTree, position: ArrayLikeTree | None = None
     ) -> Numeric:
         del position
         momentum, _ = ravel_pytree(momentum)
@@ -160,9 +272,9 @@ def gaussian_euclidean(
         momentum_left: ArrayLikeTree,
         momentum_right: ArrayLikeTree,
         momentum_sum: ArrayLikeTree,
-        position_left: Optional[ArrayLikeTree] = None,
-        position_right: Optional[ArrayLikeTree] = None,
-    ) -> bool:
+        position_left: ArrayLikeTree | None = None,
+        position_right: ArrayLikeTree | None = None,
+    ) -> Array:
         """Generalized U-turn criterion :cite:p:`betancourt2013generalizing,nuts_uturn`.
 
         Parameters
@@ -196,7 +308,7 @@ def gaussian_euclidean(
         *,
         inv: bool,
         trans: bool,
-    ) -> ArrayLikeTree:
+    ) -> ArrayTree:
         """Scale elements by the mass matrix.
 
         Parameters
@@ -233,22 +345,157 @@ def gaussian_euclidean(
     return Metric(momentum_generator, kinetic_energy, is_turning, scale)
 
 
+def gaussian_euclidean_low_rank(
+    sigma: Array,
+    U: Array,
+    lam: Array,
+) -> Metric:
+    r"""Euclidean metric with low-rank-modified mass matrix :cite:p:`seyboldt2026preconditioning`.
+
+    The inverse mass matrix has the form
+
+    .. math::
+
+        M^{-1} = \operatorname{diag}(\sigma)
+                 \bigl(I + U(\Lambda - I)U^\top\bigr)
+                 \operatorname{diag}(\sigma)
+
+    where :math:`\sigma \in \mathbb{R}^d_{>0}` is a diagonal scaling,
+    :math:`U \in \mathbb{R}^{d \times k}` has orthonormal columns, and
+    :math:`\Lambda = \operatorname{diag}(\lambda)` with :math:`\lambda > 0`.
+    When :math:`\lambda = \mathbf{1}` the metric reduces to a diagonal metric
+    with scale :math:`\sigma`.  All HMC operations are :math:`O(dk)`, making
+    this efficient when :math:`k \ll d`.
+
+    Parameters
+    ----------
+    sigma
+        Shape ``(d,)``.  Positive diagonal scaling; plays the role of marginal
+        standard deviations.
+    U
+        Shape ``(d, k)``.  Matrix with orthonormal columns spanning the
+        low-rank correction subspace.
+    lam
+        Shape ``(k,)``.  Positive eigenvalues for the low-rank correction.
+
+    Returns
+    -------
+    A ``Metric`` object whose operations all run in :math:`O(dk)`.
+    """
+    inv_sigma = 1.0 / sigma  # (d,)
+    sqrt_lam = jnp.sqrt(lam)  # (k,)
+    inv_sqrt_lam = 1.0 / sqrt_lam  # (k,)
+
+    def momentum_generator(rng_key: PRNGKey, position: ArrayLikeTree) -> ArrayTree:
+        # Sample eps ~ N(0, I) with the same pytree shape as position.
+        noise = generate_gaussian_noise(rng_key, position)
+        eps, unravel_fn = ravel_pytree(noise)
+        # p = M^{1/2} eps  where  M^{1/2} = D^{-1} B,
+        # B = I + U (Λ^{-1/2} - I) U^T,  D^{-1} = diag(1/σ).
+        # D^{-1} is applied AFTER B so that E[pp^T] = D^{-1} B B D^{-1} = M.
+        v = _low_rank_matvec(eps, U, inv_sqrt_lam)  # B eps
+        p = inv_sigma * v  # D^{-1} B eps
+        return unravel_fn(p)
+
+    def kinetic_energy(
+        momentum: ArrayLikeTree, position: ArrayLikeTree | None = None
+    ) -> Numeric:
+        del position
+        p, _ = ravel_pytree(momentum)
+        # K(p) = ½ p^T M^{-1} p = ½ q^T (I + U(Λ-I)U^T) q,  q = σ⊙p
+        q = sigma * p  # (d,)
+        return 0.5 * jnp.dot(q, _low_rank_matvec(q, U, lam))
+
+    def is_turning(
+        momentum_left: ArrayLikeTree,
+        momentum_right: ArrayLikeTree,
+        momentum_sum: ArrayLikeTree,
+        position_left: ArrayLikeTree | None = None,
+        position_right: ArrayLikeTree | None = None,
+    ) -> Array:
+        del position_left, position_right
+        m_left, _ = ravel_pytree(momentum_left)
+        m_right, _ = ravel_pytree(momentum_right)
+        m_sum, _ = ravel_pytree(momentum_sum)
+
+        def _inv_mass_times(p):
+            # M^{-1} p = D(I + U(Λ-I)U^T)D p
+            return sigma * _low_rank_matvec(sigma * p, U, lam)
+
+        vel_left = _inv_mass_times(m_left)
+        vel_right = _inv_mass_times(m_right)
+        rho = m_sum - (m_right + m_left) / 2
+        return (jnp.dot(vel_left, rho) <= 0) | (jnp.dot(vel_right, rho) <= 0)
+
+    def scale(
+        position: ArrayLikeTree,
+        element: ArrayLikeTree,
+        *,
+        inv: bool,
+        trans: bool,
+    ) -> ArrayTree:
+        """Scale an element by the (inverse) (transposed) square-root mass matrix.
+
+        M = D^{-1} C D^{-1} where C = I+U(Λ^{-1}-I)U^T and D = diag(σ).
+        The (non-symmetric) left square root is M^{1/2} = D^{-1} B where
+        B = I+U(Λ^{-1/2}-I)U^T, so M = M^{1/2} (M^{1/2})^T.
+
+        * ``inv=False, trans=False``:  M^{1/2}    = D^{-1} B
+        * ``inv=False, trans=True`` :  (M^{1/2})^T = B D^{-1}
+        * ``inv=True,  trans=False``:  M^{-1/2}   = D A^{*}  where A^{*} = I+U(√Λ-I)U^T
+        * ``inv=True,  trans=True`` :  (M^{-1/2})^T = A^{*} D
+        """
+        del position
+        e, unravel_fn = ravel_pytree(element)
+
+        if not inv and not trans:
+            # M^{1/2} e = D^{-1} (B e) = (1/σ) * (B e),  B = I+U(Λ^{-1/2}-I)U^T
+            scaled = inv_sigma * _low_rank_matvec(e, U, inv_sqrt_lam)
+        elif not inv and trans:
+            # (M^{1/2})^T e = B (D^{-1} e) = B (e/σ)
+            scaled = _low_rank_matvec(inv_sigma * e, U, inv_sqrt_lam)
+        elif inv and not trans:
+            # M^{-1/2} e = D (A^{*} e) = σ * (A^{*} e),  A^{*} = I+U(√Λ-I)U^T
+            scaled = sigma * _low_rank_matvec(e, U, sqrt_lam)
+        else:
+            # (M^{-1/2})^T e = A^{*} (D e) = A^{*} (σ⊙e)
+            scaled = _low_rank_matvec(sigma * e, U, sqrt_lam)
+
+        return unravel_fn(scaled)
+
+    return Metric(momentum_generator, kinetic_energy, is_turning, scale)
+
+
 def gaussian_riemannian(
     mass_matrix_fn: Callable,
 ) -> Metric:
-    def momentum_generator(rng_key: PRNGKey, position: ArrayLikeTree) -> ArrayLikeTree:
+    """Hamiltonian dynamic on Riemannian manifold with normally-distributed momentum.
+
+    Parameters
+    ----------
+    mass_matrix_fn
+        A callable that takes a position and returns the mass matrix at that
+        location (positive definite, one or two-dimensional array).
+
+    Returns
+    -------
+    A ``Metric`` object with ``sample_momentum``, ``kinetic_energy``,
+    ``check_turning``, and ``scale`` fields.
+    """
+
+    def momentum_generator(rng_key: PRNGKey, position: ArrayLikeTree) -> ArrayTree:
         mass_matrix = mass_matrix_fn(position)
         mass_matrix_sqrt, *_ = _format_covariance(mass_matrix, is_inv=False)
 
         return generate_gaussian_noise(rng_key, position, sigma=mass_matrix_sqrt)
 
     def kinetic_energy(
-        momentum: ArrayLikeTree, position: Optional[ArrayLikeTree] = None
+        momentum: ArrayLikeTree, position: ArrayLikeTree | None = None
     ) -> Numeric:
         if position is None:
             raise ValueError(
-                "A Reinmannian kinetic energy function must be called with the "
-                "position specified; make sure to use a Reinmannian-capable "
+                "A Riemannian kinetic energy function must be called with the "
+                "position specified; make sure to use a Riemannian-capable "
                 "integrator like `implicit_midpoint`."
             )
 
@@ -264,9 +511,9 @@ def gaussian_riemannian(
         momentum_left: ArrayLikeTree,
         momentum_right: ArrayLikeTree,
         momentum_sum: ArrayLikeTree,
-        position_left: Optional[ArrayLikeTree] = None,
-        position_right: Optional[ArrayLikeTree] = None,
-    ) -> bool:
+        position_left: ArrayLikeTree | None = None,
+        position_right: ArrayLikeTree | None = None,
+    ) -> Array:
         del momentum_left, momentum_right, momentum_sum, position_left, position_right
         raise NotImplementedError(
             "NUTS sampling is not yet implemented for Riemannian manifolds"
@@ -298,7 +545,7 @@ def gaussian_riemannian(
         *,
         inv: bool,
         trans: bool,
-    ) -> ArrayLikeTree:
+    ) -> ArrayTree:
         """Scale elements by the mass matrix.
 
         Parameters
@@ -329,6 +576,125 @@ def gaussian_riemannian(
         return unravel_fn(scaled)
 
     return Metric(momentum_generator, kinetic_energy, is_turning, scale)
+
+
+def lbfgs_inverse_hessian_to_low_rank_metric(
+    alpha: Array,
+    beta: Array,
+    gamma: Array,
+) -> LowRankInverseMassMatrix:
+    r"""Convert an L-BFGS factored inverse-Hessian to a :class:`LowRankInverseMassMatrix`.
+
+    The L-BFGS inverse Hessian is stored in the factored form
+
+    .. math::
+
+        H^{-1} = \operatorname{diag}(\alpha) + \beta \Gamma \beta^\top
+
+    (formula II.1 / II.3 of :cite:p:`zhang2022pathfinder`).  This adapter
+    rewrites it as a :class:`LowRankInverseMassMatrix` with
+
+    .. math::
+
+        M^{-1} = \operatorname{diag}(\sigma)
+                 \bigl(I + U(\Lambda - I)U^\top\bigr)
+                 \operatorname{diag}(\sigma),
+        \quad \sigma = \sqrt{\alpha}
+
+    via a compact :math:`O((2m)^3)` inner eigendecomposition that avoids the
+    :math:`O(d^3)` full eigenproblem:
+
+    1. Set :math:`D = \operatorname{diag}(\sigma)` and factor out to obtain
+       :math:`H^{-1} = D(I + \tilde B \Gamma \tilde B^\top)D` with
+       :math:`\tilde B = D^{-1}\beta \in \mathbb{R}^{d \times 2m}`.
+    2. QR-decompose :math:`\tilde B = Q R` (thin QR, :math:`Q` orthonormal
+       :math:`d \times r`, :math:`r = \min(d, 2m)`).
+    3. The inner correction satisfies
+       :math:`\tilde B \Gamma \tilde B^\top = Q (R \Gamma R^\top) Q^\top`,
+       so its eigenvalues are those of the :math:`r \times r` matrix
+       :math:`R \Gamma R^\top`.
+    4. Eigendecompose :math:`R \Gamma R^\top = V \Lambda_c V^\top` (eigh,
+       :math:`r \times r` only).
+    5. Return :math:`U = QV` (orthonormal eigenvectors, shape :math:`d \times r`)
+       and :math:`\lambda = 1 + \Lambda_c` (eigenvalues of :math:`I + \tilde B
+       \Gamma \tilde B^\top`).
+
+    **When to use this.**  Pass the ``(alpha, beta, gamma)`` triple produced by
+    :func:`~blackjax.optimizers.lbfgs.lbfgs_inverse_hessian_factors` to obtain a
+    JAX-pytree-safe :class:`LowRankInverseMassMatrix` that can cross
+    ``jax.vmap`` boundaries and feed any consumer that accepts the unified
+    representation (HMC, MCLMC, etc.).
+
+    .. note::
+        This function is a **pure adapter** — it does not alter Pathfinder's
+        internal sampling path.  Wiring this adapter into Pathfinder's own
+        sampling path is deliberate follow-up work; for now it ships as an
+        adapter with parity tests only.
+
+    .. warning::
+        **Positive-definiteness precondition.**  The triple ``(alpha, beta, gamma)``
+        must yield a positive-definite dense form ``diag(alpha) + beta @ gamma @
+        beta.T``; this is guaranteed when the triple comes from
+        :func:`~blackjax.optimizers.lbfgs.lbfgs_inverse_hessian_factors` under a
+        Wolfe-condition line search.  Non-positive-definite inputs produce ``lam <=
+        0`` *silently* here and surface as NaN at momentum sampling.  Additionally,
+        at float32 near-singular metrics (condition number ≳ 1e7) can resolve the
+        smallest eigenvalue with unreliable sign; for such inputs prefer float64
+        factors.
+
+    Parameters
+    ----------
+    alpha
+        Shape ``(d,)``.  Positive diagonal of the inverse Hessian approximation.
+    beta
+        Shape ``(d, 2m)``.  Left factor of the low-rank correction.  When
+        ``m = 0`` (empty L-BFGS history) ``beta`` has shape ``(d, 0)`` and the
+        adapter returns a pure diagonal metric.
+    gamma
+        Shape ``(2m, 2m)``.  Symmetric inner factor of the low-rank correction.
+
+    Returns
+    -------
+    LowRankInverseMassMatrix
+        With ``sigma = sqrt(alpha)``, ``U`` the ``(d, r)`` orthonormal
+        eigenvector matrix, and ``lam = 1 + eigenvalues(R Γ Rᵀ)``.
+        Empty-history edge: ``U`` has shape ``(d, 0)`` and ``lam`` shape ``(0,)``,
+        representing a pure diagonal metric with scale ``sigma``.
+
+    See Also
+    --------
+    LowRankInverseMassMatrix : Target representation consumed by :func:`gaussian_euclidean_low_rank`.
+    gaussian_euclidean_low_rank : Full metric protocol built from the representation.
+    """
+    sigma = jnp.sqrt(alpha)  # (d,)
+    inv_sigma = 1.0 / sigma  # (d,)
+
+    k = beta.shape[-1]
+    if k == 0:
+        # Empty L-BFGS history: pure diagonal metric.
+        d = alpha.shape[0]
+        return LowRankInverseMassMatrix(
+            sigma=sigma,
+            U=jnp.zeros((d, 0), dtype=alpha.dtype),
+            lam=jnp.ones(0, dtype=alpha.dtype),
+        )
+
+    # Whiten beta: B̃ = D^{-1} β,  shape (d, 2m).
+    B_tilde = inv_sigma[:, None] * beta
+
+    # Thin QR: B̃ = Q R,  Q (d, r) orthonormal,  R (r, 2m),  r = min(d, 2m).
+    # C := B̃ Γ B̃ᵀ = Q (R Γ Rᵀ) Qᵀ so eigenvalues(C) = eigenvalues(R Γ Rᵀ).
+    Q, R = jnp.linalg.qr(B_tilde, mode="reduced")  # Q: (d, r), R: (r, k)
+    M_inner = R @ gamma @ R.T  # (r, r), symmetric
+    eigvals, V = jnp.linalg.eigh(M_inner)  # eigvals: (r,), V: (r, r)
+
+    # U = Q V is orthonormal (Q has orthonormal columns; V unitary from eigh).
+    # λ = 1 + eigenvalues(C) = eigenvalues of the full inner factor (I + C).
+    return LowRankInverseMassMatrix(
+        sigma=sigma,
+        U=Q @ V,
+        lam=1.0 + eigvals,
+    )
 
 
 def _format_covariance(cov: Array, is_inv):

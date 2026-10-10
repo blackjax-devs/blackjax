@@ -12,36 +12,52 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v5
       with:
-        python-version: 3.12
-    - uses: pre-commit/action@v3.0.0
+        python-version: 3.13
+    - name: Set up the dev environment (pre-commit and mypy run in it)
+      # mypy runs in the project env so it sees the real jax/numpy types.
+      # --extra progress: blackjax.progress_bar imports jaxtap behind a
+      # try/except ImportError, and mypy still needs it to resolve the import.
+      run: uv sync --group dev --extra progress
+    - name: Cache pre-commit hook environments
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pre-commit
+        key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+    # Not pre-commit/action: it runs `python -m pip install pre-commit`, and
+    # setup-uv activates the uv venv, which has no pip. pre-commit is in the
+    # dev group, so run it through uv instead.
+    - name: Run pre-commit
+      run: uv run --frozen pre-commit run --show-diff-on-failure --color=always --all-files
 
   test:
     name: Run tests for Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     needs:
       - style
+    permissions:
+      contents: read
+      id-token: write  # lets codecov-action request an OIDC token for the upload
     strategy:
       matrix:
-        python-version: ['3.12', '3.13']
+        python-version: ['3.13', '3.14']
     steps:
     - uses: actions/checkout@v3
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v5
       with:
         python-version: ${{ matrix.python-version }}
     - name: Set up test environment
-      run: |
-        python -m pip install --upgrade pip
-        pip install .
-        less requirements.txt | grep 'pytest\|chex' | xargs -i -t pip install {}
+      run: uv sync --group dev --extra progress
     - name: Run tests
       run: |
-        pytest -n auto -vv --benchmark-disable --cov=blackjax --cov-report=xml --cov-report=term tests
+        uv run pytest -n 2 -vv --benchmark-disable --cov=blackjax --cov-report=xml --cov-report=term tests
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v7
       with:
+        use_oidc: true
         env_vars: OS,PYTHON
         name: codecov-umbrella
         fail_ci_if_error: false

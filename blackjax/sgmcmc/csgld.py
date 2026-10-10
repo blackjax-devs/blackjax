@@ -11,17 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Public API for the Contour Stochastic gradient Langevin Dynamics kernel :cite:p:`deng2020contour,deng2022interacting`.
+"""Public API for the Contour Stochastic gradient Langevin Dynamics kernel :cite:p:`deng2020contour,deng2022interacting`."""
 
-"""
-from typing import Callable, NamedTuple
+from collections.abc import Callable
+from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp
 
 from blackjax.base import SamplingAlgorithm
 from blackjax.sgmcmc.diffusions import overdamped_langevin
-from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import Array, ArrayLikeTree, Numeric, PRNGKey
 
 __all__ = ["ContourSGLDState", "init", "build_kernel", "as_top_level_api"]
 
@@ -41,9 +41,10 @@ class ContourSGLDState(NamedTuple):
         Index `i` such that the current position belongs to :math:`S_i`.
 
     """
-    position: ArrayTree
+
+    position: ArrayLikeTree
     energy_pdf: Array
-    energy_idx: int
+    energy_idx: Numeric
 
 
 def init(position: ArrayLikeTree, num_partitions=512) -> ContourSGLDState:
@@ -86,7 +87,7 @@ def build_kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable:
         zeta: float = 1,
         temperature: float = 1.0,
     ) -> ContourSGLDState:
-        r"""Multil-modal sampling via Contour SGLD :cite:p:`deng2020contour,deng2022interacting`.
+        r"""Multi-modal sampling via Contour SGLD :cite:p:`deng2020contour,deng2022interacting`.
 
         We are interested in the simulations of :math:`\exp(-U(x) / T)`,
         where :math:`U` is an energy function and :math:`T` is the temperature.
@@ -145,26 +146,24 @@ def build_kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable:
         position = integrator(
             rng_key,
             position,
-            jax.tree_util.tree_map(lambda g: gradient_multiplier * g, logprob_grad),
+            jax.tree.map(lambda g: gradient_multiplier * g, logprob_grad),
             step_size_diff,
             temperature,
         )
 
         # Update the stochastic approximation to the energy histogram
         neg_logprob = -logdensity_estimator(position, minibatch)
-        idx = jax.lax.min(
-            jax.lax.max(
-                jax.lax.floor((neg_logprob - min_energy) / energy_gap + 1).astype(
-                    "int32"
-                ),
-                1,
+        idx = jnp.clip(
+            jax.lax.floor((neg_logprob - min_energy) / energy_gap + 1).astype(
+                jnp.int32
             ),
-            num_partitions - 1,
+            min=1,
+            max=num_partitions - 1,
         )
 
-        energy_pdf_update = -energy_pdf.copy()
+        energy_pdf_update = -energy_pdf
         energy_pdf_update = energy_pdf_update.at[idx].set(energy_pdf_update[idx] + 1)
-        energy_pdf = jax.tree_util.tree_map(
+        energy_pdf = jax.tree.map(
             lambda e: e + step_size_stoch * energy_pdf[idx] * energy_pdf_update,
             energy_pdf,
         )

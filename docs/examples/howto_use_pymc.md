@@ -62,7 +62,7 @@ with pm.Model() as model:
 We need to translate the model into a log-probability function that will be used by Blackjax to perform inference. For that we use the `get_jaxified_logp` function in PyMC's internals.
 
 ```{code-cell} ipython3
-from pymc.sampling_jax import get_jaxified_logp
+from pymc.sampling.jax import get_jaxified_logp
 
 rvs = [rv.name for rv in model.value_vars]
 logdensity_fn = get_jaxified_logp(model)

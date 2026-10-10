@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Callable, NamedTuple, Tuple
+from collections.abc import Callable
+from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp
 import jax.random
 from jax.flatten_util import ravel_pytree
-from jax.tree_util import tree_leaves
 from jax.typing import ArrayLike
 
 from blackjax.base import VIAlgorithm
@@ -65,7 +65,7 @@ def step(
     logdensity_fn: Callable,
     step_size: float,
     n_samples: int,
-) -> Tuple[SchrodingerFollmerState, SchrodingerFollmerInfo]:
+) -> tuple[SchrodingerFollmerState, SchrodingerFollmerInfo]:
     """
     Runs one step of the Schrödinger-Föllmer algorithm. As per the paper, we only allow for Euler-Maruyama integration.
     It is likely possible to generalize this to other integration schemes but is not considered in the original work
@@ -177,11 +177,13 @@ def _log_fn_corrected(position, logdensity_fn):
     """
     log_pdf_val = logdensity_fn(position)
     norm = jax.tree.map(lambda a: 0.5 * jnp.sum(a**2), position)
-    norm = sum(tree_leaves(norm))
+    norm = sum(jax.tree.leaves(norm))
     return log_pdf_val + norm
 
 
-def as_top_level_api(logdensity_fn: Callable, n_steps: int, n_inner_samples: int) -> VIAlgorithm:  # type: ignore[misc]
+def as_top_level_api(
+    logdensity_fn: Callable, n_steps: int, n_inner_samples: int
+) -> VIAlgorithm:  # type: ignore[misc]
     """Implements the (basic) user interface for the Schrödinger-Föllmer algortithm :cite:p:`huang2021schrodingerfollmer`.
 
     The Schrödinger-Föllmer algorithm obtains (approximate) samples from the target distribution by means of a diffusion with

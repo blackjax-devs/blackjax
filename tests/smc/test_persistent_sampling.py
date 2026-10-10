@@ -1,7 +1,7 @@
 """Test the Persistent Sampling steps and routine"""
 
+from collections.abc import Callable
 from functools import partial
-from typing import Callable
 
 import chex
 import jax
@@ -95,7 +95,7 @@ class PersistentSamplingUnitTest(chex.TestCase):
         rng_key, init_key = jax.random.split(self.key, 2)
         particles = particle_generator(init_key)
 
-        def loglikelihood_fn(x: ArrayLikeTree) -> jnp.ndarray:
+        def loglikelihood_fn(x: ArrayLikeTree) -> jax.Array:
             leaves = jax.tree.leaves(x)
             return jnp.array(sum(jnp.sum(leaf) for leaf in leaves))
 
@@ -137,7 +137,7 @@ class PersistentSamplingUnitTest(chex.TestCase):
         key, init_key = jax.random.split(self.key, 2)
         particles = jax.random.normal(init_key, shape=(num_particles, num_dim))
 
-        def loglikelihood_fn(x: jnp.ndarray) -> jnp.ndarray:
+        def loglikelihood_fn(x: jax.Array) -> jax.Array:
             return stats.norm.logpdf(x).sum()
 
         state = init(particles, loglikelihood_fn, n_schedule)
@@ -208,7 +208,7 @@ class PersistentSamplingUnitTest(chex.TestCase):
 
         # Check shapes
         assert log_weights.shape == (num_iterations + 2, num_particles)
-        assert isinstance(log_Z, jnp.ndarray) or isinstance(log_Z, float)
+        assert isinstance(log_Z, jax.Array) or isinstance(log_Z, float)
 
         # Check that weights are finite where they should be
         assert jnp.all(jnp.isfinite(log_weights[: iteration + 1]))
@@ -333,7 +333,7 @@ class PersistentSamplingUnitTest(chex.TestCase):
         single_iter_particles = particle_generator(init_key)
 
         # Create persistent particles by stacking multiple iterations
-        def expand_to_iterations(leaf: jnp.ndarray) -> jnp.ndarray:
+        def expand_to_iterations(leaf: jax.Array) -> jax.Array:
             # Expand first particle dimension to (num_iterations, num_particles, ...)
             return jnp.tile(
                 leaf[None, ...], (num_iterations, 1) + (1,) * (leaf.ndim - 1)
@@ -387,14 +387,14 @@ class PersistentSamplingStateUpdateTest(chex.TestCase):
         rng_key, init_key = jax.random.split(self.key, 2)
         particles = jax.random.normal(init_key, shape=(num_particles, num_dim))
 
-        def logprior_fn(x: jnp.ndarray) -> jnp.ndarray:
+        def logprior_fn(x: jax.Array) -> jax.Array:
             return jnp.array(
                 stats.multivariate_normal.logpdf(
                     x, jnp.zeros((num_dim,)), jnp.eye(num_dim)
                 )
             )
 
-        def loglikelihood_fn(x: jnp.ndarray) -> jnp.ndarray:
+        def loglikelihood_fn(x: jax.Array) -> jax.Array:
             return jnp.array(
                 stats.multivariate_normal.logpdf(
                     x, jnp.zeros((num_dim,)), 0.5 * jnp.eye(num_dim)
@@ -429,9 +429,9 @@ class PersistentSamplingStateUpdateTest(chex.TestCase):
         assert state.tempering_schedule[0] == 0.0, "Initial lambda should be 0.0"
         assert state.persistent_log_Z[0] == 0.0, "Initial log_Z should be 0.0"
         initial_log_liks = state.persistent_log_likelihoods[0]
-        assert jnp.all(
-            jnp.isfinite(initial_log_liks)
-        ), "Initial log-likelihoods should be finite"
+        assert jnp.all(jnp.isfinite(initial_log_liks)), (
+            "Initial log-likelihoods should be finite"
+        )
 
         # Run multiple steps with different lambda values
         lambda_schedule = jnp.array([0.1, 0.3, 0.5, 0.7, 0.9, 1.0])
@@ -445,23 +445,23 @@ class PersistentSamplingStateUpdateTest(chex.TestCase):
             expected_iteration = step_idx + 1
 
             # 1. Check that iteration is incremented
-            assert (
-                state.iteration == expected_iteration
-            ), f"Iteration should be {expected_iteration}, got {state.iteration}"
+            assert state.iteration == expected_iteration, (
+                f"Iteration should be {expected_iteration}, got {state.iteration}"
+            )
 
             # 2. Check that the ensemble grows - verify persistent particles are
             # populated at the new iteration index
             state_particles = jax.tree.leaves(state.persistent_particles)[0]
-            assert (
-                jnp.count_nonzero(state_particles[expected_iteration]) > 0
-            ), f"Particles at iteration {expected_iteration} should be non-zero"
+            assert jnp.count_nonzero(state_particles[expected_iteration]) > 0, (
+                f"Particles at iteration {expected_iteration} should be non-zero"
+            )
 
             # Verify particles from previous iterations are preserved
             for prev_iter in range(expected_iteration):
                 prev_particles = state_particles[prev_iter]
-                assert (
-                    jnp.count_nonzero(prev_particles) > 0
-                ), f"Particles from iteration {prev_iter} should still be present"
+                assert jnp.count_nonzero(prev_particles) > 0, (
+                    f"Particles from iteration {prev_iter} should still be present"
+                )
 
             # 3. Check that lambda is set correctly in the schedule
             np.testing.assert_allclose(
@@ -489,9 +489,9 @@ class PersistentSamplingStateUpdateTest(chex.TestCase):
 
             # Verify weights are finite for all iterations up to current
             active_weights = weights[: expected_iteration + 1]
-            assert jnp.all(
-                jnp.isfinite(active_weights)
-            ), f"Weights up to iteration {expected_iteration} should be finite"
+            assert jnp.all(jnp.isfinite(active_weights)), (
+                f"Weights up to iteration {expected_iteration} should be finite"
+            )
 
             # Verify weights are non-negative
             assert jnp.all(active_weights >= 0), "Weights should be non-negative"
@@ -512,9 +512,9 @@ class PersistentSamplingStateUpdateTest(chex.TestCase):
             ess = compute_persistent_ess(log_weights, normalize_weights=True)
 
             # ESS should be positive and finite
-            assert jnp.isfinite(
-                ess
-            ), f"ESS should be finite at iteration {expected_iteration}"
+            assert jnp.isfinite(ess), (
+                f"ESS should be finite at iteration {expected_iteration}"
+            )
             assert ess > 0, f"ESS should be positive at iteration {expected_iteration}"
 
             # ESS should not exceed the total number of persistent particles
@@ -528,9 +528,9 @@ class PersistentSamplingStateUpdateTest(chex.TestCase):
             current_log_liks = state.persistent_log_likelihoods[expected_iteration]
 
             # Log-likelihoods should be finite
-            assert jnp.all(
-                jnp.isfinite(current_log_liks)
-            ), f"Log-likelihoods at iteration {expected_iteration} should be finite"
+            assert jnp.all(jnp.isfinite(current_log_liks)), (
+                f"Log-likelihoods at iteration {expected_iteration} should be finite"
+            )
 
             # Verify log-likelihoods are computed for current particles
             current_particles = state.particles
@@ -559,18 +559,18 @@ class PersistentSamplingStateUpdateTest(chex.TestCase):
             current_log_Z = state.log_Z
 
             # log_Z should be finite
-            assert jnp.isfinite(
-                current_log_Z
-            ), f"log_Z should be finite at iteration {expected_iteration}"
+            assert jnp.isfinite(current_log_Z), (
+                f"log_Z should be finite at iteration {expected_iteration}"
+            )
 
             # For this problem with Gaussian prior/likelihood, log_Z should generally
             # increase (or stay similar) as we incorporate more data
             # NOTE: This is not a strict requirement, but helps catch obvious bugs
             if lmbda > 0:
                 # Just check it's not wildly different (within a reasonable range)
-                assert (
-                    jnp.abs(current_log_Z - prev_log_Z) < 100
-                ), f"log_Z change seems unreasonable: {prev_log_Z} -> {current_log_Z}"
+                assert jnp.abs(current_log_Z - prev_log_Z) < 100, (
+                    f"log_Z change seems unreasonable: {prev_log_Z} -> {current_log_Z}"
+                )
 
             prev_log_Z = current_log_Z
 
@@ -588,16 +588,16 @@ class PersistentSamplingStateUpdateTest(chex.TestCase):
             if expected_iteration < n_schedule:
                 future_particles = state_particles[expected_iteration + 1 :]
                 # Future particles should be zeros (padding)
-                assert jnp.allclose(
-                    future_particles, 0.0
-                ), "Future iterations should still be zero-padded"
+                assert jnp.allclose(future_particles, 0.0), (
+                    "Future iterations should still be zero-padded"
+                )
 
                 future_log_liks = state.persistent_log_likelihoods[
                     expected_iteration + 1 :
                 ]
-                assert jnp.allclose(
-                    future_log_liks, 0.0
-                ), "Future log-likelihoods should still be zero-padded"
+                assert jnp.allclose(future_log_liks, 0.0), (
+                    "Future log-likelihoods should still be zero-padded"
+                )
 
 
 def inference_loop_adaptive(
@@ -609,7 +609,7 @@ def inference_loop_adaptive(
 ) -> PersistentSMCState:
     """Run adaptive SMC until condition is met."""
 
-    def cond(carry: tuple[PersistentSMCState, PRNGKey]) -> jnp.ndarray:
+    def cond(carry: tuple[PersistentSMCState, PRNGKey]) -> jax.Array:
         """Returns True while lambda < 1.0 or ESS < target_ess and
         iteration < max_iterations."""
         state, _ = carry
@@ -650,7 +650,7 @@ def inference_loop_fixed(
     rng_key: PRNGKey,
     kernel: Callable,
     initial_state: PersistentSMCState,
-    tempering_schedule: jnp.ndarray,
+    tempering_schedule: jax.Array,
 ) -> PersistentSMCState:
     """Inference loop for fixed schedule persistent sampling."""
 
@@ -760,7 +760,7 @@ class PersistentSamplingPosteriorTest(SMCLinearRegressionTestCase):
         hmc_parameters_list = [
             base_params,
             jax.tree.map(lambda x: jnp.repeat(x, num_particles, axis=0), base_params),
-            jax.tree_util.tree_map_with_path(
+            jax.tree.map_with_path(
                 lambda path, x: (
                     jnp.repeat(x, num_particles, axis=0)
                     if path[0].key == "step_size"
@@ -818,9 +818,9 @@ class PersistentSamplingPosteriorTest(SMCLinearRegressionTestCase):
 
 
 def multivariate_normal_log_pdf(
-    x: jnp.ndarray,
-    chol_cov: jnp.ndarray,
-) -> jnp.ndarray:
+    x: jax.Array,
+    chol_cov: jax.Array,
+) -> jax.Array:
     """Compute log density of multivariate normal with zero mean and covariance
     defined by its Cholesky factor."""
     dim = chol_cov.shape[0]
@@ -842,7 +842,12 @@ class NormalizingConstantTest(chex.TestCase):
 
     def _setup_test_problem(
         self, num_dim: int
-    ) -> tuple[PRNGKey, jnp.ndarray, Callable, Callable,]:
+    ) -> tuple[
+        PRNGKey,
+        jax.Array,
+        Callable,
+        Callable,
+    ]:
         """Setup common test problem: random covariance and log functions."""
         rng_key, cov_key = jax.random.split(self.key, 2)
         chol_cov = jax.random.uniform(cov_key, shape=(num_dim, num_dim))
@@ -850,7 +855,7 @@ class NormalizingConstantTest(chex.TestCase):
         chol_cov = chol_cov.at[iu].set(0.0)
         cov = chol_cov @ chol_cov.T
 
-        def logprior_fn(x: jnp.ndarray) -> jnp.ndarray:
+        def logprior_fn(x: jax.Array) -> jax.Array:
             return jnp.array(
                 stats.multivariate_normal.logpdf(
                     x, jnp.zeros((num_dim,)), jnp.eye(num_dim)
@@ -875,7 +880,7 @@ class NormalizingConstantTest(chex.TestCase):
             ),
         }
 
-    def _compute_expected_log_likelihood(self, cov: jnp.ndarray, num_dim: int) -> float:
+    def _compute_expected_log_likelihood(self, cov: jax.Array, num_dim: int) -> float:
         """Compute expected log marginal likelihood for prior :math:`N(0, I)` and
         likelihood :math:`N(0, cov)`."""
         return -0.5 * np.linalg.slogdet(np.eye(num_dim) + cov)[
@@ -984,6 +989,170 @@ class NormalizingConstantTest(chex.TestCase):
         # Check that the estimated log marginal likelihood is close to the expected
         # value
         np.testing.assert_allclose(result.log_Z, expected, rtol=1e-1)
+
+
+########################################################################################
+# Batching Tests
+########################################################################################
+
+
+class BatchedPersistentSamplingTest(SMCLinearRegressionTestCase):
+    """Verify batch_size > 0 paths produce the same outputs as full vmap."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.key = jax.random.key(77)
+
+    @chex.variants(with_jit=True)
+    def test_fixed_schedule_persistent_sampling_batched(self) -> None:
+        """persistent_sampling_smc with batch_size > 0 should converge."""
+        (
+            init_particles,
+            logprior_fn,
+            loglikelihood_fn,
+        ) = self.particles_prior_loglikelihood()
+
+        num_tempering_steps = 5
+        lambda_schedule = np.logspace(-5, 0, num_tempering_steps)
+        hmc_init = blackjax.hmc.init
+        hmc_kernel = blackjax.hmc.build_kernel()
+        hmc_parameters = extend_params(
+            {
+                "step_size": 10e-2,
+                "inverse_mass_matrix": jnp.eye(2),
+                "num_integration_steps": 10,
+            }
+        )
+
+        ps = persistent_sampling_smc(
+            logprior_fn=logprior_fn,
+            loglikelihood_fn=loglikelihood_fn,
+            n_schedule=num_tempering_steps,
+            mcmc_step_fn=hmc_kernel,
+            mcmc_init_fn=hmc_init,
+            mcmc_parameters=hmc_parameters,
+            resampling_fn=resampling.systematic,
+            num_mcmc_steps=5,
+            batch_size=10,
+        )
+        init_state = ps.init(init_particles)  # type: ignore
+
+        _key, sample_key = jax.random.split(self.key)
+        result = self.variant(partial(inference_loop_fixed, kernel=ps.step))(
+            rng_key=sample_key,
+            initial_state=init_state,
+            tempering_schedule=lambda_schedule,
+        )
+        self.assert_linear_regression_test_case(result)
+
+    @chex.variants(with_jit=True)
+    def test_fixed_schedule_persistent_sampling_batch_equivalence(self) -> None:
+        """batch_size > 0 must produce results matching batch_size=0 to rtol=1e-5.
+
+        Uses a simple 2-D Gaussian prior/likelihood (no sum over external data)
+        to ensure jax.vmap and jax.lax.map produce numerically equivalent
+        log-likelihoods regardless of the outer batch size, avoiding
+        floating-point divergence through the discrete resampling step.
+        """
+        num_particles = 100
+        num_dim = 2
+        num_tempering_steps = 3
+
+        _, init_key = jax.random.split(self.key)
+        init_particles = jax.random.normal(init_key, shape=(num_particles, num_dim))
+        lambda_schedule = np.array([0.1, 0.5, 1.0])
+
+        def logprior_fn(x: jax.Array) -> jax.Array:
+            return jnp.sum(stats.norm.logpdf(x))
+
+        def loglikelihood_fn(x: jax.Array) -> jax.Array:
+            return jnp.sum(stats.norm.logpdf(x, loc=1.0))
+
+        hmc_init = blackjax.hmc.init
+        hmc_kernel = blackjax.hmc.build_kernel()
+        hmc_parameters = extend_params(
+            {
+                "step_size": 10e-2,
+                "inverse_mass_matrix": jnp.eye(num_dim),
+                "num_integration_steps": 10,
+            }
+        )
+
+        def run(batch_size):
+            ps = persistent_sampling_smc(
+                logprior_fn=logprior_fn,
+                loglikelihood_fn=loglikelihood_fn,
+                n_schedule=num_tempering_steps,
+                mcmc_step_fn=hmc_kernel,
+                mcmc_init_fn=hmc_init,
+                mcmc_parameters=hmc_parameters,
+                resampling_fn=resampling.systematic,
+                num_mcmc_steps=5,
+                batch_size=batch_size,
+            )
+            _, sample_key = jax.random.split(self.key)
+            return self.variant(partial(inference_loop_fixed, kernel=ps.step))(
+                rng_key=sample_key,
+                initial_state=jax.jit(ps.init)(init_particles),
+                tempering_schedule=lambda_schedule,
+            )
+
+        result_full = run(batch_size=0)
+        result_batched = run(batch_size=10)
+
+        jax.tree.map(
+            lambda a, b: np.testing.assert_allclose(a, b, rtol=1e-5),
+            result_full.particles,
+            result_batched.particles,
+        )
+
+    @chex.variants(with_jit=True)
+    def test_adaptive_persistent_sampling_batched(self) -> None:
+        """adaptive_persistent_sampling_smc with batch_size > 0 should converge."""
+        (
+            init_particles,
+            logprior_fn,
+            loglikelihood_fn,
+        ) = self.particles_prior_loglikelihood()
+
+        max_iterations = 100
+        hmc_kernel = blackjax.hmc.build_kernel()
+        hmc_init = blackjax.hmc.init
+        hmc_parameters = extend_params(
+            {
+                "step_size": 10e-2,
+                "inverse_mass_matrix": jnp.eye(2),
+                "num_integration_steps": 10,
+            }
+        )
+
+        ps = adaptive_persistent_sampling_smc(
+            logprior_fn=logprior_fn,
+            loglikelihood_fn=loglikelihood_fn,
+            max_iterations=max_iterations,
+            mcmc_step_fn=hmc_kernel,
+            mcmc_init_fn=hmc_init,
+            mcmc_parameters=hmc_parameters,
+            resampling_fn=resampling.systematic,
+            target_ess=1,
+            num_mcmc_steps=5,
+            batch_size=10,
+        )
+        init_state = ps.init(init_particles)  # type: ignore
+
+        _key, sample_key = jax.random.split(self.key)
+        loop_fn = self.variant(
+            partial(
+                inference_loop_adaptive,
+                kernel=ps.step,
+                target_ess=1,
+                max_iterations=max_iterations,
+            )
+        )
+        result = loop_fn(rng_key=sample_key, initial_state=init_state)
+
+        assert result.iteration < max_iterations
+        self.assert_linear_regression_test_case(result)
 
 
 if __name__ == "__main__":

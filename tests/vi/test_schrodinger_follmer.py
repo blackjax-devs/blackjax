@@ -7,24 +7,20 @@ import jax.scipy.stats as stats
 from absl.testing import absltest
 
 from blackjax.vi.schrodinger_follmer import as_top_level_api as schrodinger_follmer
+from tests.fixtures import BlackJAXTest
 
 
-class SchrodingerFollmerTest(chex.TestCase):
-    def setUp(self):
-        super().setUp()
-        self.key = jax.random.key(1)
-
+class SchrodingerFollmerTest(BlackJAXTest):
     @chex.all_variants(with_pmap=True)
     def test_recover_posterior(self):
         """Simple Normal mean test"""
 
         ndim = 2
 
-        rng_key_chol, rng_key_observed, rng_key_init = jax.random.split(self.key, 3)
-        L = jnp.tril(jax.random.normal(rng_key_chol, (ndim, ndim)))
-        true_mu = jnp.arange(ndim)
-        true_cov = L @ L.T
-        true_prec = jnp.linalg.pinv(true_cov)
+        rng_key_observed, rng_key_init = jax.random.split(self.next_key(), 2)
+        true_mu = jnp.arange(ndim, dtype=float)
+        true_cov = jnp.array([[1.0, 0.5], [0.5, 2.0]])
+        true_prec = jnp.linalg.inv(true_cov)
 
         def logp_posterior_conjugate_normal_model(
             observed, prior_mu, prior_prec, true_prec
@@ -67,7 +63,14 @@ class SchrodingerFollmerTest(chex.TestCase):
             observed, prior_mu, prior_prec, true_prec
         )
 
-        schrodinger_follmer_algo = schrodinger_follmer(logp_model, 50, 25)
+        # n_steps=100 SDE steps with n_inner_samples=100 drift Monte Carlo
+        # samples — previously (50, 25), which gave a variational bias of order
+        # ~0.13 on the second posterior component for an unlucky `BlackJAXTest`
+        # date-rotated seed (e.g. 2026-05-20 → seed=20260520). Doubling each
+        # parameter cuts the worst-seed max-diff from 0.131 → 0.060, giving a
+        # comfortable safety margin under `atol=0.1` across 20 sampled daily
+        # seeds for ~0.25s of extra wall time.
+        schrodinger_follmer_algo = schrodinger_follmer(logp_model, 100, 100)
 
         initial_state = schrodinger_follmer_algo.init(initial_position)
         schrodinger_follmer_algo_sample = self.variant(

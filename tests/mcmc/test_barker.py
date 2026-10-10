@@ -88,7 +88,7 @@ class BarkerPreconditioiningTest(chex.TestCase):
             return mu_prior + sigma_prior + jnp.sum(stats.norm.logcdf(data, x[0], x[1]))
 
         logposterior_fn1 = functools.partial(logdensity, data=data)
-        barker1 = blackjax.barker_proposal(logposterior_fn1, 1e-1, inv_mass_matrix)
+        barker1 = blackjax.barker(logposterior_fn1, 1e-1, inv_mass_matrix)
         state1 = barker1.init(true_x)
 
         # scaled, trivial pre-conditioning
@@ -99,7 +99,7 @@ class BarkerPreconditioiningTest(chex.TestCase):
         logposterior_fn2 = functools.partial(
             scaled_logdensity, data=data, metric=metric
         )
-        barker2 = blackjax.barker_proposal(logposterior_fn2, 1e-1, jnp.eye(2))
+        barker2 = blackjax.barker(logposterior_fn2, 1e-1, jnp.eye(2))
 
         true_x_trans = metric.scale(true_x, true_x, inv=True, trans=True)
         state2 = barker2.init(true_x_trans)
@@ -149,7 +149,7 @@ class BarkerPreconditioiningTest(chex.TestCase):
                 lambda x: 1 / jnp.sum(1 + jnp.sum(x**2)) * jnp.eye(2)
             )
 
-        barker = blackjax.barker_proposal(logpdf, 0.5, metric)
+        barker = blackjax.barker(logpdf, 0.5, metric)
         init_samples = jax.random.normal(init_key, shape=(n_samples, 2))
 
         def loop(carry, key_):

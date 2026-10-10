@@ -13,16 +13,18 @@
 # limitations under the License.
 """Public API for the Dynamic HMC Kernel"""
 
-from typing import Callable, NamedTuple
+from collections.abc import Callable
+from typing import NamedTuple, cast
 
 import jax
 import jax.numpy as jnp
 
 import blackjax.mcmc.integrators as integrators
-from blackjax.base import SamplingAlgorithm
-from blackjax.mcmc.hmc import HMCInfo, HMCState
+from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
+from blackjax.mcmc.adjusted_mclmc import rescale
+from blackjax.mcmc.hmc import HMCInfo, HMCState, hmc_proposal
 from blackjax.mcmc.hmc import build_kernel as build_static_hmc_kernel
-from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, Numeric, PRNGKey
 
 __all__ = [
     "DynamicHMCState",
@@ -30,6 +32,7 @@ __all__ = [
     "build_kernel",
     "halton_sequence",
     "as_top_level_api",
+    "hmc_proposal",
 ]
 
 
@@ -50,10 +53,22 @@ class DynamicHMCState(NamedTuple):
 def init(
     position: ArrayLikeTree,
     logdensity_fn: Callable,
-    random_generator_arg: Array,
+    random_generator_arg: Numeric,
 ):
     logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
-    return DynamicHMCState(position, logdensity, logdensity_grad, random_generator_arg)
+    # position is stored unconverted, like hmc.HMCState: adjusted_mclmc_dynamic
+    # re-feeds DynamicHMCState.position straight into an IntegratorState.
+    # random_generator_arg is accepted as a plain int Halton-sequence index
+    # too (chees_adaptation seeds it with a literal 0), but the field stays
+    # Array: every downstream consumer (halton_sequence, trajectory_length)
+    # calls .dtype on it, which a bare Python int would not survive at
+    # runtime any more than it does today.
+    return DynamicHMCState(
+        cast(ArrayTree, position),
+        logdensity,
+        logdensity_grad,
+        cast(Array, random_generator_arg),
+    )
 
 
 def build_kernel(
@@ -61,6 +76,7 @@ def build_kernel(
     divergence_threshold: float = 1000,
     next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
     integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10),
+    build_proposal: Callable = hmc_proposal,
 ):
     """Build a Dynamic HMC kernel where the number of integration steps is chosen randomly.
 
@@ -73,8 +89,17 @@ def build_kernel(
     next_random_arg_fn
         Function that generates the next `random_generator_arg` from its previous value.
     integration_steps_fn
-        Function that generates the next pseudo or quasi-random number of integration steps in the
-        sequence, given the current `random_generator_arg`. Needs to return an `int`.
+        Callable with signature ``(random_generator_arg, *integration_steps_params) -> int``
+        that draws the number of integration steps for a single transition.
+        Extra positional arguments beyond ``random_generator_arg`` are supplied
+        at call time via ``integration_steps_params`` on the inner kernel, so
+        tunable parameters (e.g. average number of steps, distribution bounds)
+        can be adapted without rebuilding the kernel.
+    build_proposal
+        A callable with signature
+        ``(integrator, kinetic_energy, step_size, num_integration_steps,
+        divergence_threshold) -> generate`` that builds the proposal function.
+        Defaults to :func:`hmc_proposal` (standard endpoint HMC).
 
     Returns
     -------
@@ -83,7 +108,7 @@ def build_kernel(
     information about the transition.
 
     """
-    hmc_base = build_static_hmc_kernel(integrator, divergence_threshold)
+    hmc_base = build_static_hmc_kernel(integrator, divergence_threshold, build_proposal)
 
     def kernel(
         rng_key: PRNGKey,
@@ -91,11 +116,11 @@ def build_kernel(
         logdensity_fn: Callable,
         step_size: float,
         inverse_mass_matrix: Array,
-        **integration_steps_kwargs,
+        integration_steps_params: tuple = (),
     ) -> tuple[DynamicHMCState, HMCInfo]:
         """Generate a new sample with the HMC kernel."""
         num_integration_steps = integration_steps_fn(
-            state.random_generator_arg, **integration_steps_kwargs
+            state.random_generator_arg, *integration_steps_params
         )
         hmc_state = HMCState(state.position, state.logdensity, state.logdensity_grad)
         hmc_proposal, info = hmc_base(
@@ -129,6 +154,8 @@ def as_top_level_api(
     integrator: Callable = integrators.velocity_verlet,
     next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
     integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10),
+    integration_steps_params: tuple = (),
+    build_proposal: Callable = hmc_proposal,
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the dynamic HMC kernel.
 
@@ -150,9 +177,21 @@ def as_top_level_api(
     next_random_arg_fn
         Function that generates the next `random_generator_arg` from its previous value.
     integration_steps_fn
-        Function that generates the next pseudo or quasi-random number of integration steps in the
-        sequence, given the current `random_generator_arg`.
-
+        Callable with signature ``(random_generator_arg, *integration_steps_params) -> int``
+        that draws the number of integration steps for a single transition.
+    integration_steps_params
+        Extra positional arguments unpacked into ``integration_steps_fn`` after
+        ``random_generator_arg`` on every step.  Use this to pass tunable
+        parameters (e.g. ``(avg_num_integration_steps,)`` or
+        ``(lower_bound, upper_bound)``) without rebuilding the kernel.
+        Defaults to ``()`` so that a plain 1-arg ``integration_steps_fn`` works
+        unchanged.
+    build_proposal
+        A callable with signature
+        ``(integrator, kinetic_energy, step_size, num_integration_steps,
+        divergence_threshold) -> generate`` that builds the proposal function.
+        Defaults to :func:`hmc_proposal` (standard endpoint HMC).  Pass
+        :func:`multinomial_hmc_proposal` for multinomial trajectory sampling.
 
     Returns
     -------
@@ -163,27 +202,19 @@ def as_top_level_api(
         divergence_threshold,
         next_random_arg_fn,
         integration_steps_fn,
+        build_proposal,
     )
 
-    def init_fn(position: ArrayLikeTree, rng_key: Array):
-        # Note that rng_key here is not necessarily a PRNGKey, could be a Array that
-        # for generates a sequence of pseudo or quasi-random numbers (previously
-        # named as `random_generator_arg`)
-        return init(position, logdensity_fn, rng_key)
-
-    def step_fn(rng_key: PRNGKey, state):
-        return kernel(
-            rng_key,
-            state,
-            logdensity_fn,
-            step_size,
-            inverse_mass_matrix,
-        )
-
-    return SamplingAlgorithm(init_fn, step_fn)
+    return build_sampling_algorithm(
+        kernel,
+        init,
+        logdensity_fn,
+        kernel_args=(step_size, inverse_mass_matrix, integration_steps_params),
+        pass_rng_key_to_init=True,
+    )
 
 
-def halton_sequence(i: Array, max_bits: int = 10) -> float:
+def halton_sequence(i: Array, max_bits: int = 10) -> Array:
     """Generate the (i+1)-th element of the Halton sequence.
 
     Warning: max_bits should be less than the bit width of i.dtype to prevent integer overflow (e.g., max_bits <= 63 for int64).
@@ -196,16 +227,9 @@ def halton_sequence(i: Array, max_bits: int = 10) -> float:
     return jnp.einsum("i,i->", jnp.mod((i + 1) // bit_masks, 2), 0.5 / bit_masks)
 
 
-def rescale(mu):
-    # Returns s, such that `round(U(0, 1) * s + 0.5)` has expected value mu.
-    k = jnp.floor(2 * mu - 1)
-    x = k * (mu - 0.5 * (k + 1)) / (k + 1 - mu)
-    return k + x
-
-
 def halton_trajectory_length(
     i: Array, trajectory_length_adjustment: float, max_bits: int = 10
-) -> int:
+) -> Array:
     """Generate a quasi-random number of integration steps."""
     s = rescale(trajectory_length_adjustment)
     return jnp.asarray(jnp.rint(0.5 + halton_sequence(i, max_bits) * s), dtype=int)

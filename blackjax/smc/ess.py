@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """All things related to SMC effective sample size"""
-from typing import Callable
 
+from collections.abc import Callable
+
+import jax
 import jax.numpy as jnp
 from jax.scipy.special import logsumexp
 
@@ -49,6 +51,8 @@ def log_ess(log_weights: Array) -> float | Array:
     log_ess: float | Array
         The logarithm of the effective sample size.
     """
+    # ESS is invariant to a common offset; remove it before subtracting log sums.
+    log_weights = log_weights - jax.lax.stop_gradient(jnp.max(log_weights))
     return 2 * logsumexp(log_weights) - logsumexp(2 * log_weights)
 
 
@@ -82,12 +86,18 @@ def ess_solver(
         The increment that solves for the target ESS.
 
     """
-    logprob = logdensity_fn(particles)
-    n_particles = logprob.shape[0]
+    logdensity = logdensity_fn(particles)
+    n_particles = logdensity.shape[0]
     target_val = jnp.log(n_particles * target_ess)
 
     def fun_to_solve(delta: float | Array) -> Array:
-        log_weights = jnp.nan_to_num(-delta * logprob)
+        # NOTE: sign must match the SMC weight update in
+        # ``blackjax.smc.tempered`` (`log_weights_fn` uses
+        # ``delta * loglikelihood_fn(position)``). A sign mismatch makes the
+        # bisection find a δ that targets the wrong distribution, which is
+        # silent for symmetric log-likelihoods but breaks adaptive tempering
+        # on asymmetric ones. See issue #914.
+        log_weights = jnp.nan_to_num(delta * logdensity)
         ess_val = log_ess(log_weights)
 
         return ess_val - target_val

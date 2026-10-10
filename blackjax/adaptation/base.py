@@ -11,15 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import NamedTuple, Set
+from typing import NamedTuple
 
 import jax
 
-from blackjax.types import ArrayTree
+from blackjax.types import ArrayLikeTree
 
 
 class AdaptationResults(NamedTuple):
-    state: ArrayTree
+    # Callers pass their own concrete sampler State NamedTuple here (e.g.
+    # HMCState, GHMCState); those mix plain float/int fields (acceptance
+    # rate, slice, ...) with ArrayTree ones, so ArrayLikeTree -- not the
+    # stricter ArrayTree -- is what actually covers every call site.
+    state: ArrayLikeTree
     parameters: dict
 
 
@@ -37,9 +41,9 @@ def return_all_adapt_info(state, info, adaptation_state):
 
 
 def get_filter_adapt_info_fn(
-    state_keys: Set[str] = set(),
-    info_keys: Set[str] = set(),
-    adapt_state_keys: Set[str] = set(),
+    state_keys: set[str] = set(),
+    info_keys: set[str] = set(),
+    adapt_state_keys: set[str] = set(),
 ):
     """Generate a function to filter what is saved in AdaptationInfo.  Used
     for adptation_info_fn parameters of the adaptation algorithms.

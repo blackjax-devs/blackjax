@@ -1,16 +1,23 @@
 """Utility functions for BlackJax."""
 
+from collections.abc import Callable
 from functools import partial
-from typing import Callable, Union
+from typing import NamedTuple
 
+import jax
 import jax.numpy as jnp
 from jax import jit, lax
 from jax.flatten_util import ravel_pytree
 from jax.random import normal, split
-from jax.tree_util import tree_leaves, tree_map
 
 from blackjax.base import SamplingAlgorithm, VIAlgorithm
-from blackjax.progress_bar import gen_scan_fn
+from blackjax.diagnostics import psis_weights as psis_weights  # noqa: F401
+from blackjax.eca import add_all_chains_info as add_all_chains_info  # noqa: F401
+from blackjax.eca import add_splitR as add_splitR  # noqa: F401
+from blackjax.eca import eca_step as eca_step  # noqa: F401
+from blackjax.eca import ensemble_execute_fn as ensemble_execute_fn  # noqa: F401
+from blackjax.eca import run_eca as run_eca  # noqa: F401
+from blackjax.eca import while_with_info as while_with_info  # noqa: F401
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 
@@ -60,8 +67,8 @@ def linear_map(diag_or_dense_a, b, *, precision="highest"):
 def generate_gaussian_noise(
     rng_key: PRNGKey,
     position: ArrayLikeTree,
-    mu: Union[float, Array] = 0.0,
-    sigma: Union[float, Array] = 1.0,
+    mu: float | Array = 0.0,
+    sigma: float | Array = 1.0,
 ) -> ArrayTree:
     """Generate N(mu, sigma) noise with output structure that match a given PyTree.
 
@@ -109,7 +116,7 @@ def generate_unit_vector(
 
 def pytree_size(pytree: ArrayLikeTree) -> int:
     """Return the dimension of the flatten PyTree."""
-    return sum(jnp.size(value) for value in tree_leaves(pytree))
+    return sum(jnp.size(value) for value in jax.tree.leaves(pytree))
 
 
 def index_pytree(input_pytree: ArrayLikeTree) -> ArrayTree:
@@ -143,11 +150,10 @@ def index_pytree(input_pytree: ArrayLikeTree) -> ArrayTree:
 
 def run_inference_algorithm(
     rng_key: PRNGKey,
-    inference_algorithm: Union[SamplingAlgorithm, VIAlgorithm],
+    inference_algorithm: SamplingAlgorithm | VIAlgorithm,
     num_steps: int,
-    initial_state: ArrayLikeTree = None,
-    initial_position: ArrayLikeTree = None,
-    progress_bar: bool = False,
+    initial_state: ArrayLikeTree | None = None,
+    initial_position: ArrayLikeTree | None = None,
     transform: Callable = lambda state, info: (state, info),
 ) -> tuple:
     """Wrapper to run an inference algorithm.
@@ -155,6 +161,9 @@ def run_inference_algorithm(
     Note that this utility function does not work for Stochastic Gradient MCMC samplers
     like sghmc, as SG-MCMC samplers require additional control flow for batches of data
     to be passed in during each sample.
+
+    Wrap the call in :func:`blackjax.progress_bar` to display a progress bar,
+    e.g. ``with blackjax.progress_bar(): run_inference_algorithm(...)``.
 
     Parameters
     ----------
@@ -168,8 +177,6 @@ def run_inference_algorithm(
         One of blackjax's sampling algorithms or variational inference algorithms.
     num_steps
         Number of MCMC steps.
-    progress_bar
-        Whether to display a progress bar.
     transform
         A transformation of the trace of states (and info) to be returned. This is useful for
         computing determinstic variables, or returning a subset of the states.
@@ -191,6 +198,8 @@ def run_inference_algorithm(
         )
 
     if initial_state is None:
+        # Guaranteed non-None by the "exactly one must be provided" check above.
+        assert initial_position is not None
         rng_key, init_key = split(rng_key, 2)
         initial_state = inference_algorithm.init(initial_position, init_key)
 
@@ -201,10 +210,10 @@ def run_inference_algorithm(
         state, info = inference_algorithm.step(rng_key, state)
         return state, transform(state, info)
 
-    scan_fn = gen_scan_fn(num_steps, progress_bar)
-
-    xs = jnp.arange(num_steps), keys
-    final_state, history = scan_fn(one_step, initial_state, xs)
+    # jit the loop: eager lax.scan dispatch is slow on CPU (jax-ml/jax#37465)
+    final_state, history = jit(partial(lax.scan, one_step))(
+        initial_state, (jnp.arange(num_steps), keys)
+    )
 
     return final_state, history
 
@@ -218,13 +227,16 @@ def store_only_expectation_values(
     """Takes a sampling algorithm and constructs from it a new sampling algorithm object. The new sampling algorithm has the same
      kernel but only stores the streaming expectation values of some observables, not the full states; to save memory.
 
+    The first ``burn_in`` kernel steps are excluded from the running average.
+    During burn-in, the stored average is zero after each kernel step.
+
     It saves incremental_value_transform(E[state_transform(x)]) at each step i, where expectation is computed with samples up to i-th sample.
 
     Example:
 
     .. code::
 
-         init_key, state_key, run_key = jax.random.split(jax.random.PRNGKey(0),3)
+         init_key, state_key, run_key = jax.random.split(jax.random.key(0),3)
          model = StandardNormal(2)
          initial_position = model.sample_init(init_key)
          initial_state = blackjax.mcmc.mclmc.init(
@@ -250,7 +262,6 @@ def store_only_expectation_values(
              inference_algorithm=memory_efficient_sampling_alg,
              num_steps=num_steps,
              transform=transform,
-             progress_bar=True,
          )
     """
 
@@ -263,14 +274,16 @@ def store_only_expectation_values(
         state, info = sampling_algorithm.step(
             rng_key, state
         )  # update the state with the sampling algorithm
-        averaging_state = incremental_value_update(
+        step_count, average = averaging_state
+        # The burn-in clock advances even when no sample enters the average.
+        sample_count = jnp.maximum(step_count - burn_in, 0)
+        _, average = incremental_value_update(
             state_transform(state),
-            averaging_state,
-            weight=(
-                averaging_state[0] >= burn_in
-            ),  # If we want to eliminate some number of steps as a burn-in
+            (sample_count, average),
+            weight=step_count >= burn_in,
             zero_prevention=1e-10 * (burn_in > 0),
         )
+        averaging_state = (step_count + 1, average)
         # update the expectation value with the running average
         return (state, averaging_state), info
 
@@ -305,7 +318,7 @@ def incremental_value_update(
     """
 
     total, average = incremental_val
-    average = tree_map(
+    average = jax.tree.map(
         lambda exp, av: safediv(
             total * av + weight * exp, (total + weight + zero_prevention)
         ),
@@ -314,3 +327,137 @@ def incremental_value_update(
     )
     total += weight
     return total, average
+
+
+def thin_algorithm(
+    sampling_algorithm: SamplingAlgorithm,
+    thinning: int = 1,
+    info_transform: Callable = lambda x: x,
+) -> SamplingAlgorithm:
+    """
+    Return a new sampling algorithm that performs `thinning` iterations of the given algorithm,
+    meaning only one state is returned every `thinning` steps.
+    This is useful to reduce computation and memory cost of high throughput samplers, especially in high dimension.
+    Parameters
+    ----------
+    sampling_algorithm: SamplingAlgorithm
+            The sampling algorithm to thin.
+    thinning: int
+        The number of algorithm step to be performed before returning the state.
+    info_transform: Callable
+        A function defining how to aggregate algorithm information across the `thinning` steps.
+        By default return all of them.
+    Returns
+    -------
+    SamplingAlgorithm
+        A thinned version of the sampling algorithm.
+
+    Example
+    -------
+    .. code::
+
+        logdf = lambda x: -(x**2).sum()
+        init_pos = jnp.ones(2)
+        init_key, run_key = jr.split(jr.key(43), 2)
+
+        state = blackjax.mcmc.mclmc.init(
+                    position=init_pos,
+                    logdensity_fn=logdf,
+                    rng_key=init_key
+                    )
+        sampler = blackjax.mclmc(
+                    logdensity_fn=logdf,
+                    L=L,
+                    step_size=step_size,
+                    inverse_mass_matrix=inverse_mass_matrix,
+                    )
+        sampler = thin_algorithm(
+                    sampler,
+                    thinning=16,
+                    info_transform=lambda info: tree.map(jnp.mean, info),
+                    )
+        state, history = run_inference_algorithm(
+                    rng_key=run_key,
+                    initial_state=state,
+                    inference_algorithm=sampler,
+                    num_steps=100,
+                    )
+    """
+
+    def step_fn(rng_key: PRNGKey, state: NamedTuple) -> tuple[NamedTuple, NamedTuple]:
+        step = lambda state, rng_key: sampling_algorithm.step(rng_key, state)
+        keys = split(rng_key, thinning)
+        state, info = lax.scan(step, state, keys)
+        return state, info_transform(info)
+
+    return SamplingAlgorithm(sampling_algorithm.init, step_fn)
+
+
+def thin_kernel(
+    kernel: Callable, thinning: int = 1, info_transform: Callable = lambda x: x
+) -> Callable:
+    """
+    Return a thinned version of a kernel that runs the kernel `thinning` times before returning the state.
+    This is useful to reduce computation and memory cost of high throughput samplers, especially in high dimension.
+
+    Parameters
+    ----------
+    kernel: Callable
+        The kernel to thin.
+    thinning: int
+        The number of kernel step to be performed before returning the state.
+    info_transform: Callable
+        A function defining how to aggregate algorithm information across the `thinning` steps.
+        By default return all of them.
+
+    Returns
+    -------
+    Callable
+        A thinned version of the kernel.
+
+
+    Example
+    -------
+    .. code::
+
+        logdf = lambda x: -(x**2).sum()
+        init_pos = jnp.ones(2)
+        init_key, tune_key = jr.split(jr.key(42), 2)
+
+        state = blackjax.mcmc.mclmc.init(
+                    position=init_pos,
+                    logdensity_fn=logdf,
+                    rng_key=init_key
+                    )
+
+        kernel = thin_kernel(
+            blackjax.mcmc.mclmc.build_kernel(
+                                integrator=isokinetic_mclachlan,
+                                ),
+
+            # Return every 16th state, especially decreasing computation and memory cost
+            # when estimating high dimensional autocorrelation length during tuning.
+            thinning = 16,
+
+            # Adequately aggregate info.energy_change
+            info_transform=lambda info: tree.map(lambda x: (x**2).mean()**.5, info)
+            )
+
+        state, params, n_steps = blackjax.mclmc_find_L_and_step_size(
+            mclmc_kernel=kernel,
+            logdensity_fn=logdf,
+            num_steps=100,
+            state=state,
+            rng_key=tune_key,
+            )
+    """
+
+    def thinned_kernel(
+        rng_key: PRNGKey, state: NamedTuple, *args, **kwargs
+    ) -> tuple[NamedTuple, NamedTuple]:
+        step = lambda state, rng_key: kernel(rng_key, state, *args, **kwargs)
+        keys = split(rng_key, thinning)
+        state, info = lax.scan(step, state, keys)
+        return state, info_transform(info)
+
+    return thinned_kernel

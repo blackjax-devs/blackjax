@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "blackjax"
 authors= [{name = "The Blackjax team", email = "remi@thetypicalset.com"}]
 description = "Flexible and fast sampling in Python"
-requires-python = ">=3.9"
+requires-python = ">=3.13"
 keywords=[
     "probability",
     "machine learning",
@@ -22,23 +22,25 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: MacOS",
     "Operating System :: POSIX",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Education",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Scientific/Engineering :: Mathematics",
 ]
 dependencies = [
-    "fastprogress>=1.0.0",
-    "jax>=0.4.16",
-    "jaxlib>=0.4.16",
-    "jaxopt<=0.8.3",
-    "optax>=0.1.7",
+    "jax>=0.9.0",
+    "jaxlib>=0.9.0",
+    "numpy>=1.25",
+    "optax>=0.2.3",
+    "scipy>=1.13",
     "typing-extensions>=4.4.0",
 ]
 dynamic = ["version"]
+
+[project.optional-dependencies]
+progress = ["tqdm>=4.66", "jax-tap>=0.3.1"]
 
 [project.urls]
 homepage = "https://github.com/blackjax-devs/blackjax"
@@ -68,3 +70,67 @@ exclude = [
 
 [tool.setuptools_scm]
 write_to = "blackjax/_version.py"
+
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+extend-exclude = ["blackjax/_version.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "PLC0415"]
+ignore = [
+    "E501",  # line length: ruff-format owns it (was ignored in flake8)
+    "E731",  # lambda assignment (was ignored in flake8)
+    "E402",  # module import not at top of file (was ignored in flake8)
+    "E741",  # ambiguous variable name (was ignored in flake8)
+    "UP040",  # PEP 695 type alias rewrite: changes runtime semantics, out of scope
+    "UP046",  # PEP 695 generic class rewrite: changes runtime semantics, out of scope
+    "UP047",  # PEP 695 generic function rewrite: changes runtime semantics, out of scope
+]
+
+[tool.ruff.lint.per-file-ignores]
+# PLC0415 (no function-level imports) applies to tests/ only, mirroring the
+# old repo-local pre-commit hook scoped to `files: ^tests/`.
+"!tests/**" = ["PLC0415"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["blackjax"]
+
+[dependency-groups]
+dev = [
+    "chex>=0.1.83",
+    "mypy>=2.4",
+    "pre-commit",
+    "pytest",
+    "pytest-benchmark",
+    "pytest-cov",
+    "pytest-xdist",
+    "setuptools-scm",
+]
+docs = [
+    "arviz",
+    "flax",
+    "funsor>=0.4.7",
+    "gmmx",
+    "ipython",
+    "jupytext",
+    "myst_nb>=1.0.0",
+    "numba",
+    "numpyro",
+    "optax",
+    "oryx @ git+https://github.com/jax-ml/oryx.git",
+    "pymc",
+    "pytensor",
+    "scikit-learn",
+    "scipy",
+    "sphinx",
+    "sphinx-autoapi",
+    "sphinx-autobuild",
+    "sphinx-book-theme",
+    "sphinx-design",
+    "sphinx-math-dollar",
+    "sphinxcontrib-bibtex",
+    "tfp-nightly[jax]",
+    "tqdm>=4.66",
+    "versioneer",
+]

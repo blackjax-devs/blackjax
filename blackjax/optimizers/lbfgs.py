@@ -11,21 +11,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple
+from collections.abc import Callable
+from typing import Any, NamedTuple
 
 import jax
 import jax.numpy as jnp
 import jax.random
-import jaxopt
+import optax
 from jax import lax
 from jax.flatten_util import ravel_pytree
-from jaxopt._src.lbfgs import LbfgsState
-from jaxopt.base import OptStep
 
 from blackjax.types import Array, ArrayLikeTree
 
 __all__ = [
     "LBFGSHistory",
+    "LBFGSDiagnostics",
+    "LbfgsState",
+    "OptStep",
     "minimize_lbfgs",
     "lbfgs_inverse_hessian_factors",
     "lbfgs_inverse_hessian_formula_1",
@@ -33,8 +35,37 @@ __all__ = [
     "bfgs_sample",
 ]
 
-INIT_STEP_SIZE = 1.0
-MIN_STEP_SIZE = 1e-3
+
+class LBFGSDiagnostics(NamedTuple):
+    """Per-call convergence diagnostics from a single :func:`minimize_lbfgs` run.
+
+    These fields are surfaced through the kernel ``Info`` NamedTuple of
+    Laplace-marginal samplers (:class:`~blackjax.mcmc.laplace_marginal.LaplaceHMCInfo`)
+    so that callers can detect non-convergence of the inner L-BFGS solve at
+    every MCMC step without resorting to callbacks or host-side introspection.
+
+    iter_num
+        Number of L-BFGS iterations actually taken (scalar int).  Equal to
+        ``maxiter`` when the iteration budget is exhausted — see ``hit_maxiter``.
+    error
+        Final gradient norm ``||∇f(x*)||₂`` (scalar float).  Small values
+        indicate convergence to a stationary point.  A value substantially
+        above ``gtol`` signals a non-converged solve.
+    converged
+        ``True`` iff ``error <= gtol``.  Note: warm-started solves can land at
+        ``error ~ 1e-6`` (fine in practice) and still return ``converged=False``
+        if ``gtol=1e-8``.  Prefer ``hit_maxiter`` as the primary bug-signature.
+    hit_maxiter
+        ``True`` iff ``iter_num >= maxiter``.  **This is the actionable
+        non-convergence signal**: it fires exactly when the optimizer exhausted
+        the budget without stopping early.  This is the direct descendant of the
+        ``maxiter=30`` silent-failure diagnosed in blackjax issue #925.
+    """
+
+    iter_num: Array
+    error: Array
+    converged: Array
+    hit_maxiter: Array
 
 
 class LBFGSHistory(NamedTuple):
@@ -62,11 +93,31 @@ class LBFGSHistory(NamedTuple):
     update_mask: Array
 
 
+class LbfgsState(NamedTuple):
+    """State returned by minimize_lbfgs."""
+
+    iter_num: Array
+    value: Array
+    grad: Array
+    error: Array
+    s_history: Array
+    y_history: Array
+    rho_history: Array
+    gamma: Array
+    stepsize: Array
+    aux: Any
+
+
+class OptStep(NamedTuple):
+    params: Any
+    state: LbfgsState
+
+
 def minimize_lbfgs(
     fun: Callable,
     x0: ArrayLikeTree,
     maxiter: int = 30,
-    maxcor: float = 10,
+    maxcor: int = 10,
     gtol: float = 1e-08,
     ftol: float = 1e-05,
     maxls: int = 1000,
@@ -92,8 +143,6 @@ def minimize_lbfgs(
         terminates the minimization when `|g_k|_norm < gtol`
     maxls:
         maximum number of line search steps (per iteration)
-    **lbfgs_kwargs
-        other keyword arguments passed to `jaxopt.LBFGS`.
 
     Returns
     -------
@@ -113,7 +162,6 @@ def minimize_lbfgs(
         gtol,
         ftol,
         maxls,
-        **lbfgs_kwargs,
     )
 
     # Unravel final optimization step.
@@ -123,13 +171,13 @@ def minimize_lbfgs(
             iter_num=last_step_raveled.state.iter_num,
             value=last_step_raveled.state.value,
             grad=unravel_fn(last_step_raveled.state.grad),
-            stepsize=last_step_raveled.state.stepsize,
             error=last_step_raveled.state.error,
             s_history=unravel_fn_mapped(last_step_raveled.state.s_history),
             y_history=unravel_fn_mapped(last_step_raveled.state.y_history),
             rho_history=last_step_raveled.state.rho_history,
             gamma=last_step_raveled.state.gamma,
-            aux=last_step_raveled.state.aux,
+            stepsize=last_step_raveled.state.stepsize,
+            aux=None,
         ),
     )
 
@@ -152,72 +200,18 @@ def _minimize_lbfgs(
     fun: Callable,
     x0: Array,
     maxiter: int,
-    maxcor: float,
+    maxcor: int,
     gtol: float,
     ftol: float,
     maxls: int,
-    **lbfgs_kwargs,
 ) -> tuple[OptStep, LBFGSHistory]:
-    def lbfgs_one_step(carry, i):
-        (params, state), previous_history = carry
+    linesearch = optax.scale_by_zoom_linesearch(max_linesearch_steps=maxls)
+    solver = optax.lbfgs(memory_size=maxcor, linesearch=linesearch)
+    value_and_grad_fn = optax.value_and_grad_from_state(fun)
 
-        # this is to help optimization when using log-likelihoods, especially for float 32
-        # it resets stepsize of the line search algorithm back to stating value (INIT_STEP_SIZE) if
-        # it get stuck in very small values
-        state = state._replace(
-            stepsize=jnp.where(
-                state.stepsize < MIN_STEP_SIZE, INIT_STEP_SIZE, state.stepsize
-            )
-        )
-        # LBFGS use a rolling history, getting the correct index here.
-        last = (state.iter_num % maxcor + maxcor) % maxcor
-        next_params, next_state = solver.update(params, state)
-
-        # Recover alpha and update mask
-        s_l = next_state.s_history[last]
-        z_l = next_state.y_history[last]
-        alpha_lm1 = previous_history.alpha
-
-        alpha_l, mask_l = lbfgs_recover_alpha(alpha_lm1, s_l, z_l)
-
-        current_grad = previous_history.g + z_l
-        history = LBFGSHistory(
-            x=next_params,
-            f=next_state.value,
-            g=current_grad,
-            alpha=alpha_l,
-            update_mask=mask_l,
-        )
-        # check convergence
-        f_delta = (
-            jnp.abs(state.value - next_state.value)
-            / jnp.asarray([jnp.abs(state.value), jnp.abs(next_state.value), 1.0]).max()
-        )
-        not_converged = (next_state.error > gtol) & (f_delta > ftol) & (i < maxiter)
-        return (OptStep(params=next_params, state=next_state), history), not_converged
-
-    def non_op(carry, it):
-        return carry, False
-
-    def scan_body(tup, it):
-        carry, not_converged = tup
-        # When cond is met, we start doing no-ops.
-        next_tup = lax.cond(not_converged, lbfgs_one_step, non_op, carry, it)
-        return next_tup, next_tup[0][-1]
-
-    solver = jaxopt.LBFGS(
-        fun=fun,
-        maxiter=maxiter,
-        maxls=maxls,
-        history_size=maxcor,
-        **lbfgs_kwargs,
-    )
-    state = solver.init_state(x0)
-
+    opt_state = solver.init(x0)
     value0, grad0 = jax.value_and_grad(fun)(x0)
-    # LBFGS update overwrite value internally, here is to set the value for checking condition
-    state = state._replace(value=value0)
-    init_step = OptStep(params=x0, state=state)
+
     initial_history = LBFGSHistory(
         x=x0,
         f=value0,
@@ -226,16 +220,93 @@ def _minimize_lbfgs(
         update_mask=jnp.zeros_like(x0, dtype=bool),
     )
 
-    ((last_step, _), _), history = lax.scan(
-        scan_body, ((init_step, initial_history), True), jnp.arange(maxiter)
+    def lbfgs_one_step(carry, i):
+        (params, state), previous_history = carry
+
+        # Reuse value/grad cached by the previous linesearch when available.
+        value, grad = value_and_grad_fn(params, state=state)
+
+        # One LBFGS step; zoom linesearch runs internally via lax.while_loop.
+        updates, new_state = solver.update(
+            grad, state, params, value=value, grad=grad, value_fn=fun
+        )
+        new_params = optax.apply_updates(params, updates)
+
+        # Compute new value/grad directly. optax's internal buffer stores s/y
+        # one step late (it writes x_k - x_{k-1} only after step k+1), so we
+        # compute s and z from the params and grads we already have.
+        new_value, new_grad = jax.value_and_grad(fun)(new_params)
+        s_l = new_params - params
+        z_l = new_grad - grad
+
+        alpha_lm1 = previous_history.alpha
+        alpha_l, mask_l = lbfgs_recover_alpha(alpha_lm1, s_l, z_l)
+
+        history = LBFGSHistory(
+            x=new_params,
+            f=new_value,
+            g=new_grad,
+            alpha=alpha_l,
+            update_mask=mask_l,
+        )
+
+        f_delta = (
+            jnp.abs(value - new_value)
+            / jnp.asarray([jnp.abs(value), jnp.abs(new_value), 1.0]).max()
+        )
+        not_converged = (
+            (jnp.linalg.norm(grad) > gtol) & (f_delta > ftol) & (i < maxiter)
+        )
+
+        return ((new_params, new_state), history), not_converged
+
+    def non_op(carry, it):
+        return carry, False
+
+    def scan_body(tup, it):
+        carry, not_converged = tup
+        next_tup = lax.cond(not_converged, lbfgs_one_step, non_op, carry, it)
+        return next_tup, next_tup[0][-1]
+
+    init_carry = ((x0, opt_state), initial_history)
+
+    (((last_params, last_opt_state), _), _), history = lax.scan(
+        scan_body, (init_carry, True), jnp.arange(maxiter)
     )
-    # Append initial state to history.
+
+    # Prepend initial state to produce shape (maxiter+1, ...) histories.
     history = jax.tree.map(
         lambda x, y: jnp.concatenate([x[None, ...], y], axis=0),
         initial_history,
         history,
     )
-    return last_step, history
+
+    # Build LbfgsState from the final optax state.
+    lbfgs_inner = last_opt_state[0]  # ScaleByLBFGSState
+    last_idx = (lbfgs_inner.count - 1) % maxcor
+    s_last = lbfgs_inner.diff_params_memory[last_idx]
+    y_last = lbfgs_inner.diff_updates_memory[last_idx]
+    # gamma = (s^T y) / (y^T y), the Hessian scale estimate.
+    gamma = jnp.where(
+        jnp.dot(s_last, y_last) > 0,
+        jnp.dot(s_last, y_last) / jnp.dot(y_last, y_last),
+        1.0,
+    )
+
+    status = LbfgsState(
+        iter_num=lbfgs_inner.count,
+        value=history.f[-1],
+        grad=history.g[-1],
+        error=jnp.linalg.norm(history.g[-1]),
+        s_history=lbfgs_inner.diff_params_memory,
+        y_history=lbfgs_inner.diff_updates_memory,
+        rho_history=lbfgs_inner.weights_memory,
+        gamma=gamma,
+        stepsize=jnp.array(1.0),
+        aux=None,
+    )
+
+    return OptStep(params=last_params, state=status), history
 
 
 def lbfgs_recover_alpha(alpha_lm1, s_l, z_l, epsilon=1e-12):
@@ -265,13 +336,11 @@ def lbfgs_recover_alpha(alpha_lm1, s_l, z_l, epsilon=1e-12):
     """
 
     def compute_next_alpha(s_l, z_l, alpha_lm1):
-        a = z_l.T @ jnp.diag(alpha_lm1) @ z_l
-        b = z_l.T @ s_l
-        c = s_l.T @ jnp.diag(1.0 / alpha_lm1) @ s_l
+        a = jnp.sum(alpha_lm1 * z_l**2)
+        b = jnp.dot(z_l, s_l)
+        c = jnp.sum(s_l**2 / alpha_lm1)
         inv_alpha_l = (
-            a / (b * alpha_lm1)
-            + z_l**2 / b
-            - (a * s_l**2) / (b * c * alpha_lm1**2)
+            a / (b * alpha_lm1) + z_l**2 / b - (a * s_l**2) / (b * c * alpha_lm1**2)
         )
         return 1.0 / inv_alpha_l
 
@@ -301,10 +370,10 @@ def lbfgs_inverse_hessian_factors(S, Z, alpha):
 
     eta = jnp.diag(StZ)
 
-    beta = jnp.hstack([jnp.diag(alpha) @ Z, S])
+    beta = jnp.hstack((alpha[:, None] * Z, S))
 
     minvR = -jnp.linalg.inv(R)
-    alphaZ = jnp.diag(jnp.sqrt(alpha)) @ Z
+    alphaZ = jnp.sqrt(alpha)[:, None] * Z
     block_dd = minvR.T @ (alphaZ.T @ alphaZ + jnp.diag(eta)) @ minvR
     gamma = jnp.block(
         [[jnp.zeros((param_dims, param_dims)), minvR], [minvR.T, block_dd]]
@@ -350,20 +419,16 @@ def bfgs_sample(rng_key, num_samples, position, grad_position, alpha, beta, gamm
     if not isinstance(num_samples, tuple):
         num_samples = (num_samples,)
 
-    Q, R = jnp.linalg.qr(jnp.diag(jnp.sqrt(1 / alpha)) @ beta)
+    Q, R = jnp.linalg.qr(beta / jnp.sqrt(alpha)[:, None], mode="reduced")
     param_dims = beta.shape[0]
     Id = jnp.identity(R.shape[0])
     L = jnp.linalg.cholesky(Id + R @ gamma @ R.T)
 
-    logdet = jnp.log(jnp.prod(alpha)) + 2 * jnp.log(jnp.linalg.det(L))
-    mu = (
-        position
-        + jnp.diag(alpha) @ grad_position
-        + beta @ gamma @ beta.T @ grad_position
-    )
+    logdet = jnp.sum(jnp.log(alpha)) + 2.0 * jnp.sum(jnp.log(jnp.diag(L)))
+    mu = position + alpha * grad_position + beta @ (gamma @ (beta.T @ grad_position))
 
     u = jax.random.normal(rng_key, num_samples + (param_dims, 1))
-    phi = mu[..., None] + jnp.diag(jnp.sqrt(alpha)) @ (Q @ (L - Id) @ (Q.T @ u) + u)
+    phi = mu[..., None] + jnp.sqrt(alpha)[:, None] * (Q @ (L - Id) @ (Q.T @ u) + u)
 
     logdensity = -0.5 * (
         logdet

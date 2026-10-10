@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for the NUTS Kernel"""
-from typing import Callable, NamedTuple
+
+from collections.abc import Callable
+from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -24,8 +26,8 @@ import blackjax.mcmc.metrics as metrics
 import blackjax.mcmc.proposal as proposal
 import blackjax.mcmc.termination as termination
 import blackjax.mcmc.trajectory as trajectory
-from blackjax.base import SamplingAlgorithm
-from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
+from blackjax.types import ArrayTree, Numeric, PRNGKey
 
 __all__ = ["NUTSInfo", "init", "build_kernel", "as_top_level_api"]
 
@@ -211,22 +213,13 @@ def as_top_level_api(
 
     """
     kernel = build_kernel(integrator, divergence_threshold)
-
-    def init_fn(position: ArrayLikeTree, rng_key=None):
-        del rng_key
-        return init(position, logdensity_fn)
-
-    def step_fn(rng_key: PRNGKey, state):
-        return kernel(
-            rng_key,
-            state,
-            logdensity_fn,
-            step_size,
-            inverse_mass_matrix,
-            max_num_doublings,
-        )
-
-    return SamplingAlgorithm(init_fn, step_fn)
+    metric = metrics.default_metric(inverse_mass_matrix)
+    return build_sampling_algorithm(
+        kernel,
+        init,
+        logdensity_fn,
+        kernel_args=(step_size, metric, max_num_doublings),
+    )
 
 
 def iterative_nuts_proposal(
@@ -280,7 +273,7 @@ def iterative_nuts_proposal(
         max_num_expansions,
     )
 
-    def _compute_energy(state: integrators.IntegratorState) -> float:
+    def _compute_energy(state: integrators.IntegratorState) -> Numeric:
         energy = -state.logdensity + kinetic_energy(state.momentum)
         return energy
 

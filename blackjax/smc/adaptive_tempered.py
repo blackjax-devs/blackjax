@@ -11,9 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
-import jax
 import jax.numpy as jnp
 
 import blackjax.smc.base as base
@@ -34,7 +34,8 @@ def build_kernel(
     resampling_fn: Callable,
     target_ess: float,
     root_solver: Callable = solver.dichotomy,
-    **extra_parameters: dict[str, Any],
+    batch_size: int = 0,
+    **extra_parameters: Any,
 ) -> Callable:
     """Build a Tempered SMC step using an adaptive schedule.
 
@@ -57,6 +58,12 @@ def build_kernel(
     root_solver: Callable, optional
         The solver used to adaptively compute the temperature given a target number
         of effective samples. By default, blackjax.smc.solver.dichotomy.
+    batch_size: int, optional
+        Number of particles processed per sequential batch when
+        ``batch_size > 0``. Uses ``jax.lax.map`` for both the ESS
+        log-likelihood evaluation (in ``compute_delta``) and the underlying
+        tempered SMC update, reducing peak GPU memory. ``0`` (default) keeps
+        the original ``jax.vmap`` behaviour.
     **extra_parameters : dict[str, Any]
         Additional parameters to pass to tempered.build_kernel.
 
@@ -69,11 +76,13 @@ def build_kernel(
 
     """
 
+    batched_loglikelihood_fn = base.map_fn(loglikelihood_fn, batch_size)
+
     def compute_delta(state: tempered.TemperedSMCState) -> float | Array:
         tempering_param = state.tempering_param
         max_delta = 1 - tempering_param
         delta = ess.ess_solver(
-            jax.vmap(loglikelihood_fn),
+            batched_loglikelihood_fn,
             state.particles,
             target_ess,
             max_delta,
@@ -89,7 +98,8 @@ def build_kernel(
         mcmc_step_fn,
         mcmc_init_fn,
         resampling_fn,
-        **extra_parameters,  # type: ignore
+        batch_size=batch_size,
+        **extra_parameters,
     )
 
     def kernel(
@@ -120,7 +130,8 @@ def as_top_level_api(
     target_ess: float,
     root_solver: Callable = solver.dichotomy,
     num_mcmc_steps: int = 10,
-    **extra_parameters: dict[str, Any],
+    batch_size: int = 0,
+    **extra_parameters: Any,
 ) -> SamplingAlgorithm:
     """Implements the user interface for the Adaptive Tempered SMC kernel.
 
@@ -148,6 +159,12 @@ def as_top_level_api(
     num_mcmc_steps: int, optional
         The number of times the MCMC kernel is applied to the particles per step,
         by default 10.
+    batch_size: int, optional
+        Number of particles processed per sequential batch when
+        ``batch_size > 0``. Uses ``jax.lax.map`` for both the ESS
+        log-likelihood evaluation and the underlying tempered SMC update,
+        reducing peak GPU memory. ``0`` (default) keeps the original
+        ``jax.vmap`` behaviour.
     **extra_parameters: dict [str, Any]
         Additional parameters to pass to the kernel.
 
@@ -165,11 +182,12 @@ def as_top_level_api(
         resampling_fn,
         target_ess,
         root_solver,
+        batch_size=batch_size,
         **extra_parameters,
     )
 
     def init_fn(
-        position: ArrayLikeTree, rng_key: Optional[PRNGKey] = None
+        position: ArrayLikeTree, rng_key: PRNGKey | None = None
     ) -> tempered.TemperedSMCState:
         del rng_key
         return init(position)
