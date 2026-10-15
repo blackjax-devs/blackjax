@@ -53,7 +53,7 @@ def logdensity_estimator(
         ----------
         position
             The current value of the random variables.
-        batch
+        minibatch
             The current batch of data
 
         Returns
@@ -112,7 +112,7 @@ def control_variates(
         ----------
         position
             The current value of the random variables.
-        batch
+        minibatch
             The current batch of data. The first dimension is assumed to be the
             batch dimension.
 
