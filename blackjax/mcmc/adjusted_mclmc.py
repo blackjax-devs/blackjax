@@ -216,8 +216,6 @@ def adjusted_mclmc_proposal(
     ----------
     integrator
         integrator used to build the trajectory step by step.
-    kinetic_energy
-        Function that computes the kinetic energy.
     step_size
         Size of the integration step.
     num_integration_steps
