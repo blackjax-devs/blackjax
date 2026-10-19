@@ -84,7 +84,7 @@ def build_kernel():
     """
 
     def _compute_acceptance_probability(
-        state: BarkerState, proposal: BarkerState, metric: Metric
+        state: BarkerState, proposal: BarkerState, metric: Metric, step_size: float
     ) -> Numeric:
         """Compute the acceptance probability of the Barker's proposal kernel."""
 
@@ -111,13 +111,13 @@ def build_kernel():
         sum_log1pexp_yx = sum(jnp.sum(leaf) for leaf in jax.tree.leaves(log1pexp_yx))
         sum_log1pexp_xy = sum(jnp.sum(leaf) for leaf in jax.tree.leaves(log1pexp_xy))
 
-        # The original code broadcasts kinetic_energy (scalar) - log1pexp (vector)
-        # then sums, which multiplies KE by N. Preserve this exactly.
-        n = sum(leaf.size for leaf in jax.tree.leaves(x))
+        # The Gaussian base has covariance step_size**2 * M(position).
+        # The common step-size normalization cancels in the density ratio.
+        scaled_displacement = jax.tree.map(lambda d: d / step_size, y_minus_x)
         ratio_proposal = (
-            n * metric.kinetic_energy(x_minus_y, y)
+            metric.kinetic_energy(scaled_displacement, x)
+            - metric.kinetic_energy(scaled_displacement, y)
             - sum_log1pexp_yx
-            - n * metric.kinetic_energy(y_minus_x, x)
             + sum_log1pexp_xy
         )
 
@@ -151,7 +151,9 @@ def build_kernel():
             proposed_pos, proposed_logdensity, proposed_logdensity_grad
         )
 
-        log_p_accept = _compute_acceptance_probability(state, proposed_state, metric)
+        log_p_accept = _compute_acceptance_probability(
+            state, proposed_state, metric, step_size
+        )
         accepted_state, info = static_binomial_sampling(
             key_rmh, log_p_accept, state, proposed_state
         )
@@ -211,6 +213,9 @@ def as_top_level_api(
         The value of the step_size correspnoding to the global scale of the proposal distribution.
     inverse_mass_matrix
         The inverse mass matrix to use for pre-conditioning (see Appendix G of :cite:p:`Livingstone2022Barker`).
+        May also be a metric or a callable returning the mass matrix at the current
+        position. The Gaussian base proposal has covariance ``step_size**2`` times
+        the mass matrix.
 
     Returns
     -------
