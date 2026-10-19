@@ -5,12 +5,16 @@ import chex
 import jax
 import jax.numpy as jnp
 import jax.scipy.stats as stats
+import numpy as np
 from absl.testing import absltest, parameterized
+from jax.flatten_util import ravel_pytree
+from scipy import stats as scipy_stats
 
 import blackjax
 from blackjax.mcmc import metrics
 from blackjax.mcmc.barker import _barker_pdf, _barker_sample
 from blackjax.util import run_inference_algorithm
+from tests.fixtures import std_normal_logdensity
 
 
 class BarkerSamplingTest(chex.TestCase):
@@ -60,6 +64,53 @@ def _test_samples_vs_pdf(samples, pdf):
 
 
 class BarkerPreconditioiningTest(chex.TestCase):
+    @parameterized.parameters(
+        itertools.product([0.5, 1.0, 2.0], [True, False], [True, False])
+    )
+    def test_riemannian_acceptance_probability(self, step_size, diagonal, pytree):
+        """The acceptance ratio includes the position-dependent Gaussian base."""
+        covariance = np.array([[1.0, 0.3], [0.3, 1.5]])
+        if diagonal:
+            covariance = np.diag(np.diag(covariance))
+
+        def mass_matrix(position):
+            flat_position, _ = ravel_pytree(position)
+            mass = jnp.asarray(covariance) / (1 + jnp.sum(flat_position**2))
+            return jnp.diag(mass) if diagonal else mass
+
+        def proposal_logpdf(destination, origin):
+            mass = covariance / (1 + origin @ origin)
+            cholesky = np.linalg.cholesky(mass)
+            displacement = np.linalg.solve(cholesky, destination - origin)
+            gradient = cholesky.T @ (-origin)
+            return (
+                scipy_stats.multivariate_normal.logpdf(
+                    destination, mean=origin, cov=step_size**2 * mass
+                )
+                + origin.size * np.log(2)
+                - np.logaddexp(0, -displacement * gradient).sum()
+            )
+
+        position = (
+            {"a": jnp.array(1.0), "b": jnp.array([-0.5])}
+            if pytree
+            else jnp.array([1.0, -0.5])
+        )
+        sampler = blackjax.barker(std_normal_logdensity, step_size, mass_matrix)
+        state = sampler.init(position)
+        step = jax.jit(sampler.step)
+        x = np.asarray(ravel_pytree(position)[0], dtype=np.float64)
+        for seed in (2, 5):
+            _, info = step(jax.random.key(seed), state)
+            y = np.asarray(ravel_pytree(info.proposal.position)[0], dtype=np.float64)
+            log_ratio = (
+                -0.5 * (y @ y - x @ x) + proposal_logpdf(x, y) - proposal_logpdf(y, x)
+            )
+            expected = np.exp(min(0.0, log_ratio))
+            chex.assert_trees_all_close(
+                info.acceptance_rate, expected, atol=1e-6, rtol=1e-6
+            )
+
     @parameterized.parameters([1234, 5678])
     def test_preconditioning_matrix(self, seed):
         """Test two different ways of using pre-conditioning matrix has exactly same effect.
