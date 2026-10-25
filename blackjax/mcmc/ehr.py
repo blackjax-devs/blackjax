@@ -15,8 +15,10 @@
 
 from typing import Callable, NamedTuple
 
+import jax
 import jax.numpy as jnp
 from jax import lax
+from jax.flatten_util import ravel_pytree
 from jax.random import split, uniform
 
 import blackjax.mcmc.proposal as proposal
@@ -99,7 +101,11 @@ def init(
 
     logdensity_grad = solve(metric, logdensity_grad)  # natural gradient H^{-1}g
 
-    intersection = intersect_fn(position, logdensity_grad)
+    # Flatten pytree position / grad to 1-D arrays for intersection solver.
+    pos_flat, _ = ravel_pytree(position)
+    grad_flat, _ = ravel_pytree(logdensity_grad)
+
+    intersection = intersect_fn(pos_flat, grad_flat)
     clip = lax.select(
         0.5 * step_size**2 < grad_clip * intersection,
         0.5 * step_size**2,
@@ -163,15 +169,28 @@ def build_kernel(
     trunc_sample, trunc_logpdf = truncate(step_dist)
 
     def proposal_logdensity_fn(state, new_state, step_size):
-        delta = (
-            new_state.position - state.position - state.clip * state.logdensity_grad
-        )  # Δ = y − x − g
-        step = jnp.linalg.norm(sqrt_multiply(state.metric, delta / step_size))
-        direction = delta / step / step_size
+        delta = jax.tree_util.tree_map(
+            lambda y, x, g: y - x - state.clip * g,
+            new_state.position,
+            state.position,
+            state.logdensity_grad,
+        )  # Δ = y − x − clip*g  (pytree)
 
+        # Flatten for norm computation; sqrt_multiply unravels internally.
+        delta_scaled = sqrt_multiply(state.metric, jax.tree_util.tree_map(
+            lambda d: d / step_size, delta
+        ))
+        delta_scaled_flat, _ = ravel_pytree(delta_scaled)
+        step = jnp.linalg.norm(delta_scaled_flat)
+
+        delta_flat, _ = ravel_pytree(delta)
+        direction_flat = delta_flat / step / step_size
+
+        pos_flat, _ = ravel_pytree(state.position)
+        grad_flat, _ = ravel_pytree(state.logdensity_grad)
         s_max = compute_intersection(
-            state.position + state.clip * state.logdensity_grad,
-            step_size * direction,
+            pos_flat + state.clip * grad_flat,
+            step_size * direction_flat,
         )
 
         trunc_logp = trunc_logpdf(step, s_max)
@@ -208,17 +227,28 @@ def build_kernel(
         key_direction, key_step, key_accept = split(rng_key, num=3)
 
         noise = generate_gaussian_noise(key_direction, position)
-        noise = noise / jnp.linalg.norm(noise)
-        direction = sqrt_solve(metric, noise)
+        # Flatten to 1-D for norm; sqrt_solve will unravel back to pytree.
+        noise_flat, unravel_fn = ravel_pytree(noise)
+        noise_flat = noise_flat / jnp.linalg.norm(noise_flat)
+        noise = unravel_fn(noise_flat)
+        direction = sqrt_solve(metric, noise)  # pytree with same structure as position
+
+        # Flatten position, grad, and direction for the intersection solver.
+        pos_flat, _ = ravel_pytree(position)
+        grad_flat, _ = ravel_pytree(logdensity_grad)
+        dir_flat, _ = ravel_pytree(direction)
 
         intersection = compute_intersection(
-            position + clip * logdensity_grad,  # type: ignore[operator]
-            step_size * direction,
+            pos_flat + clip * grad_flat,
+            step_size * dir_flat,
         )
         step = trunc_sample(key_step, intersection)
 
-        new_position = (
-            position + clip * logdensity_grad + step * step_size * direction  # type: ignore[operator]
+        new_position = jax.tree_util.tree_map(
+            lambda p, g, d: p + clip * g + step * step_size * d,
+            position,
+            logdensity_grad,
+            direction,
         )
 
         new_logdensity = logdensity_fn(new_position)
@@ -226,7 +256,9 @@ def build_kernel(
         new_metric = mass_matrix_fn(new_position)
         new_logdensity_grad = solve(new_metric, new_logdensity_grad)
 
-        intersection = compute_intersection(new_position, new_logdensity_grad)
+        new_pos_flat, _ = ravel_pytree(new_position)
+        new_grad_flat, _ = ravel_pytree(new_logdensity_grad)
+        intersection = compute_intersection(new_pos_flat, new_grad_flat)
         new_clip = lax.select(
             0.5 * step_size**2 < grad_clip * intersection,
             0.5 * step_size**2,

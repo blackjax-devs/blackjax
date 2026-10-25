@@ -36,9 +36,9 @@ from .mcmc import periodic_orbital
 from .mcmc import posdep_rwmh as _posdep_rwmh  # dev
 from .mcmc import random_walk
 from .mcmc import rmhmc as _rmhmc
+from .mcmc import slice as _slice
 from .mcmc import smmala as _smmala
 from .mcmc import vaidya as _vaidya  # dev
-from .mcmc import slice as _slice
 from .mcmc.composed import step_size as _gist_step_size
 from .mcmc.composed import trajectory_length as _gist_trajectory_length
 from .mcmc.random_walk import additive_step_random_walk as _additive_step_random_walk

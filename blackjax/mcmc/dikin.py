@@ -14,6 +14,8 @@
 """Public API for the Dikin walk algorithm."""
 from typing import Callable
 
+from jax.flatten_util import ravel_pytree
+
 from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.constraints import barrier_hessian
 from blackjax.mcmc.diffusions import DiffusionMetric
@@ -38,7 +40,9 @@ def dikin_metric(constraint):
     return lambda x: barrier_hessian(constraint, x)
 
 
-def as_top_level_api(logdensity_fn: Callable, constraint, step_size) -> SamplingAlgorithm:
+def as_top_level_api(
+    logdensity_fn: Callable, constraint, step_size
+) -> SamplingAlgorithm:
     """Implements the user interface for the Dikin walk.
 
     Parameters
@@ -63,7 +67,9 @@ def as_top_level_api(logdensity_fn: Callable, constraint, step_size) -> Sampling
 
     """
     mass_matrix_fn = lambda position: DiffusionMetric(
-        *_format_covariance(barrier_hessian(constraint, position), is_inv=False)[:2]
+        *_format_covariance(
+            barrier_hessian(constraint, ravel_pytree(position)[0]), is_inv=False
+        )[:2]
     )
     kernel = build_kernel()
 

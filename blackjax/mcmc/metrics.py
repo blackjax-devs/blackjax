@@ -618,6 +618,7 @@ def _sq_scale(
     )
     return element
 
+
 def lbfgs_inverse_hessian_to_low_rank_metric(
     alpha: Array,
     beta: Array,

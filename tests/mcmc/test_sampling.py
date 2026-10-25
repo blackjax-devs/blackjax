@@ -556,7 +556,8 @@ class LinearRegressionTest(chex.TestCase):
         assert (
             jnp.abs(
                 jnp.dot(
-                    (inverse_mass_matrix**2) / jnp.linalg.norm(inverse_mass_matrix**2),
+                    (inverse_mass_matrix**2)
+                    / jnp.linalg.norm(inverse_mass_matrix**2),
                     eigs / jnp.linalg.norm(eigs),
                 )
                 - 1
@@ -795,9 +796,9 @@ class LinearRegressionTest(chex.TestCase):
                 f"{first_bad_iter} of {step_sizes.size}"
             )
         mean_acceptance = float(np.mean(np.asarray(info["phase_2"]["acc_prob"])))
-        assert mean_acceptance > 0.01, (
-            f"adjusted phase accepted nothing (mean acceptance {mean_acceptance})"
-        )
+        assert (
+            mean_acceptance > 0.01
+        ), f"adjusted phase accepted nothing (mean acceptance {mean_acceptance})"
 
         # Median location (robust to one stray chain) and two-sided dispersion
         # (an ensemble that never moved has sd 1.0, not ~0.02).
@@ -811,9 +812,9 @@ class LinearRegressionTest(chex.TestCase):
         equilibrated = np.mean(np.all(np.abs(z_scores) < 6.0, axis=1))
         # not f"{x:.0%}": pycodestyle 2.10.0 flags E231 on PEP 701 f-strings
         equilibrated_pct = round(100 * equilibrated)
-        assert equilibrated >= 0.9, (
-            f"only {equilibrated_pct}% of chains are within 6 posterior sd"
-        )
+        assert (
+            equilibrated >= 0.9
+        ), f"only {equilibrated_pct}% of chains are within 6 posterior sd"
 
     @parameterized.named_parameters(
         {"testcase_name": "typed_key", "use_typed_key": True},
@@ -1386,6 +1387,7 @@ class ConstrainedNormal(chex.TestCase):
     @chex.all_variants(with_pmap=False)
     def test_dikin(self):
         from blackjax.mcmc.constraints import LinearConstraint
+
         inference_algorithm = blackjax.dikin(
             self.constrained_normal_logprob,
             LinearConstraint(A=self.A, b=self.b),
@@ -1399,6 +1401,7 @@ class ConstrainedNormal(chex.TestCase):
     @chex.all_variants(with_pmap=False)
     def test_vaidya(self):
         from blackjax.mcmc.constraints import LinearConstraint
+
         inference_algorithm = blackjax.vaidya(
             self.constrained_normal_logprob,
             LinearConstraint(A=self.A, b=self.b),
@@ -1412,6 +1415,7 @@ class ConstrainedNormal(chex.TestCase):
     @chex.all_variants(with_pmap=False)
     def test_mapla(self):
         from blackjax.mcmc.constraints import LinearConstraint
+
         inference_algorithm = blackjax.mapla(
             self.constrained_normal_logprob,
             LinearConstraint(A=self.A, b=self.b),
@@ -1463,6 +1467,149 @@ class ConstrainedNormal(chex.TestCase):
         self.constrained_normal_test_case(
             inference_algorithm, self.key, initial_state, 4500, 1_000
         )
+
+
+class ConstrainedNormalArrayTree(chex.TestCase):
+    """Test constrained samplers with an ArrayTree (dict) position.
+
+    The position is a dict ``{'linear': x_lin, 'quad': x_quad}`` where
+    ``x_lin`` lives in a 2-D simplex-like triangle and ``x_quad`` lives
+    inside a 2-D unit ball.  A ``ConstraintDict`` is used to assign a
+    separate constraint object to each leaf.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.key = jax.random.key(42)
+
+        # Linear constraint for the 'linear' leaf: Ax ≤ b  (triangle)
+        self.A_lin = jnp.array([[1.0, 1.0], [-1.0, 0.0], [0.0, -1.0]])
+        self.b_lin = jnp.array([1.0, 0.0, 0.0])
+
+        # Quadratic constraint for the 'quad' leaf: ||x||² − 0.25 ≤ 0  (ball)
+        from blackjax.mcmc.constraints import ellipsoid_constraint
+        self.ellipsoid = ellipsoid_constraint(
+            jnp.eye(2), jnp.zeros(2), radius=0.5
+        )
+
+        # Example position (used by ConstraintDict to compute leaf slices)
+        self.example_pos = {
+            "linear": jnp.zeros(2),
+            "quad": jnp.zeros(2),
+        }
+
+        # Initial point strictly inside both feasible regions
+        self.initial_pos = {
+            "linear": jnp.array([0.1, 0.1]),
+            "quad": jnp.array([0.1, 0.1]),
+        }
+
+    def _make_constraint_dict(self):
+        from blackjax.mcmc.constraints import ConstraintDict, LinearConstraint
+
+        return ConstraintDict(
+            {
+                "linear": LinearConstraint(A=self.A_lin, b=self.b_lin),
+                "quad": self.ellipsoid,
+            },
+            self.example_pos,
+        )
+
+    def logdensity_fn(self, position):
+        x_lin = position["linear"]
+        x_quad = position["quad"]
+        in_lin = (self.A_lin @ x_lin < self.b_lin).all()
+        in_quad = (x_quad @ x_quad < 0.25)
+        return jax.lax.cond(
+            in_lin & in_quad,
+            lambda: (
+                stats.norm.logpdf(x_lin, loc=0.0, scale=1.0).sum()
+                + stats.norm.logpdf(x_quad, loc=0.0, scale=1.0).sum()
+            ),
+            lambda: -jnp.inf,
+        )
+
+    def _check_feasibility(self, samples):
+        """Assert all samples satisfy both constraints."""
+        x_lin_samples = samples["linear"]   # (T, 2)
+        x_quad_samples = samples["quad"]    # (T, 2)
+        assert (self.A_lin @ x_lin_samples.T < self.b_lin.reshape(-1, 1)).all(), (
+            "LinearConstraint violated in arraytree sampler test"
+        )
+        norms_sq = (x_quad_samples ** 2).sum(axis=-1)
+        assert (norms_sq < 0.25).all(), (
+            "Ellipsoid constraint violated in arraytree sampler test"
+        )
+
+    def _run_and_check(self, inference_algorithm, num_steps=5000, burnin=500):
+        initial_state = inference_algorithm.init(self.initial_pos)
+        _, (states, _) = self.variant(
+            functools.partial(
+                run_inference_algorithm,
+                inference_algorithm=inference_algorithm,
+                num_steps=num_steps,
+            )
+        )(rng_key=self.key, initial_state=initial_state)
+        samples = jax.tree_util.tree_map(lambda s: s[burnin:], states.position)
+        self._check_feasibility(samples)
+
+    @chex.all_variants(with_pmap=False)
+    def test_dikin_arraytree(self):
+        import blackjax
+
+        inference_algorithm = blackjax.dikin(
+            self.logdensity_fn,
+            self._make_constraint_dict(),
+            step_size=0.1,
+        )
+        self._run_and_check(inference_algorithm)
+
+    @chex.all_variants(with_pmap=False)
+    def test_vaidya_arraytree(self):
+        import blackjax
+
+        inference_algorithm = blackjax.vaidya(
+            self.logdensity_fn,
+            self._make_constraint_dict(),
+            step_size=0.1,
+        )
+        self._run_and_check(inference_algorithm)
+
+    @chex.all_variants(with_pmap=False)
+    def test_mapla_arraytree(self):
+        import blackjax
+
+        inference_algorithm = blackjax.mapla(
+            self.logdensity_fn,
+            self._make_constraint_dict(),
+            step_size=0.05,
+        )
+        self._run_and_check(inference_algorithm)
+
+    @chex.all_variants(with_pmap=False)
+    def test_ehr_arraytree(self):
+        import blackjax
+
+        constraint = self._make_constraint_dict()
+        grad_fn = jax.grad(self.logdensity_fn)
+
+        # mass_matrix_fn: barrier Hessian of ConstraintDict at flat position
+        from blackjax.mcmc.constraints import barrier_hessian
+        from jax.flatten_util import ravel_pytree as _ravel
+
+        def mass_matrix_fn(position):
+            flat, _ = _ravel(position)
+            return barrier_hessian(constraint, flat)
+
+        inference_algorithm = blackjax.ehr(
+            self.logdensity_fn,
+            constraint,
+            dim=4,  # 2 (linear) + 2 (quad)
+            vector_field_fn=grad_fn,
+            mass_matrix_fn=mass_matrix_fn,
+            step_size=0.1,
+        )
+        self._run_and_check(inference_algorithm, num_steps=2000, burnin=200)
 
 
 class GHMCRichMetricTest(chex.TestCase):

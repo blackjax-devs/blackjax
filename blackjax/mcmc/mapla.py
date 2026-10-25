@@ -14,6 +14,8 @@
 """Public API for Metropolis-adjusted Preconditioned Langevin Algorithm (MAPLA)."""
 from typing import Callable
 
+from jax.flatten_util import ravel_pytree
+
 from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.constraints import barrier_hessian
 from blackjax.mcmc.diffusions import DiffusionMetric
@@ -53,7 +55,9 @@ def as_top_level_api(
 
     """
     mass_matrix_fn = lambda position: DiffusionMetric(
-        *_format_covariance(barrier_hessian(constraint, position), is_inv=False)[:2]
+        *_format_covariance(
+            barrier_hessian(constraint, ravel_pytree(position)[0]), is_inv=False
+        )[:2]
     )
     kernel = build_kernel()
 
