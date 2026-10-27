@@ -63,9 +63,9 @@ platforms = [
 ]
 
 [tool.setuptools.packages.find]
-exclude = [
-    "tests",
-    "tests.*",
+include = [
+    "blackjax",
+    "blackjax.*",
 ]
 
 [tool.setuptools_scm]
