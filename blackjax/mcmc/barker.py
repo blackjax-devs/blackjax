@@ -281,7 +281,7 @@ def _barker_sample(key, mean, a, scale, metric):
 
 
 def _log1pexp(a):
-    return jnp.log1p(jnp.exp(a))
+    return jax.nn.softplus(a)
 
 
 def _barker_logpdf(x, mean, a, scale):

@@ -5,11 +5,12 @@ import chex
 import jax
 import jax.numpy as jnp
 import jax.scipy.stats as stats
+import numpy as np
 from absl.testing import absltest, parameterized
 
 import blackjax
 from blackjax.mcmc import metrics
-from blackjax.mcmc.barker import _barker_pdf, _barker_sample
+from blackjax.mcmc.barker import _barker_pdf, _barker_sample, _log1pexp
 from blackjax.util import run_inference_algorithm
 
 
@@ -173,6 +174,56 @@ class BarkerPreconditioiningTest(chex.TestCase):
         chex.assert_trees_all_close(
             jnp.cov(samples.T), jnp.eye(2), atol=1e-1, rtol=1e-1
         )
+
+
+class BarkerNumericalStabilityTest(chex.TestCase):
+    @parameterized.product(dtype=[jnp.float32, jnp.float64], use_jit=[False, True])
+    def test_log1pexp_values_and_gradients(self, dtype, use_jit):
+        with jax.enable_x64(dtype == jnp.float64):
+            values = jnp.array(
+                [-1000.0, -100.0, -1.0, 0.0, 1.0, 100.0, 1000.0], dtype=dtype
+            )
+            value_and_grad = jax.value_and_grad(lambda x: _log1pexp(x).sum())
+            if use_jit:
+                value_and_grad = jax.jit(value_and_grad)
+            actual, gradient = value_and_grad(values)
+            host = np.asarray(values, dtype=np.float64)
+            expected = np.logaddexp(0.0, host).sum()
+            # Stable sigmoid, including both saturated tails and its derivative at zero.
+            expected_grad = np.exp(-np.logaddexp(0.0, -host))
+            chex.assert_trees_all_close(actual, expected, rtol=1e-6)
+            chex.assert_trees_all_close(gradient, expected_grad, atol=1e-7, rtol=1e-6)
+
+    @parameterized.product(
+        dtype=[jnp.float32, jnp.float64], use_jit=[False, True], pytree=[False, True]
+    )
+    def test_accept_improving_proposal_with_large_gradient(
+        self, dtype, use_jit, pytree
+    ):
+        with jax.enable_x64(dtype == jnp.float64):
+            # A finite Gaussian state can have logistic corrections beyond exp's range.
+            # Use a larger initial position in float64 to exercise that dtype's range too.
+            initial = 20.0 if dtype == jnp.float32 else 60.0
+            position = jnp.array([initial], dtype=dtype)
+            if pytree:
+                position = {"x": position}
+            logdensity = lambda x: -0.5 * sum(jnp.sum(v**2) for v in jax.tree.leaves(x))
+            algorithm = blackjax.barker(logdensity, step_size=initial / 2)
+            state = algorithm.init(position)
+            step = jax.jit(algorithm.step) if use_jit else algorithm.step
+            new_state, info = step(jax.random.key(2), state)
+            proposed = float(jax.tree.leaves(info.proposal.position)[0][0])
+            delta = proposed - initial
+            # Independent Gaussian target and forward/reverse Barker proposal ratio.
+            log_accept = (
+                0.5 * (initial**2 - proposed**2)
+                + np.logaddexp(0.0, initial * delta)
+                - np.logaddexp(0.0, -proposed * delta)
+            )
+            self.assertGreater(log_accept, 0.0)
+            self.assertEqual(float(info.acceptance_rate), 1.0)
+            self.assertTrue(bool(info.is_accepted))
+            chex.assert_trees_all_equal(new_state.position, info.proposal.position)
 
 
 if __name__ == "__main__":
