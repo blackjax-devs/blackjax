@@ -42,6 +42,45 @@ def insert_list(input_list, loc, elem):
     return input_list
 
 
+def _reference_stan_ess(x):
+    """NumPy port of Stan's ESS estimator (as in ArviZ ``_ess``) for (nchains, nsamples)."""
+    num_chains, num_samples = x.shape
+    centered = x - x.mean(axis=1, keepdims=True)
+    acov = np.stack(
+        [
+            np.array(
+                [c[: num_samples - t] @ c[t:] / num_samples for t in range(num_samples)]
+            )
+            for c in centered
+        ]
+    )
+    mean_var = acov[:, 0].mean() * num_samples / (num_samples - 1.0)
+    var_plus = mean_var * (num_samples - 1.0) / num_samples
+    if num_chains > 1:
+        var_plus += x.mean(axis=1).var(ddof=1)
+    rho = np.zeros(num_samples)
+    rho_even, rho_odd = 1.0, 1.0 - (mean_var - acov[:, 1].mean()) / var_plus
+    rho[0], rho[1] = rho_even, rho_odd
+    t = 1
+    while t < num_samples - 3 and rho_even + rho_odd > 0.0:
+        rho_even = 1.0 - (mean_var - acov[:, t + 1].mean()) / var_plus
+        rho_odd = 1.0 - (mean_var - acov[:, t + 2].mean()) / var_plus
+        if rho_even + rho_odd >= 0:
+            rho[t + 1], rho[t + 2] = rho_even, rho_odd
+        t += 2
+    max_t = t - 2
+    if rho_even > 0:
+        rho[max_t + 1] = rho_even
+    t = 1
+    while t <= max_t - 2:
+        if rho[t + 1] + rho[t + 2] > rho[t - 1] + rho[t]:
+            rho[t + 1] = rho[t + 2] = (rho[t - 1] + rho[t]) / 2.0
+        t += 2
+    tau = -1.0 + 2.0 * rho[: max_t + 1].sum() + rho[max_t + 1 : max_t + 2].sum()
+    tau = max(tau, 1.0 / np.log10(num_chains * num_samples))
+    return num_chains * num_samples / tau
+
+
 class DiagnosticsTest(chex.TestCase):
     """Tests for MCMC diagnostics."""
 
@@ -125,6 +164,28 @@ class DiagnosticsTest(chex.TestCase):
         ess = diagnostics.effective_sample_size(samples)
 
         assert ess > num_samples
+
+    @parameterized.parameters(
+        itertools.product([-0.5, 0.0, 0.5, 0.9, 0.99], [(1, 300), (4, 61), (2, 20)])
+    )
+    def test_ess_matches_stan_estimator(self, phi, shape):
+        # AR(1) chains: the positive-sequence truncation, the monotone
+        # sequence and the final improved term must follow Stan exactly.
+        num_chains, num_samples = shape
+        noise = np.asarray(
+            jax.random.normal(
+                jax.random.key(self.test_seed), (num_chains, num_samples)
+            ),
+            dtype=np.float64,
+        )
+        samples = np.zeros_like(noise)
+        samples[:, 0] = noise[:, 0]
+        for t in range(1, num_samples):
+            samples[:, t] = phi * samples[:, t - 1] + noise[:, t]
+
+        ess = diagnostics.effective_sample_size(jnp.asarray(samples))
+
+        np.testing.assert_allclose(ess, _reference_stan_ess(samples), rtol=1e-5)
 
 
 # ---------------------------------------------------------------------------
@@ -514,8 +575,7 @@ def _reference_rank_normalize(x):
 def _reference_split(x):
     """Split each chain of a ``(nchains, nsamples, ...)`` array in half."""
     half = x.shape[1] // 2
-    x = x[:, : 2 * half]
-    return np.concatenate([x[:, :half], x[:, half:]], axis=0)
+    return np.concatenate([x[:, :half], x[:, x.shape[1] - half :]], axis=0)
 
 
 def _reference_split_rhat(x):
@@ -806,14 +866,14 @@ class RankNormalizeTiesTest(chex.TestCase):
 
     def test_nan_in_a_trimmed_odd_draw_is_not_seen(self):
         # Pins the exact scope of the NaN contract.  With an odd number of
-        # draws _split_chains trims the last one, so a NaN sitting only there
+        # draws _split_chains trims the middle one, so a NaN sitting only there
         # is never used and the diagnostics stay finite.  A NaN among the
         # draws actually used propagates as normal.
         base = np.asarray(
             jax.random.normal(self.rng, shape=(4, 65)), dtype=np.float64
         ).copy()
         trimmed = base.copy()
-        trimmed[1, 64] = np.nan
+        trimmed[1, 32] = np.nan
         assert np.isfinite(float(diagnostics.ess_bulk(jnp.asarray(trimmed))))
         used = base.copy()
         used[1, 3] = np.nan
@@ -864,6 +924,32 @@ class RankNormalizeTiesTest(chex.TestCase):
         bj_ess = np.asarray(diagnostics.ess_bulk(jnp.asarray(draws)))
         np.testing.assert_allclose(bj_rhat, az_rhat, rtol=1e-4)
         np.testing.assert_allclose(bj_ess, az_ess, rtol=1e-3)
+
+    def test_odd_draw_count_matches_arviz(self):
+        # Autocorrelated chains with an odd number of draws: the split drops
+        # the middle draw and the tail quantiles use every draw, as in ArviZ.
+        az = pytest.importorskip("arviz")
+        noise = np.asarray(
+            jax.random.normal(self.rng, shape=(4, 101, 3)), dtype=np.float64
+        )
+        draws = np.cumsum(noise, axis=1) * 0.2 + noise
+        idata = az.convert_to_dataset({"x": draws})
+        x = jnp.asarray(draws)
+        np.testing.assert_allclose(
+            diagnostics.ess_bulk(x),
+            np.asarray(az.ess(idata, method="bulk")["x"]),
+            rtol=1e-5,
+        )
+        np.testing.assert_allclose(
+            diagnostics.ess_tail(x),
+            np.asarray(az.ess(idata, method="tail")["x"]),
+            rtol=1e-5,
+        )
+        np.testing.assert_allclose(
+            diagnostics.rhat(x),
+            np.asarray(az.rhat(idata, method="rank")["x"]),
+            rtol=1e-5,
+        )
 
     def _rejection_trace(self, proposals, accepted):
         """Carry the last accepted proposal forward — a Metropolis-like trace."""

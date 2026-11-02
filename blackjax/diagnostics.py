@@ -265,10 +265,11 @@ def effective_sample_size(
         is_numerically_degenerate, jnp.ones_like(weighted_var), weighted_var
     )
 
-    # Geyer's initial positive sequence
-    num_samples_even = num_samples - num_samples % 2
+    # Autocorrelation estimates, one per pair (rho_2t, rho_2t+1). As in Stan
+    # (and ArviZ), the pairs examined stop at lag num_samples - 2.
+    num_pairs = max((num_samples - 1) // 2, 1)
     mean_autocov_var_tp1 = jnp.take(
-        mean_autocov_var, jnp.arange(1, num_samples_even), axis=sample_axis
+        mean_autocov_var, jnp.arange(1, 2 * num_pairs), axis=sample_axis
     )
     rho_hat = jnp.concatenate(
         [
@@ -277,54 +278,38 @@ def effective_sample_size(
         ],
         axis=sample_axis,
     )
-
     rho_hat = jnp.moveaxis(rho_hat, sample_axis, 0)
-    rho_hat_even = rho_hat[0::2]
-    rho_hat_odd = rho_hat[1::2]
+    rho_hat = rho_hat.reshape((num_pairs, 2) + rho_hat.shape[1:])
+    rho_hat_even = rho_hat[:, 0]
+    pair_sum = rho_hat[:, 0] + rho_hat[:, 1]
 
-    mask0 = (rho_hat_even + rho_hat_odd) > 0.0
-    carry_cond = jnp.ones_like(mask0[0])
-    max_t = jnp.zeros_like(mask0[0], dtype=int)
-
-    def positive_sequence_body_fn(state, mask_t):
-        t, carry_cond, max_t = state
-        next_mask = carry_cond & mask_t
-        next_max_t = jnp.where(next_mask, jnp.ones_like(max_t) * t, max_t)
-        return (t + 1, next_mask, next_max_t), next_mask
-
-    (*_, max_t_next), mask = jax.lax.scan(
-        positive_sequence_body_fn, (0, carry_cond, max_t), mask0
-    )
-    indices = jnp.indices(max_t_next.shape)
-    # Renamed from `indices` (the tuple result shadowed the Array above
-    # under a different, incompatible type).
-    index_tuple = tuple([max_t_next + 1] + [indices[i] for i in range(max_t_next.ndim)])
-    rho_hat_odd = jnp.where(mask, rho_hat_odd, jnp.zeros_like(rho_hat_odd))
-    # improve estimation
-    mask_even = mask.at[index_tuple].set(rho_hat_even[index_tuple] > 0)
-    rho_hat_even = jnp.where(mask_even, rho_hat_even, jnp.zeros_like(rho_hat_even))
-
-    # Geyer's initial monotone sequence
-    def monotone_sequence_body_fn(rho_hat_sum_tm1, rho_hat_sum_t):
-        update_mask = rho_hat_sum_t > rho_hat_sum_tm1
-        next_rho_hat_sum_t = jnp.where(update_mask, rho_hat_sum_tm1, rho_hat_sum_t)
-        return next_rho_hat_sum_t, (update_mask, next_rho_hat_sum_t)
-
-    rho_hat_sum = rho_hat_even + rho_hat_odd
-    _, (update_mask, update_value) = jax.lax.scan(
-        monotone_sequence_body_fn, rho_hat_sum[0], rho_hat_sum
+    # Geyer's initial positive sequence: the sum runs over the pairs before
+    # the first non-positive one (or before the last pair examined).
+    is_positive = pair_sum > 0.0
+    last_pair = jnp.where(
+        jnp.all(is_positive, axis=0),
+        num_pairs - 1,
+        jnp.argmin(is_positive, axis=0),
     )
 
-    rho_hat_even_final = jnp.where(update_mask, update_value / 2.0, rho_hat_even)
-    rho_hat_odd_final = jnp.where(update_mask, update_value / 2.0, rho_hat_odd)
+    # Geyer's initial monotone sequence: each pair sum is capped by the
+    # previous one, which amounts to a running minimum.
+    monotone_sum = jax.lax.cummin(pair_sum, axis=0)
+    pair_index = jnp.arange(num_pairs).reshape((-1,) + (1,) * last_pair.ndim)
+    positive_sum = jnp.sum(jnp.where(pair_index < last_pair, monotone_sum, 0.0), axis=0)
+
+    # Improved estimate: the even autocorrelation of the pair that stopped
+    # the sequence is added once, outside the monotone sequence. Stan keeps
+    # it when it is positive or when that pair was itself retained.
+    rho_hat_even_last = jnp.take_along_axis(rho_hat_even, last_pair[None], axis=0)[0]
+    pair_sum_last = jnp.take_along_axis(pair_sum, last_pair[None], axis=0)[0]
+    improved = jnp.where(
+        (rho_hat_even_last > 0.0) | (pair_sum_last >= 0.0), rho_hat_even_last, 0.0
+    )
 
     # compute effective sample size
     ess_raw = num_chains * num_samples
-    tau_hat = (
-        -1.0
-        + 2.0 * jnp.sum(rho_hat_even_final + rho_hat_odd_final, axis=0)
-        - rho_hat_even_final[index_tuple]
-    )
+    tau_hat = -1.0 + 2.0 * positive_sum + improved
 
     tau_hat = jnp.maximum(tau_hat, 1 / np.log10(ess_raw))
     ess = ess_raw / tau_hat
@@ -385,7 +370,8 @@ def _split_chains(x: Array) -> Array:
     ----------
     x
         Array of shape ``(nchains, nsamples, …)``.  If ``nsamples`` is odd the
-        last sample is dropped so both halves are equal-length.
+        middle sample is dropped so both halves are equal-length, as in Stan
+        and ArviZ.
 
     Returns
     -------
@@ -393,10 +379,8 @@ def _split_chains(x: Array) -> Array:
     """
     nsamples = x.shape[1]
     half = nsamples // 2
-    # Trim to even length so both halves are the same size.
-    x = x[:, : 2 * half]
     first = x[:, :half]
-    second = x[:, half:]
+    second = x[:, nsamples - half :]
     return jnp.concatenate([first, second], axis=0)
 
 
@@ -487,7 +471,7 @@ def _propagate_nan_components(value: Array, x: Array) -> Array:
     The reduction runs over the chain and draw axes only, so a component
     holding a missing observation never poisons an independent finite one.
 
-    ``x`` here is the *split* array, so with an odd number of draws the last
+    ``x`` here is the *split* array, so with an odd number of draws the middle
     draw has already been trimmed by :func:`_split_chains` and a ``NaN``
     sitting only in that draw is not seen.  The contract is therefore "a
     ``NaN`` among the draws the diagnostic actually uses", which is narrower
@@ -677,20 +661,20 @@ def ess_tail(
     x = _to_standard_axes(jnp.asarray(input_array), chain_axis, sample_axis)
     x_split = _split_chains(x)
 
-    nchains, nsamples = x_split.shape[0], x_split.shape[1]
-    extra_shape = x_split.shape[2:]
+    extra_shape = x.shape[2:]
 
     # Tail quantiles derived from the central-interval probability.
     q_low = (1.0 - prob) / 2.0
     q_high = (1.0 + prob) / 2.0
 
-    # Pooled quantiles over all chains and draws, per trailing dimension.
-    x_flat = x_split.reshape(nchains * nsamples, *extra_shape)
+    # Pooled quantiles over all chains and draws (before splitting, so an odd
+    # middle draw still counts, as in ArviZ), per trailing dimension.
+    x_flat = x.reshape(x.shape[0] * x.shape[1], *extra_shape)
     q_lo = jnp.quantile(x_flat, q_low, axis=0)
     q_hi = jnp.quantile(x_flat, q_high, axis=0)
 
     # Indicator series (float for ESS computation).
-    # Broadcast q_lo/q_hi over the (nchains, nsamples) leading axes.
+    # Broadcast q_lo/q_hi over the (chain, draw) leading axes.
     I_lower = (x_split <= q_lo[None, None]).astype(float)
     I_upper = (x_split >= q_hi[None, None]).astype(float)
 
