@@ -15,7 +15,7 @@ Traceback (most recent call last):
   File "/home/runner/work/blackjax/blackjax/.venv/lib/python3.13/site-packages/jupyter_core/utils/__init__.py", line 165, in wrapped
     return loop.run_until_complete(inner)
            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^
-  File "/home/runner/.local/share/uv/python/cpython-3.13.16-linux-x86_64-gnu/lib/python3.13/asyncio/base_events.py", line 726, in run_until_complete
+  File "/home/runner/.local/share/uv/python/cpython-3.13.18-linux-x86_64-gnu/lib/python3.13/asyncio/base_events.py", line 726, in run_until_complete
     return future.result()
            ~~~~~~~~~~~~~^^
   File "/home/runner/work/blackjax/blackjax/.venv/lib/python3.13/site-packages/nbclient/client.py", line 709, in async_execute
@@ -55,7 +55,7 @@ The above exception was the direct cause of the following exception:
 [32m----> [39m[32m4[39m [38;5;28;01mwith[39;00m blackjax.progress_bar(label=[33m"NUTS warmup"[39m):
 [32m      5[39m     (state, params), _ = warmup.run(k_warm, jnp.zeros(DIM), num_steps=[32m1000[39m)
 
-[36mFile [39m[32m~/.local/share/uv/python/cpython-3.13.16-linux-x86_64-gnu/lib/python3.13/contextlib.py:141[39m, in [36m_GeneratorContextManager.__enter__[39m[34m(self)[39m
+[36mFile [39m[32m~/.local/share/uv/python/cpython-3.13.18-linux-x86_64-gnu/lib/python3.13/contextlib.py:141[39m, in [36m_GeneratorContextManager.__enter__[39m[34m(self)[39m
 [32m    139[39m [38;5;28;01mdel[39;00m [38;5;28mself[39m.args, [38;5;28mself[39m.kwds, [38;5;28mself[39m.func
 [32m    140[39m [38;5;28;01mtry[39;00m:
 [32m--> [39m[32m141[39m     [38;5;28;01mreturn[39;00m [30;43mnext[39;49m[30;43m([39;49m[30;43mself[39;49m[30;43m.[39;49m[30;43mgen[39;49m[30;43m)[39;49m

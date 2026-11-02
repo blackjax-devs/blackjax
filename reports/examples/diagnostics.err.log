@@ -15,7 +15,7 @@ Traceback (most recent call last):
   File "/home/runner/work/blackjax/blackjax/.venv/lib/python3.13/site-packages/jupyter_core/utils/__init__.py", line 165, in wrapped
     return loop.run_until_complete(inner)
            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^
-  File "/home/runner/.local/share/uv/python/cpython-3.13.16-linux-x86_64-gnu/lib/python3.13/asyncio/base_events.py", line 726, in run_until_complete
+  File "/home/runner/.local/share/uv/python/cpython-3.13.18-linux-x86_64-gnu/lib/python3.13/asyncio/base_events.py", line 726, in run_until_complete
     return future.result()
            ~~~~~~~~~~~~~^^
   File "/home/runner/work/blackjax/blackjax/.venv/lib/python3.13/site-packages/nbclient/client.py", line 709, in async_execute

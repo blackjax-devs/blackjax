@@ -53,7 +53,7 @@
     <link rel="search" title="Search" href="../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g2d6a51c3b" />
+  <meta name="docsearch:version" content="0.1.dev1+ge76e72f9c" />
   
     
     <script src="../../_static/searchtools.js"></script>
@@ -743,10 +743,11 @@
         <span class="n">is_numerically_degenerate</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">weighted_var</span><span class="p">),</span> <span class="n">weighted_var</span>
     <span class="p">)</span>
 
-    <span class="c1"># Geyer's initial positive sequence</span>
-    <span class="n">num_samples_even</span> <span class="o">=</span> <span class="n">num_samples</span> <span class="o">-</span> <span class="n">num_samples</span> <span class="o">%</span> <span class="mi">2</span>
+    <span class="c1"># Autocorrelation estimates, one per pair (rho_2t, rho_2t+1). As in Stan</span>
+    <span class="c1"># (and ArviZ), the pairs examined stop at lag num_samples - 2.</span>
+    <span class="n">num_pairs</span> <span class="o">=</span> <span class="nb">max</span><span class="p">((</span><span class="n">num_samples</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
     <span class="n">mean_autocov_var_tp1</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">take</span><span class="p">(</span>
-        <span class="n">mean_autocov_var</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_samples_even</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="n">sample_axis</span>
+        <span class="n">mean_autocov_var</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">num_pairs</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="n">sample_axis</span>
     <span class="p">)</span>
     <span class="n">rho_hat</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
         <span class="p">[</span>
@@ -755,54 +756,38 @@
         <span class="p">],</span>
         <span class="n">axis</span><span class="o">=</span><span class="n">sample_axis</span><span class="p">,</span>
     <span class="p">)</span>
-
     <span class="n">rho_hat</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">moveaxis</span><span class="p">(</span><span class="n">rho_hat</span><span class="p">,</span> <span class="n">sample_axis</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-    <span class="n">rho_hat_even</span> <span class="o">=</span> <span class="n">rho_hat</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span>
-    <span class="n">rho_hat_odd</span> <span class="o">=</span> <span class="n">rho_hat</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">rho_hat</span> <span class="o">=</span> <span class="n">rho_hat</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">num_pairs</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">rho_hat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+    <span class="n">rho_hat_even</span> <span class="o">=</span> <span class="n">rho_hat</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">pair_sum</span> <span class="o">=</span> <span class="n">rho_hat</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">rho_hat</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
 
-    <span class="n">mask0</span> <span class="o">=</span> <span class="p">(</span><span class="n">rho_hat_even</span> <span class="o">+</span> <span class="n">rho_hat_odd</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.0</span>
-    <span class="n">carry_cond</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">mask0</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="n">max_t</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">mask0</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">positive_sequence_body_fn</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">mask_t</span><span class="p">):</span>
-        <span class="n">t</span><span class="p">,</span> <span class="n">carry_cond</span><span class="p">,</span> <span class="n">max_t</span> <span class="o">=</span> <span class="n">state</span>
-        <span class="n">next_mask</span> <span class="o">=</span> <span class="n">carry_cond</span> <span class="o">&amp;</span> <span class="n">mask_t</span>
-        <span class="n">next_max_t</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">next_mask</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">max_t</span><span class="p">)</span> <span class="o">*</span> <span class="n">t</span><span class="p">,</span> <span class="n">max_t</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">t</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">next_mask</span><span class="p">,</span> <span class="n">next_max_t</span><span class="p">),</span> <span class="n">next_mask</span>
-
-    <span class="p">(</span><span class="o">*</span><span class="n">_</span><span class="p">,</span> <span class="n">max_t_next</span><span class="p">),</span> <span class="n">mask</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
-        <span class="n">positive_sequence_body_fn</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">carry_cond</span><span class="p">,</span> <span class="n">max_t</span><span class="p">),</span> <span class="n">mask0</span>
-    <span class="p">)</span>
-    <span class="n">indices</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="n">max_t_next</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-    <span class="c1"># Renamed from `indices` (the tuple result shadowed the Array above</span>
-    <span class="c1"># under a different, incompatible type).</span>
-    <span class="n">index_tuple</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">max_t_next</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">indices</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_t_next</span><span class="o">.</span><span class="n">ndim</span><span class="p">)])</span>
-    <span class="n">rho_hat_odd</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">rho_hat_odd</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">rho_hat_odd</span><span class="p">))</span>
-    <span class="c1"># improve estimation</span>
-    <span class="n">mask_even</span> <span class="o">=</span> <span class="n">mask</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">index_tuple</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">rho_hat_even</span><span class="p">[</span><span class="n">index_tuple</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
-    <span class="n">rho_hat_even</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask_even</span><span class="p">,</span> <span class="n">rho_hat_even</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">rho_hat_even</span><span class="p">))</span>
-
-    <span class="c1"># Geyer's initial monotone sequence</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">monotone_sequence_body_fn</span><span class="p">(</span><span class="n">rho_hat_sum_tm1</span><span class="p">,</span> <span class="n">rho_hat_sum_t</span><span class="p">):</span>
-        <span class="n">update_mask</span> <span class="o">=</span> <span class="n">rho_hat_sum_t</span> <span class="o">&gt;</span> <span class="n">rho_hat_sum_tm1</span>
-        <span class="n">next_rho_hat_sum_t</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">update_mask</span><span class="p">,</span> <span class="n">rho_hat_sum_tm1</span><span class="p">,</span> <span class="n">rho_hat_sum_t</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">next_rho_hat_sum_t</span><span class="p">,</span> <span class="p">(</span><span class="n">update_mask</span><span class="p">,</span> <span class="n">next_rho_hat_sum_t</span><span class="p">)</span>
-
-    <span class="n">rho_hat_sum</span> <span class="o">=</span> <span class="n">rho_hat_even</span> <span class="o">+</span> <span class="n">rho_hat_odd</span>
-    <span class="n">_</span><span class="p">,</span> <span class="p">(</span><span class="n">update_mask</span><span class="p">,</span> <span class="n">update_value</span><span class="p">)</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
-        <span class="n">monotone_sequence_body_fn</span><span class="p">,</span> <span class="n">rho_hat_sum</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">rho_hat_sum</span>
+    <span class="c1"># Geyer's initial positive sequence: the sum runs over the pairs before</span>
+    <span class="c1"># the first non-positive one (or before the last pair examined).</span>
+    <span class="n">is_positive</span> <span class="o">=</span> <span class="n">pair_sum</span> <span class="o">&gt;</span> <span class="mf">0.0</span>
+    <span class="n">last_pair</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">is_positive</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+        <span class="n">num_pairs</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">is_positive</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
     <span class="p">)</span>
 
-    <span class="n">rho_hat_even_final</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">update_mask</span><span class="p">,</span> <span class="n">update_value</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">rho_hat_even</span><span class="p">)</span>
-    <span class="n">rho_hat_odd_final</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">update_mask</span><span class="p">,</span> <span class="n">update_value</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">rho_hat_odd</span><span class="p">)</span>
+    <span class="c1"># Geyer's initial monotone sequence: each pair sum is capped by the</span>
+    <span class="c1"># previous one, which amounts to a running minimum.</span>
+    <span class="n">monotone_sum</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cummin</span><span class="p">(</span><span class="n">pair_sum</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">pair_index</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_pairs</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,)</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="p">,)</span> <span class="o">*</span> <span class="n">last_pair</span><span class="o">.</span><span class="n">ndim</span><span class="p">)</span>
+    <span class="n">positive_sum</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">pair_index</span> <span class="o">&lt;</span> <span class="n">last_pair</span><span class="p">,</span> <span class="n">monotone_sum</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># Improved estimate: the even autocorrelation of the pair that stopped</span>
+    <span class="c1"># the sequence is added once, outside the monotone sequence. Stan keeps</span>
+    <span class="c1"># it when it is positive or when that pair was itself retained.</span>
+    <span class="n">rho_hat_even_last</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">take_along_axis</span><span class="p">(</span><span class="n">rho_hat_even</span><span class="p">,</span> <span class="n">last_pair</span><span class="p">[</span><span class="kc">None</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">pair_sum_last</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">take_along_axis</span><span class="p">(</span><span class="n">pair_sum</span><span class="p">,</span> <span class="n">last_pair</span><span class="p">[</span><span class="kc">None</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">improved</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">rho_hat_even_last</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">pair_sum_last</span> <span class="o">&gt;=</span> <span class="mf">0.0</span><span class="p">),</span> <span class="n">rho_hat_even_last</span><span class="p">,</span> <span class="mf">0.0</span>
+    <span class="p">)</span>
 
     <span class="c1"># compute effective sample size</span>
     <span class="n">ess_raw</span> <span class="o">=</span> <span class="n">num_chains</span> <span class="o">*</span> <span class="n">num_samples</span>
-    <span class="n">tau_hat</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="o">-</span><span class="mf">1.0</span>
-        <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">rho_hat_even_final</span> <span class="o">+</span> <span class="n">rho_hat_odd_final</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="o">-</span> <span class="n">rho_hat_even_final</span><span class="p">[</span><span class="n">index_tuple</span><span class="p">]</span>
-    <span class="p">)</span>
+    <span class="n">tau_hat</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">positive_sum</span> <span class="o">+</span> <span class="n">improved</span>
 
     <span class="n">tau_hat</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">tau_hat</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">ess_raw</span><span class="p">))</span>
     <span class="n">ess</span> <span class="o">=</span> <span class="n">ess_raw</span> <span class="o">/</span> <span class="n">tau_hat</span>
@@ -864,7 +849,8 @@
 <span class="sd">    ----------</span>
 <span class="sd">    x</span>
 <span class="sd">        Array of shape ``(nchains, nsamples, …)``.  If ``nsamples`` is odd the</span>
-<span class="sd">        last sample is dropped so both halves are equal-length.</span>
+<span class="sd">        middle sample is dropped so both halves are equal-length, as in Stan</span>
+<span class="sd">        and ArviZ.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -872,10 +858,8 @@
 <span class="sd">    """</span>
     <span class="n">nsamples</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">half</span> <span class="o">=</span> <span class="n">nsamples</span> <span class="o">//</span> <span class="mi">2</span>
-    <span class="c1"># Trim to even length so both halves are the same size.</span>
-    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="p">:</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">half</span><span class="p">]</span>
     <span class="n">first</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="p">:</span><span class="n">half</span><span class="p">]</span>
-    <span class="n">second</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="n">half</span><span class="p">:]</span>
+    <span class="n">second</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="n">nsamples</span> <span class="o">-</span> <span class="n">half</span> <span class="p">:]</span>
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">first</span><span class="p">,</span> <span class="n">second</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
 
@@ -966,7 +950,7 @@
 <span class="sd">    The reduction runs over the chain and draw axes only, so a component</span>
 <span class="sd">    holding a missing observation never poisons an independent finite one.</span>
 
-<span class="sd">    ``x`` here is the *split* array, so with an odd number of draws the last</span>
+<span class="sd">    ``x`` here is the *split* array, so with an odd number of draws the middle</span>
 <span class="sd">    draw has already been trimmed by :func:`_split_chains` and a ``NaN``</span>
 <span class="sd">    sitting only in that draw is not seen.  The contract is therefore "a</span>
 <span class="sd">    ``NaN`` among the draws the diagnostic actually uses", which is narrower</span>
@@ -1161,20 +1145,20 @@
     <span class="n">x</span> <span class="o">=</span> <span class="n">_to_standard_axes</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">input_array</span><span class="p">),</span> <span class="n">chain_axis</span><span class="p">,</span> <span class="n">sample_axis</span><span class="p">)</span>
     <span class="n">x_split</span> <span class="o">=</span> <span class="n">_split_chains</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 
-    <span class="n">nchains</span><span class="p">,</span> <span class="n">nsamples</span> <span class="o">=</span> <span class="n">x_split</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x_split</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-    <span class="n">extra_shape</span> <span class="o">=</span> <span class="n">x_split</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
+    <span class="n">extra_shape</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
 
     <span class="c1"># Tail quantiles derived from the central-interval probability.</span>
     <span class="n">q_low</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">prob</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span>
     <span class="n">q_high</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">prob</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span>
 
-    <span class="c1"># Pooled quantiles over all chains and draws, per trailing dimension.</span>
-    <span class="n">x_flat</span> <span class="o">=</span> <span class="n">x_split</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">nchains</span> <span class="o">*</span> <span class="n">nsamples</span><span class="p">,</span> <span class="o">*</span><span class="n">extra_shape</span><span class="p">)</span>
+    <span class="c1"># Pooled quantiles over all chains and draws (before splitting, so an odd</span>
+    <span class="c1"># middle draw still counts, as in ArviZ), per trailing dimension.</span>
+    <span class="n">x_flat</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">*</span><span class="n">extra_shape</span><span class="p">)</span>
     <span class="n">q_lo</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">x_flat</span><span class="p">,</span> <span class="n">q_low</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">q_hi</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">x_flat</span><span class="p">,</span> <span class="n">q_high</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
     <span class="c1"># Indicator series (float for ESS computation).</span>
-    <span class="c1"># Broadcast q_lo/q_hi over the (nchains, nsamples) leading axes.</span>
+    <span class="c1"># Broadcast q_lo/q_hi over the (chain, draw) leading axes.</span>
     <span class="n">I_lower</span> <span class="o">=</span> <span class="p">(</span><span class="n">x_split</span> <span class="o">&lt;=</span> <span class="n">q_lo</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
     <span class="n">I_upper</span> <span class="o">=</span> <span class="p">(</span><span class="n">x_split</span> <span class="o">&gt;=</span> <span class="n">q_hi</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
 
