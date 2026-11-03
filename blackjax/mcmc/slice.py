@@ -325,7 +325,10 @@ def _univariate_slice(
     ``t``.
     """
     level_key, interval_key, shrink_key = random.split(rng_key, 3)
-    level = current_state.logdensity + jnp.log(random.uniform(level_key))
+    # A draw of exactly zero would put the level at -inf, so the slice would
+    # be the whole line.
+    u = random.uniform(level_key, minval=jnp.finfo(jnp.float32).tiny)
+    level = current_state.logdensity + jnp.log(u)
 
     # ``slice_fn(t) -> (state, is_valid)`` is the slice function: it builds the
     # candidate state at coordinate ``t`` (computing whatever it records) and

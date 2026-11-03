@@ -282,6 +282,7 @@ docs = [
     { name = "arviz" },
     { name = "flax" },
     { name = "funsor" },
+    { name = "gmmx" },
     { name = "ipython" },
     { name = "jupytext" },
     { name = "myst-nb" },
@@ -333,6 +334,7 @@ docs = [
     { name = "arviz" },
     { name = "flax" },
     { name = "funsor", specifier = ">=0.4.7" },
+    { name = "gmmx" },
     { name = "ipython" },
     { name = "jupytext" },
     { name = "myst-nb", specifier = ">=1.0.0" },
@@ -892,6 +894,19 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/91/f6/e73969782a2ecec280f8a176f2476149dd9dba69d5f8779ec6108a7721e6/gast-0.7.0.tar.gz", hash = "sha256:0bb14cd1b806722e91ddbab6fb86bba148c22b40e7ff11e248974e04c8adfdae", size = 33630, upload-time = "2025-11-29T15:30:05.266Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/1d/33/f1c6a276de27b7d7339a34749cc33fa87f077f921969c47185d34a887ae2/gast-0.7.0-py3-none-any.whl", hash = "sha256:99cbf1365633a74099f69c59bd650476b96baa5ef196fec88032b00b31ba36f7", size = 22966, upload-time = "2025-11-29T15:30:03.983Z" },
+]
+
+[[package]]
+name = "gmmx"
+version = "0.7"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "jax" },
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/8e/6b/6023c93fe6b065bc1a397ec891f32557b7cd193dccce8431251188b89ce0/gmmx-0.7.tar.gz", hash = "sha256:4bf8274419cd84727155a043f2bf53307b30aff31c9d4dc51b5b41b65d7bec4d", size = 16841, upload-time = "2025-07-07T18:31:24.96Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cb/44/5a76e0baefa5dd504ae60f6ec0803625f5c07427b65d4782dec2d294ef9e/gmmx-0.7-py3-none-any.whl", hash = "sha256:222a2947ac3bc2f8139e261919792f642b19e615ee13e512c703fc57ba92ad70", size = 13013, upload-time = "2025-07-07T18:31:24.17Z" },
 ]
 
 [[package]]

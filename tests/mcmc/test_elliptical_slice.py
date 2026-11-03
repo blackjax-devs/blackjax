@@ -161,6 +161,20 @@ class EllipSliceKernelTest(BlackJAXTest):
         _, info = kernel(self.next_key(), state, std_normal_logdensity)
         assert int(info.subiter) >= 1
 
+    def test_zero_level_draw(self):
+        """The level's uniform draw is exactly zero for this key."""
+
+        def loglikelihood_fn(x):
+            return -0.5 * jnp.sum(((x - 1.0) / 0.01) ** 2)
+
+        key = jax.random.key(16438558)
+        self.assertEqual(float(jax.random.uniform(jax.random.split(key, 4)[2])), 0.0)
+
+        state = init(jnp.ones(2), loglikelihood_fn)
+        kernel = build_kernel(jnp.ones(2), jnp.zeros(2))
+        new_state, _ = kernel(key, state, loglikelihood_fn)
+        self.assertGreater(float(new_state.logdensity), float(state.logdensity) - 88.0)
+
     def test_accepts_for_flat_likelihood(self):
         """With a flat likelihood (constant), the chain always accepts at theta=0 is not guaranteed,
         but the position is always inside the support and logdensity is finite."""
