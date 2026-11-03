@@ -523,7 +523,7 @@ def pathfinder_adaptation(
 
     def _run_multichain_single_path(rng_key, position, num_steps):
         """Single Pathfinder fit; broadcast init and IMM to num_chains; vmap DA."""
-        pf_key, rng_key = jax.random.split(rng_key)
+        pf_key, sample_key, rng_key = jax.random.split(rng_key, 3)
         pathfinder_state, _ = vi.pathfinder.approximate(pf_key, logdensity_fn, position)
         # Derive the L-BFGS-based IMM from the single Pathfinder fit.
         # lbfgs_inverse_hessian_formula_1 returns a dense (d, d) matrix.
@@ -534,7 +534,7 @@ def pathfinder_adaptation(
         )  # (d, d)
 
         # Sample num_chains init positions from the single Pathfinder fit.
-        sample_keys = jax.random.split(rng_key, num_chains)
+        sample_keys = jax.random.split(sample_key, num_chains)
 
         @jax.vmap
         def sample_one(key):
