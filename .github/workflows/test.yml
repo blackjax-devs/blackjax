@@ -37,6 +37,9 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - style
+    permissions:
+      contents: read
+      id-token: write  # lets codecov-action request an OIDC token for the upload
     strategy:
       matrix:
         python-version: ['3.13', '3.14']
@@ -52,8 +55,9 @@ jobs:
       run: |
         uv run pytest -n 2 -vv --benchmark-disable --cov=blackjax --cov-report=xml --cov-report=term tests
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v7
       with:
+        use_oidc: true
         env_vars: OS,PYTHON
         name: codecov-umbrella
         fail_ci_if_error: false

@@ -21,6 +21,6 @@ comment:
   branches: null
 
 ignore:
-  - */_version.py
+  - "*/_version.py"
   - setup.py
   - versioneer.py
