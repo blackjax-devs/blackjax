@@ -325,7 +325,7 @@ def _univariate_slice(
     ``t``.
     """
     level_key, interval_key, shrink_key = random.split(rng_key, 3)
-    level = current_state.logdensity + jnp.log(random.uniform(level_key))
+    level = current_state.logdensity - random.exponential(level_key)
 
     # ``slice_fn(t) -> (state, is_valid)`` is the slice function: it builds the
     # candidate state at coordinate ``t`` (computing whatever it records) and
