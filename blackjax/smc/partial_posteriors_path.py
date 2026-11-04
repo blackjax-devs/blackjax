@@ -91,8 +91,14 @@ def build_kernel(
         def log_weights_fn(x):
             return logposterior_fn(x) - previous_logposterior_fn(x)
 
+        # Mutation precedes reweighting, so preserve the previous target.
         state, info = delegate(
-            key, state, num_mcmc_steps, mcmc_parameters, logposterior_fn, log_weights_fn
+            key,
+            state,
+            num_mcmc_steps,
+            mcmc_parameters,
+            previous_logposterior_fn,
+            log_weights_fn,
         )
 
         return (
