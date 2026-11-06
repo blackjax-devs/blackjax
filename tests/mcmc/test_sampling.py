@@ -1458,10 +1458,9 @@ class ConstrainedNormal(chex.TestCase):
         inference_algorithm = blackjax.ehr(
             self.constrained_normal_logprob,
             constraint,
-            self.A.shape[-1],
-            grad,
-            mass_matrix_fn,
             step_size=0.2,
+            drift_fn=grad,
+            mass_matrix_fn=mass_matrix_fn,
         )
         initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
         self.constrained_normal_test_case(
@@ -1604,10 +1603,9 @@ class ConstrainedNormalArrayTree(chex.TestCase):
         inference_algorithm = blackjax.ehr(
             self.logdensity_fn,
             constraint,
-            dim=4,  # 2 (linear) + 2 (quad)
-            vector_field_fn=grad_fn,
-            mass_matrix_fn=mass_matrix_fn,
             step_size=0.1,
+            drift_fn=grad_fn,
+            mass_matrix_fn=mass_matrix_fn,
         )
         self._run_and_check(inference_algorithm, num_steps=2000, burnin=200)
 

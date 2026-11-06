@@ -89,7 +89,7 @@ def build_kernel():
     def transition_energy(state, new_state, step_size):
         """Transition energy to go from `state` to `new_state`."""
 
-        theta = jax.tree_util.tree_map(
+        theta = jax.tree.map(
             lambda x, y, gy: x - y - step_size * gy,
             state.position,
             new_state.position,
@@ -102,7 +102,7 @@ def build_kernel():
         )
 
         theta_dot = jax.tree_util.tree_reduce(
-            operator.add, jax.tree_util.tree_map(lambda t: jnp.sum(t * t), theta_scaled)
+            operator.add, jax.tree.map(lambda t: jnp.sum(t * t), theta_scaled)
         )
 
         log_det_H = logdet(new_state.metric)

@@ -99,7 +99,7 @@ def overdamped_manifold_langevin(logdensity_grad_fn, mass_matrix_fn):
 
         noise = sqrt_solve(metric, noise)
 
-        position = jax.tree_util.tree_map(
+        position = jax.tree.map(
             lambda p, g, n: p + step_size * g + jnp.sqrt(2 * step_size) * n,
             position,
             grad,

@@ -102,7 +102,7 @@ def build_kernel():
     # computes -log p(y)q(x|y) where x is `state` and y is `new_state`
     def transition_energy(state, new_state, step_size):
         """Transition energy to go from `state` to `new_state`"""
-        theta = jax.tree_util.tree_map(
+        theta = jax.tree.map(
             lambda x, y: x - y,
             state.position,
             new_state.position,
@@ -113,8 +113,8 @@ def build_kernel():
             theta,
         )
 
-        theta_dot = jax.tree_util.tree_reduce(
-            operator.add, jax.tree_util.tree_map(lambda t: jnp.sum(t * t), theta_scaled)
+        theta_dot = jax.tree.reduce(
+            operator.add, jax.tree.map(lambda t: jnp.sum(t * t), theta_scaled)
         )
 
         log_det_H = logdet(new_state.metric)
@@ -139,7 +139,7 @@ def build_kernel():
         noise = generate_gaussian_noise(rng_key, position)
         noise = sqrt_solve(metric, noise)
 
-        position = jax.tree_util.tree_map(
+        position = jax.tree.map(
             lambda p, n: p + jnp.sqrt(2 * step_size) * n,
             position,
             noise,
