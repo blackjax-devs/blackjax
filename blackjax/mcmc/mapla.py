@@ -30,6 +30,7 @@ def as_top_level_api(
     logdensity_fn: Callable,
     constraint,
     step_size: float,
+    preconditioner: barrier_hessian,
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the MAPLA kernel.
 
@@ -43,6 +44,8 @@ def as_top_level_api(
         the feasible region.
     step_size
         The value to use for the step size in the symplectic integrator.
+    preconditioner
+        The inverse of the local preconditioner. Defaults to ``barrier_hessian``.
 
     Returns
     -------
@@ -56,7 +59,7 @@ def as_top_level_api(
     """
     mass_matrix_fn = lambda position: DiffusionMetric(
         *_format_covariance(
-            barrier_hessian(constraint, ravel_pytree(position)[0]), is_inv=False
+            preconditioner(constraint, ravel_pytree(position)[0]), is_inv=False
         )[:2]
     )
     kernel = build_kernel()
