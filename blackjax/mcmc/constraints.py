@@ -241,12 +241,12 @@ def _newton_intersect(
     Only the JVP of fn along u is required per step (forward-mode AD).
     """
     cx, gcx_u = jax.jvp(fn, (x,), (u,))
-    s_init = -cx / gcx_u
+    s_init = jnp.atleast_1d(-cx / gcx_u)
 
     def eval_at_s_vec(s_vec):
         def eval_one(i, s_i):
             c_val, dcu_val = jax.jvp(fn, (x + s_i * u,), (u,))
-            return c_val[i], dcu_val[i]
+            return jnp.atleast_1d(c_val)[i], jnp.atleast_1d(dcu_val)[i]
 
         return jax.vmap(eval_one)(jnp.arange(s_vec.shape[0]), s_vec)
 

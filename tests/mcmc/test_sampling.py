@@ -23,8 +23,10 @@ from blackjax.adaptation.laps import laps as run_laps
 from blackjax.mcmc.adjusted_mclmc import rescale
 from blackjax.mcmc.constraints import (
     ConstraintDict,
+    GeneralConstraint,
     LinearConstraint,
     barrier_hessian,
+    constrain,
     ellipsoid_constraint,
 )
 from blackjax.mcmc.ghmc import _metric_from_momentum_inverse_scale
@@ -1463,6 +1465,47 @@ class ConstrainedNormal(chex.TestCase):
         self.constrained_normal_test_case(
             inference_algorithm, self.key, initial_state, 4500, 1_000
         )
+
+
+class GeneralConstraintNormal(chex.TestCase):
+    """Test lhr with a GeneralConstraint using _newton_intersect.
+
+    The feasible region is ``{x : exp(x[0]) - x[1] <= 0}``, i.e. above the
+    exponential curve.  The target is a standard normal truncated to this region.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.key = jax.random.key(42)
+        self.constraint = GeneralConstraint(lambda x: jnp.exp(x[0]) - x[1])
+        self.logp = constrain(
+            lambda x: -0.5 * jnp.dot(x, x), self.constraint
+        )
+        # Initial point strictly inside the feasible region: exp(-2) ≈ 0.135 < 1.0
+        self.x0 = jnp.array([-2.0, 1.0])
+
+    @chex.all_variants(with_pmap=False)
+    def test_lhr_general_constraint(self):
+        """lhr samples stay in the feasible region (exp(x0) <= x1)."""
+        inference_algorithm = blackjax.lhr(self.logp, self.constraint, 1e0)
+        initial_state = inference_algorithm.init(self.x0)
+
+        num_steps = 2000
+        burnin = 200
+
+        _, (states, _) = self.variant(
+            functools.partial(
+                run_inference_algorithm,
+                inference_algorithm=inference_algorithm,
+                num_steps=num_steps,
+            )
+        )(rng_key=self.key, initial_state=initial_state)
+
+        samples = states.position[burnin:]
+        # Every sample must satisfy the constraint: exp(x[0]) <= x[1]
+        assert (
+            jnp.exp(samples[:, 0]) <= samples[:, 1] + 1e-5
+        ).all(), "GeneralConstraint violated: found sample with exp(x0) > x1"
 
 
 class ConstrainedNormalArrayTree(chex.TestCase):
