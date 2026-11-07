@@ -568,7 +568,7 @@ def _scale(
     *,
     inv: bool,
     trans: bool,
-) -> ArrayLikeTree:
+) -> ArrayTree:
     """Scale elements by the mass matrix.
 
     Parameters

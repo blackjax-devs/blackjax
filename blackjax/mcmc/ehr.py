@@ -35,7 +35,7 @@ from blackjax.mcmc.diffusions import (
 )
 from blackjax.mcmc.metrics import _format_covariance
 from blackjax.mcmc.step_distributions import normchi
-from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_gaussian_noise
 
 __all__ = [
@@ -64,10 +64,10 @@ class EHRState(NamedTuple):
     """
 
     position: ArrayTree
-    logdensity: float
+    logdensity: Array
     logdensity_grad: ArrayTree
     metric: DiffusionMetric
-    clip: float
+    clip: Array
 
 
 class EHRInfo(NamedTuple):
@@ -114,7 +114,9 @@ def init(
         grad_clip * intersection,
     )
 
-    return EHRState(position, logdensity, logdensity_grad, metric, clip)
+    return EHRState(
+        jax.tree.map(lambda x: x, position), logdensity, logdensity_grad, metric, clip
+    )
 
 
 def build_kernel(constraint, step_dist=None, eps: float = 1e-8, max_iter: int = 100):

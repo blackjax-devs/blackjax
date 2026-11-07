@@ -25,7 +25,7 @@ import blackjax.mcmc.proposal as proposal
 from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.diffusions import DiffusionMetric, logdet, solve, sqrt_multiply
 from blackjax.mcmc.metrics import _format_covariance
-from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["SMMALAState", "SMMALAInfo", "init", "build_kernel", "as_top_level_api"]
 
@@ -41,7 +41,7 @@ class SMMALAState(NamedTuple):
     """
 
     position: ArrayTree
-    logdensity: float
+    logdensity: Array
     logdensity_grad: ArrayTree
     metric: DiffusionMetric
 
@@ -73,7 +73,7 @@ def init(
 
     grad = solve(metric, grad)  # natural gradient
 
-    return SMMALAState(position, logdensity, grad, metric)
+    return SMMALAState(jax.tree.map(lambda x: x, position), logdensity, grad, metric)
 
 
 def build_kernel():

@@ -199,7 +199,7 @@ def ellipsoid_constraint(
 
 def _linear_intersect(
     A: Array, b: Array, x: Array, u: Array, eps: float = 1e-8
-) -> float:
+) -> Array:
     """Closed-form intersection for  Ax ≤ b  along the ray x + su."""
     Au = A @ u
     s = (b - A @ x) / Au
@@ -210,7 +210,7 @@ def _linear_intersect(
 
 def _quadratic_intersect(
     constraint: QuadraticConstraint, x: Array, u: Array, eps: float = 1e-8
-) -> float:
+) -> Array:
     """Exact one-step intersection for a batch of quadratic constraints.
 
     For each constraint i the ray gives the quadratic
@@ -234,7 +234,7 @@ def _quadratic_intersect(
 
 def _newton_intersect(
     fn: Callable, x: Array, u: Array, eps: float = 1e-8, max_iter: int = 100
-) -> float:
+) -> Array:
     """Newton's method intersection for a general constraint  fn: R^n → R^m.
 
     Each constraint i maintains an independent scalar iterate s_i.

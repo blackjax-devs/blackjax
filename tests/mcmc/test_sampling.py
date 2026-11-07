@@ -11,8 +11,9 @@ import numpy as np
 import optax
 from absl.testing import absltest, parameterized
 from jax.flatten_util import ravel_pytree
+from jax.flatten_util import ravel_pytree as _ravel
 
-# import blackjax
+import blackjax
 import blackjax.diagnostics as diagnostics
 import blackjax.mcmc.metrics as metrics
 import blackjax.mcmc.random_walk
@@ -20,6 +21,12 @@ from blackjax import mgrad_gaussian
 from blackjax.adaptation.base import get_filter_adapt_info_fn, return_all_adapt_info
 from blackjax.adaptation.laps import laps as run_laps
 from blackjax.mcmc.adjusted_mclmc import rescale
+from blackjax.mcmc.constraints import (
+    ConstraintDict,
+    LinearConstraint,
+    barrier_hessian,
+    ellipsoid_constraint,
+)
 from blackjax.mcmc.ghmc import _metric_from_momentum_inverse_scale
 from blackjax.mcmc.integrators import isokinetic_mclachlan
 from blackjax.util import run_inference_algorithm
@@ -1384,8 +1391,6 @@ class ConstrainedNormal(chex.TestCase):
 
     @chex.all_variants(with_pmap=False)
     def test_dikin(self):
-        from blackjax.mcmc.constraints import LinearConstraint
-
         inference_algorithm = blackjax.dikin(
             self.constrained_normal_logprob,
             LinearConstraint(A=self.A, b=self.b),
@@ -1398,8 +1403,6 @@ class ConstrainedNormal(chex.TestCase):
 
     @chex.all_variants(with_pmap=False)
     def test_vaidya(self):
-        from blackjax.mcmc.constraints import LinearConstraint
-
         inference_algorithm = blackjax.vaidya(
             self.constrained_normal_logprob,
             LinearConstraint(A=self.A, b=self.b),
@@ -1412,8 +1415,6 @@ class ConstrainedNormal(chex.TestCase):
 
     @chex.all_variants(with_pmap=False)
     def test_mapla(self):
-        from blackjax.mcmc.constraints import LinearConstraint
-
         inference_algorithm = blackjax.mapla(
             self.constrained_normal_logprob,
             LinearConstraint(A=self.A, b=self.b),
@@ -1448,8 +1449,6 @@ class ConstrainedNormal(chex.TestCase):
 
     @chex.all_variants(with_pmap=False)
     def test_ehr(self):
-        from blackjax.mcmc.constraints import LinearConstraint
-
         grad = jax.grad(self.constrained_normal_logprob)
         mass_matrix_fn = lambda x: jax.numpy.array([[1.0, 0.0], [0.0, 1.0]])
         constraint = LinearConstraint(A=self.A, b=self.b)
@@ -1484,8 +1483,6 @@ class ConstrainedNormalArrayTree(chex.TestCase):
         self.b_lin = jnp.array([1.0, 0.0, 0.0])
 
         # Quadratic constraint for the 'quad' leaf: ||x||² − 0.25 ≤ 0  (ball)
-        from blackjax.mcmc.constraints import ellipsoid_constraint
-
         self.ellipsoid = ellipsoid_constraint(jnp.eye(2), jnp.zeros(2), radius=0.5)
 
         # Example position (used by ConstraintDict to compute leaf slices)
@@ -1501,8 +1498,6 @@ class ConstrainedNormalArrayTree(chex.TestCase):
         }
 
     def _make_constraint_dict(self):
-        from blackjax.mcmc.constraints import ConstraintDict, LinearConstraint
-
         return ConstraintDict(
             {
                 "linear": LinearConstraint(A=self.A_lin, b=self.b_lin),
@@ -1551,8 +1546,6 @@ class ConstrainedNormalArrayTree(chex.TestCase):
 
     @chex.all_variants(with_pmap=False)
     def test_dikin_arraytree(self):
-        import blackjax
-
         inference_algorithm = blackjax.dikin(
             self.logdensity_fn,
             self._make_constraint_dict(),
@@ -1562,8 +1555,6 @@ class ConstrainedNormalArrayTree(chex.TestCase):
 
     @chex.all_variants(with_pmap=False)
     def test_vaidya_arraytree(self):
-        import blackjax
-
         inference_algorithm = blackjax.vaidya(
             self.logdensity_fn,
             self._make_constraint_dict(),
@@ -1573,8 +1564,6 @@ class ConstrainedNormalArrayTree(chex.TestCase):
 
     @chex.all_variants(with_pmap=False)
     def test_mapla_arraytree(self):
-        import blackjax
-
         inference_algorithm = blackjax.mapla(
             self.logdensity_fn,
             self._make_constraint_dict(),
@@ -1584,16 +1573,10 @@ class ConstrainedNormalArrayTree(chex.TestCase):
 
     @chex.all_variants(with_pmap=False)
     def test_ehr_arraytree(self):
-        import blackjax
-
         constraint = self._make_constraint_dict()
         grad_fn = jax.grad(self.logdensity_fn)
 
         # mass_matrix_fn: barrier Hessian of ConstraintDict at flat position
-        from jax.flatten_util import ravel_pytree as _ravel
-
-        from blackjax.mcmc.constraints import barrier_hessian
-
         def mass_matrix_fn(position):
             flat, _ = _ravel(position)
             return barrier_hessian(constraint, flat)

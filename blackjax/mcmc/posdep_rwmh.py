@@ -24,7 +24,7 @@ from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc import proposal
 from blackjax.mcmc.diffusions import DiffusionMetric, logdet, sqrt_multiply, sqrt_solve
 from blackjax.mcmc.metrics import _format_covariance
-from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_gaussian_noise
 
 __all__ = [
@@ -49,7 +49,7 @@ class PosDepRWMHState(NamedTuple):
     """
 
     position: ArrayTree
-    logdensity: float
+    logdensity: Array
     metric: DiffusionMetric
 
 
@@ -88,7 +88,11 @@ def init(
         position when drawing a value for the momentum and computing the kinetic
         energy.
     """
-    return PosDepRWMHState(position, logdensity_fn(position), mass_matrix_fn(position))
+    return PosDepRWMHState(
+        jax.tree.map(lambda x: x, position),
+        logdensity_fn(position),
+        mass_matrix_fn(position),
+    )
 
 
 def build_kernel():
