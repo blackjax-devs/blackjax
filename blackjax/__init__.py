@@ -29,10 +29,10 @@ from .mcmc import laplace_dynamic_hmc as _laplace_dynamic_hmc
 from .mcmc import laplace_hmc as _laplace_hmc
 from .mcmc import mala as _mala
 from .mcmc import mapla as _mapla
-from .mcmc import posdep_rwmh as _posdep_rwmh  # dev
 from .mcmc import marginal_latent_gaussian, periodic_orbital, random_walk
 from .mcmc import mclmc as _mclmc
 from .mcmc import nuts as _nuts
+from .mcmc import posdep_rwmh as _posdep_rwmh  # dev
 from .mcmc import rmhmc as _rmhmc
 from .mcmc import slice as _slice
 from .mcmc import smmala as _smmala

@@ -13,7 +13,8 @@
 # limitations under the License.
 """Univariate step distribution for (elliptical) Hit-&-Run algorithms."""
 
-from typing import Callable, NamedTuple
+from collections.abc import Callable
+from typing import NamedTuple
 
 import jax.numpy as jnp
 import jax.scipy.stats as jstats

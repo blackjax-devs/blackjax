@@ -38,7 +38,8 @@ if the custom type stores the oracle as an attribute::
     )
 """
 
-from typing import Callable, NamedTuple
+from collections.abc import Callable
+from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp

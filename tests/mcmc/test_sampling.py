@@ -1529,13 +1529,13 @@ class ConstrainedNormalArrayTree(chex.TestCase):
         """Assert all samples satisfy both constraints."""
         x_lin_samples = samples["linear"]  # (T, 2)
         x_quad_samples = samples["quad"]  # (T, 2)
-        assert (
-            self.A_lin @ x_lin_samples.T < self.b_lin.reshape(-1, 1)
-        ).all(), "LinearConstraint violated in arraytree sampler test"
+        assert (self.A_lin @ x_lin_samples.T < self.b_lin.reshape(-1, 1)).all(), (
+            "LinearConstraint violated in arraytree sampler test"
+        )
         norms_sq = (x_quad_samples**2).sum(axis=-1)
-        assert (
-            norms_sq < 0.25
-        ).all(), "Ellipsoid constraint violated in arraytree sampler test"
+        assert (norms_sq < 0.25).all(), (
+            "Ellipsoid constraint violated in arraytree sampler test"
+        )
 
     def _run_and_check(self, inference_algorithm, num_steps=5000, burnin=500):
         initial_state = inference_algorithm.init(self.initial_pos)

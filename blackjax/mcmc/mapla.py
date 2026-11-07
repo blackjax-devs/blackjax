@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for Metropolis-adjusted Preconditioned Langevin Algorithm (MAPLA)."""
-from typing import Callable
+
+from collections.abc import Callable
 
 from jax.flatten_util import ravel_pytree
 
