@@ -1478,9 +1478,7 @@ class GeneralConstraintNormal(chex.TestCase):
         super().setUp()
         self.key = jax.random.key(42)
         self.constraint = GeneralConstraint(lambda x: jnp.exp(x[0]) - x[1])
-        self.logp = constrain(
-            lambda x: -0.5 * jnp.dot(x, x), self.constraint
-        )
+        self.logp = constrain(lambda x: -0.5 * jnp.dot(x, x), self.constraint)
         # Initial point strictly inside the feasible region: exp(-2) ≈ 0.135 < 1.0
         self.x0 = jnp.array([-2.0, 1.0])
 
@@ -1503,9 +1501,9 @@ class GeneralConstraintNormal(chex.TestCase):
 
         samples = states.position[burnin:]
         # Every sample must satisfy the constraint: exp(x[0]) <= x[1]
-        assert (
-            jnp.exp(samples[:, 0]) <= samples[:, 1] + 1e-5
-        ).all(), "GeneralConstraint violated: found sample with exp(x0) > x1"
+        assert (jnp.exp(samples[:, 0]) <= samples[:, 1] + 1e-5).all(), (
+            "GeneralConstraint violated: found sample with exp(x0) > x1"
+        )
 
 
 class ConstrainedNormalArrayTree(chex.TestCase):
