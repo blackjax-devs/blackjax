@@ -420,31 +420,49 @@ def as_top_level_api(
     return SamplingAlgorithm(init_fn, step_fn)
 
 
-def hr_as_top_level_api(logdensity_fn, constraint, step_size, eps=1e-8, max_iter=100): 
+def hr_as_top_level_api(logdensity_fn, constraint, step_size, eps=1e-8, max_iter=100):
     return as_top_level_api(
-        logdensity_fn, constraint, step_size, 
-        eps=eps, max_iter=max_iter,
+        logdensity_fn,
+        constraint,
+        step_size,
+        eps=eps,
+        max_iter=max_iter,
     )
 
-def lhr_as_top_level_api(logdensity_fn, constraint, step_size, eps=1e-8, max_iter=100): 
+
+def lhr_as_top_level_api(logdensity_fn, constraint, step_size, eps=1e-8, max_iter=100):
     return as_top_level_api(
-        logdensity_fn, constraint, step_size, 
-        drift_fn=jax.grad(logdensity_fn), 
-        eps=eps, max_iter=max_iter,
+        logdensity_fn,
+        constraint,
+        step_size,
+        drift_fn=jax.grad(logdensity_fn),
+        eps=eps,
+        max_iter=max_iter,
     )
 
-def smhr_as_top_level_api(logdensity_fn, constraint, step_size, mass_matrix_fn, eps=1e-8, max_iter=100): 
+
+def smhr_as_top_level_api(
+    logdensity_fn, constraint, step_size, mass_matrix_fn, eps=1e-8, max_iter=100
+):
     return as_top_level_api(
-        logdensity_fn, constraint, step_size, 
+        logdensity_fn,
+        constraint,
+        step_size,
         mass_matrix_fn=mass_matrix_fn,
-        eps=eps, max_iter=max_iter,
+        eps=eps,
+        max_iter=max_iter,
     )
 
-def smlhr_as_top_level_api(logdensity_fn, constraint, step_size, mass_matrix_fn, eps=1e-8, max_iter=100): 
+
+def smlhr_as_top_level_api(
+    logdensity_fn, constraint, step_size, mass_matrix_fn, eps=1e-8, max_iter=100
+):
     return as_top_level_api(
-        logdensity_fn, constraint, step_size, 
-        drift_fn=jax.grad(logdensity_fn), 
+        logdensity_fn,
+        constraint,
+        step_size,
+        drift_fn=jax.grad(logdensity_fn),
         mass_matrix_fn=mass_matrix_fn,
-        eps=eps, max_iter=max_iter,
+        eps=eps,
+        max_iter=max_iter,
     )
-

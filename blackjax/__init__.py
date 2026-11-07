@@ -22,12 +22,6 @@ from .mcmc import barker as _barker
 from .mcmc import dikin as _dikin
 from .mcmc import dynamic_hmc as _dynamic_hmc
 from .mcmc import ehr as _ehr
-from .mcmc.ehr import (
-    hr_as_top_level_api,
-    lhr_as_top_level_api,
-    smhr_as_top_level_api,
-    smlhr_as_top_level_api,
-)
 from .mcmc import elliptical_slice as _elliptical_slice
 from .mcmc import ghmc as _ghmc
 from .mcmc import hmc as _hmc
@@ -47,6 +41,12 @@ from .mcmc import smmala as _smmala
 from .mcmc import vaidya as _vaidya  # dev
 from .mcmc.composed import step_size as _gist_step_size
 from .mcmc.composed import trajectory_length as _gist_trajectory_length
+from .mcmc.ehr import (
+    hr_as_top_level_api,
+    lhr_as_top_level_api,
+    smhr_as_top_level_api,
+    smlhr_as_top_level_api,
+)
 from .mcmc.random_walk import additive_step_random_walk as _additive_step_random_walk
 from .mcmc.random_walk import (
     irmh_as_top_level_api,
@@ -146,18 +146,10 @@ additive_step_random_walk.register_factory("normal_random_walk", normal_random_w
 dikin = generate_top_level_api_from(_dikin)
 vaidya = generate_top_level_api_from(_vaidya)
 ehr = generate_top_level_api_from(_ehr)
-hr = GenerateSamplingAPI(
-    hr_as_top_level_api, _ehr.init, _ehr.build_kernel
-)
-lhr = GenerateSamplingAPI(
-    lhr_as_top_level_api, _ehr.init, _ehr.build_kernel
-)
-smhr = GenerateSamplingAPI(
-    smhr_as_top_level_api, _ehr.init, _ehr.build_kernel
-)
-smlhr = GenerateSamplingAPI(
-    smlhr_as_top_level_api, _ehr.init, _ehr.build_kernel
-)
+hr = GenerateSamplingAPI(hr_as_top_level_api, _ehr.init, _ehr.build_kernel)
+lhr = GenerateSamplingAPI(lhr_as_top_level_api, _ehr.init, _ehr.build_kernel)
+smhr = GenerateSamplingAPI(smhr_as_top_level_api, _ehr.init, _ehr.build_kernel)
+smlhr = GenerateSamplingAPI(smlhr_as_top_level_api, _ehr.init, _ehr.build_kernel)
 mclmc = generate_top_level_api_from(_mclmc)
 adjusted_mclmc_dynamic = generate_top_level_api_from(_adjusted_mclmc_dynamic)
 adjusted_mclmc = generate_top_level_api_from(_adjusted_mclmc)

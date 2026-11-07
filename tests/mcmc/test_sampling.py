@@ -1487,9 +1487,8 @@ class ConstrainedNormalArrayTree(chex.TestCase):
 
         # Quadratic constraint for the 'quad' leaf: ||x||² − 0.25 ≤ 0  (ball)
         from blackjax.mcmc.constraints import ellipsoid_constraint
-        self.ellipsoid = ellipsoid_constraint(
-            jnp.eye(2), jnp.zeros(2), radius=0.5
-        )
+
+        self.ellipsoid = ellipsoid_constraint(jnp.eye(2), jnp.zeros(2), radius=0.5)
 
         # Example position (used by ConstraintDict to compute leaf slices)
         self.example_pos = {
@@ -1518,7 +1517,7 @@ class ConstrainedNormalArrayTree(chex.TestCase):
         x_lin = position["linear"]
         x_quad = position["quad"]
         in_lin = (self.A_lin @ x_lin < self.b_lin).all()
-        in_quad = (x_quad @ x_quad < 0.25)
+        in_quad = x_quad @ x_quad < 0.25
         return jax.lax.cond(
             in_lin & in_quad,
             lambda: (
@@ -1530,15 +1529,15 @@ class ConstrainedNormalArrayTree(chex.TestCase):
 
     def _check_feasibility(self, samples):
         """Assert all samples satisfy both constraints."""
-        x_lin_samples = samples["linear"]   # (T, 2)
-        x_quad_samples = samples["quad"]    # (T, 2)
-        assert (self.A_lin @ x_lin_samples.T < self.b_lin.reshape(-1, 1)).all(), (
-            "LinearConstraint violated in arraytree sampler test"
-        )
-        norms_sq = (x_quad_samples ** 2).sum(axis=-1)
-        assert (norms_sq < 0.25).all(), (
-            "Ellipsoid constraint violated in arraytree sampler test"
-        )
+        x_lin_samples = samples["linear"]  # (T, 2)
+        x_quad_samples = samples["quad"]  # (T, 2)
+        assert (
+            self.A_lin @ x_lin_samples.T < self.b_lin.reshape(-1, 1)
+        ).all(), "LinearConstraint violated in arraytree sampler test"
+        norms_sq = (x_quad_samples**2).sum(axis=-1)
+        assert (
+            norms_sq < 0.25
+        ).all(), "Ellipsoid constraint violated in arraytree sampler test"
 
     def _run_and_check(self, inference_algorithm, num_steps=5000, burnin=500):
         initial_state = inference_algorithm.init(self.initial_pos)
@@ -1593,8 +1592,9 @@ class ConstrainedNormalArrayTree(chex.TestCase):
         grad_fn = jax.grad(self.logdensity_fn)
 
         # mass_matrix_fn: barrier Hessian of ConstraintDict at flat position
-        from blackjax.mcmc.constraints import barrier_hessian
         from jax.flatten_util import ravel_pytree as _ravel
+
+        from blackjax.mcmc.constraints import barrier_hessian
 
         def mass_matrix_fn(position):
             flat, _ = _ravel(position)

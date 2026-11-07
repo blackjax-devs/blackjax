@@ -488,7 +488,9 @@ register_constraint(
     ComposedConstraint,
     intersect_fn=lambda c, eps, max_iter: (
         lambda x, u: jnp.min(
-            jnp.stack([build_intersect_fn(sc, eps, max_iter)(x, u) for sc in c.constraints])
+            jnp.stack(
+                [build_intersect_fn(sc, eps, max_iter)(x, u) for sc in c.constraints]
+            )
         )
     ),
     oracle_fn=lambda c, pos: jnp.concatenate(
@@ -512,28 +514,38 @@ def _constraint_dict_barrier_hessian(c, x):
 register_constraint(
     ConstraintDict,
     intersect_fn=lambda c, eps, max_iter: (
-        lambda x, u: jnp.min(jnp.stack([
-            build_intersect_fn(sub_c, eps, max_iter)(
-                x[c._slices[key][0]:c._slices[key][1]],
-                u[c._slices[key][0]:c._slices[key][1]],
+        lambda x, u: jnp.min(
+            jnp.stack(
+                [
+                    build_intersect_fn(sub_c, eps, max_iter)(
+                        x[c._slices[key][0] : c._slices[key][1]],
+                        u[c._slices[key][0] : c._slices[key][1]],
+                    )
+                    for key, sub_c in c.constraints.items()
+                ]
+            )
+        )
+    ),
+    oracle_fn=lambda c, pos: jnp.concatenate(
+        [build_oracle_fn(sub_c)(pos[key]) for key, sub_c in c.constraints.items()]
+    ),
+    barrier_hessian_fn=_constraint_dict_barrier_hessian,
+    scaled_gradients_fn=lambda c, x: jnp.concatenate(
+        [
+            (
+                lambda G_leaf, start, end, n_full: (
+                    jnp.zeros((G_leaf.shape[0], n_full)).at[:, start:end].set(G_leaf)
+                )
+            )(
+                _scaled_gradients(sub_c, x[c._slices[key][0] : c._slices[key][1]]),
+                c._slices[key][0],
+                c._slices[key][1],
+                c._total_dim,
             )
             for key, sub_c in c.constraints.items()
-        ]))
+        ],
+        axis=0,
     ),
-    oracle_fn=lambda c, pos: jnp.concatenate([
-        build_oracle_fn(sub_c)(pos[key])
-        for key, sub_c in c.constraints.items()
-    ]),
-    barrier_hessian_fn=_constraint_dict_barrier_hessian,
-    scaled_gradients_fn=lambda c, x: jnp.concatenate([
-        (lambda G_leaf, start, end, n_full: (
-            jnp.zeros((G_leaf.shape[0], n_full)).at[:, start:end].set(G_leaf)
-        ))(
-            _scaled_gradients(sub_c, x[c._slices[key][0]:c._slices[key][1]]),
-            c._slices[key][0], c._slices[key][1], c._total_dim,
-        )
-        for key, sub_c in c.constraints.items()
-    ], axis=0),
 )
 
 

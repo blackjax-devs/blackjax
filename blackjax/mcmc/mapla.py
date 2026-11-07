@@ -30,7 +30,7 @@ def as_top_level_api(
     logdensity_fn: Callable,
     constraint,
     step_size: float,
-    preconditioner: barrier_hessian,
+    preconditioner: Callable = barrier_hessian,
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the MAPLA kernel.
 
