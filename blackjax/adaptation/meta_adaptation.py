@@ -26,6 +26,7 @@
     - ``from blackjax.adaptation.meta._calibration import _ASSUMED_AVG_LEAPFROGS_PER_STEP``
     - … (see :mod:`blackjax.adaptation.meta` for the full public surface)
 """
+
 from __future__ import annotations
 
 import warnings as _warnings

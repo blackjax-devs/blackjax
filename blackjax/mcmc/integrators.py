@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Symplectic, time-reversible, integrators for Hamiltonian trajectories."""
-from typing import Any, Callable, NamedTuple, TypeAlias
+
+from collections.abc import Callable
+from typing import Any, NamedTuple, TypeAlias
 
 import jax
 import jax.numpy as jnp
@@ -24,7 +26,7 @@ from blackjax.mcmc.metrics import (
     LowRankInverseMassMatrix,
     _low_rank_matvec,
 )
-from blackjax.types import ArrayTree
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, Numeric
 
 __all__ = [
     "mclachlan",
@@ -49,7 +51,7 @@ class IntegratorState(NamedTuple):
 
     position: ArrayTree
     momentum: ArrayTree
-    logdensity: float
+    logdensity: Numeric
     logdensity_grad: ArrayTree
 
 
@@ -467,11 +469,16 @@ def esh_dynamics_momentum_update_one_step(inverse_mass_matrix=1.0):
         # Apply forward_L: O(dk) for LRD, O(d) for diagonal
         gr = unravel_fn(forward_L(new_momentum_normalized))
         next_momentum = unravel_fn(new_momentum_normalized)
-        kinetic_energy_change = (
-            delta
-            - jnp.log(2)
-            + jnp.log(1 + momentum_proj + (1 - momentum_proj) * zeta**2)
-        ) * (dims - 1)
+        s_plus = 0.5 * jnp.square(flatten_momentum + normalized_gradient).sum()
+        s_minus = 0.5 * jnp.square(flatten_momentum - normalized_gradient).sum()
+        log_a = jnp.log(
+            jnp.where(
+                zeta**2 <= 1,
+                s_plus * (1 - zeta**2) + 2 * zeta**2,
+                s_minus * (zeta**2 - 1) + 2,
+            )
+        )
+        kinetic_energy_change = (delta - jnp.log(2) + log_a) * (dims - 1)
         if previous_kinetic_energy_change is not None:
             kinetic_energy_change += previous_kinetic_energy_change
         return next_momentum, gr, kinetic_energy_change
@@ -518,7 +525,7 @@ def generate_isokinetic_integrator(coefficients):
     """
 
     def isokinetic_integrator(
-        logdensity_fn: Callable, inverse_mass_matrix: ArrayTree = 1.0
+        logdensity_fn: Callable, inverse_mass_matrix: ArrayLikeTree = 1.0
     ) -> GeneralIntegrator:
         position_update_fn = euclidean_position_update_fn(logdensity_fn)
         one_step = generalized_two_stage_integrator(
@@ -607,12 +614,12 @@ FixedPointSolver = Callable[
 ]
 
 #: Iteration state for the fixed-point solver: (iteration count, current x, auxiliary data, norm).
-FixedPointIterState: TypeAlias = tuple[int, ArrayTree, ArrayTree, float]
+FixedPointIterState: TypeAlias = tuple[int, ArrayTree, ArrayTree, Array]
 
 
 class FixedPointIterationInfo(NamedTuple):
-    success: bool
-    norm: float
+    success: Array
+    norm: Array
     iters: int
 
 
@@ -623,14 +630,14 @@ def solve_fixed_point_iteration(
     convergence_tol: float = 1e-6,
     divergence_tol: float = 1e10,
     max_iters: int = 100,
-    norm_fn: Callable[[ArrayTree], float] = lambda x: jnp.max(jnp.abs(x)),
+    norm_fn: Callable[[Array], Array] = lambda x: jnp.max(jnp.abs(x)),
 ) -> tuple[ArrayTree, ArrayTree, FixedPointIterationInfo]:
     """Solve for x = func(x) using a fixed point iteration"""
 
-    def compute_norm(x: ArrayTree, xp: ArrayTree) -> float:
+    def compute_norm(x: ArrayTree, xp: ArrayTree) -> Array:
         return norm_fn(ravel_pytree(jax.tree.map(jnp.subtract, x, xp))[0])
 
-    def cond_fn(args: FixedPointIterState) -> bool:
+    def cond_fn(args: FixedPointIterState) -> Array:
         n, _, _, norm = args
         return (
             (n < max_iters)

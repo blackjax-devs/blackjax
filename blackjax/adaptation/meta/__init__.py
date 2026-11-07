@@ -61,6 +61,7 @@ Submodule layout
     Opt-in publication telemetry (single-chain): MetricPublicationRecord,
     publication_adapt_info_fn, extract_publication_chronology, decode_gates.
 """
+
 from blackjax.adaptation.meta._calibration import (
     _mc_detection_edge,
     _mc_unimodality_threshold,

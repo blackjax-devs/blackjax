@@ -11,7 +11,7 @@
 **General**
 - [ ] The branch is rebased on the latest `main`
 - [ ] Commit messages are clear and descriptive
-- [ ] `pre-commit run --all-files` passes (black, isort, flake8, mypy)
+- [ ] `pre-commit run --all-files` passes (ruff, mypy)
 - [ ] Tests cover the changes (`mamba run -n blackjax python -m pytest tests/`)
 
 **Code quality**

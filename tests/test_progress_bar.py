@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Unit tests for the jaxtap-powered progress bar."""
+
 import os
 import stat
 import tempfile
@@ -27,6 +28,8 @@ from absl.testing import absltest
 
 pytest.importorskip("jaxtap")
 pytest.importorskip("tqdm")
+
+import jaxtap as tap
 
 import blackjax
 from blackjax.progress_bar import ProgressState
@@ -349,8 +352,7 @@ class ProgressBarTest(BlackJAXTest):
                     state._step_callback(jnp.array(0))
                 except Exception as e:  # pragma: no cover -- failure path
                     self.fail(
-                        "_step_callback raised under a promoted warnings "
-                        f"filter: {e!r}"
+                        f"_step_callback raised under a promoted warnings filter: {e!r}"
                     )
             self.assertIsNone(state.output_file)
         finally:
@@ -707,7 +709,6 @@ class ProgressBarTest(BlackJAXTest):
         ``_on_step`` must NOT crash regardless: it only reads ``event.step`` and
         ``event.total``, never touching ``event.value``.
         """
-        import jaxtap as tap
 
         def body(carry, x):
             return carry + x, carry
@@ -773,7 +774,6 @@ class ProgressBarTest(BlackJAXTest):
         rather than the custom carry bytes the user's select would have produced.
         No crash occurs in either direction.
         """
-        import jaxtap as tap
 
         def body(carry, x):
             return carry + x, carry
@@ -864,7 +864,6 @@ class ProgressBarTest(BlackJAXTest):
         -- documented boundary, not a bug (matches jaxtap's
         ``test_ashell_reentrant_contexts`` contract).
         """
-        import jaxtap as tap
 
         def body(carry, x):
             return carry + x, carry

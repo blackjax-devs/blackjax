@@ -128,7 +128,7 @@ def test_lrd_forward_adjoint_product_equals_Minv():
         / jnp.linalg.norm(M_inv_expected, ord="fro")
     )
     assert rel_err < 1e-5, (
-        "L_LR @ L_LR^T != M_inv: relative Frobenius error = %.2e" % rel_err
+        f"L_LR @ L_LR^T != M_inv: relative Frobenius error = {rel_err:.2e}"
     )
 
 
@@ -268,8 +268,8 @@ def test_mclmc_lrd_sampling_rotated_gaussian():
     )
 
     assert mean_norm < 0.5, (
-        "LRD MCLMC posterior mean far from 0: norm = %.3f" % mean_norm
+        f"LRD MCLMC posterior mean far from 0: norm = {mean_norm:.3f}"
     )
     assert rel_err_var < 0.5, (
-        "LRD MCLMC diagonal variance relative error too large: %.3f" % rel_err_var
+        f"LRD MCLMC diagonal variance relative error too large: {rel_err_var:.3f}"
     )

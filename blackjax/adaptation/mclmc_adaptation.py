@@ -13,6 +13,7 @@
 # limitations under the License.
 """Algorithms to adapt the MCLMC kernel parameters, namely step size and L."""
 
+from functools import partial
 from typing import NamedTuple
 
 import jax
@@ -20,6 +21,7 @@ import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
 
 from blackjax.diagnostics import effective_sample_size
+from blackjax.types import Numeric
 from blackjax.util import generate_unit_vector, incremental_value_update, pytree_size
 
 
@@ -34,8 +36,8 @@ class MCLMCAdaptationState(NamedTuple):
         A matrix used for preconditioning.
     """
 
-    L: float
-    step_size: float
+    L: Numeric
+    step_size: Numeric
     inverse_mass_matrix: float
 
 
@@ -177,8 +179,9 @@ def mclmc_find_L_and_step_size(
     part1_key, part2_key = jax.random.split(rng_key, 2)
     total_num_tuning_integrator_steps = 0
 
-    num_steps1, num_steps2 = round(num_steps * frac_tune1), round(
-        num_steps * frac_tune2
+    num_steps1, num_steps2 = (
+        round(num_steps * frac_tune1),
+        round(num_steps * frac_tune2),
     )
     num_steps2 += diagonal_preconditioning * (num_steps2 // 3)
     num_steps3 = round(num_steps * frac_tune3)
@@ -268,9 +271,10 @@ def make_L_step_size_adaptation(
         step_size = jnp.power(
             x_average / time, -1.0 / 6.0
         )  # invert the Var[E] = O(eps^6) relation to obtain the optimal step size
-        step_size = (step_size < step_size_max) * step_size + (
-            step_size > step_size_max
-        ) * step_size_max  # if the proposed stepsize is above the stepsize where we have seen divergences
+        step_size = (
+            (step_size < step_size_max) * step_size
+            + (step_size > step_size_max) * step_size_max
+        )  # if the proposed stepsize is above the stepsize where we have seen divergences
         params_new = params._replace(step_size=step_size)
 
         adaptive_state = (time, x_average, step_size_max)
@@ -302,21 +306,21 @@ def make_L_step_size_adaptation(
 
     def run_steps(xs, state, params):
         """Run adaptation steps via scan; return (final_carry, per_step_div_flags)."""
-        carry, div_flags = jax.lax.scan(
-            step,
-            init=(
+        carry, div_flags = jax.jit(partial(jax.lax.scan, step))(
+            (
                 state,
                 params,
                 (0.0, 0.0, jnp.inf),
                 (0.0, jnp.array([jnp.zeros(dim), jnp.zeros(dim)])),
             ),
-            xs=xs,
+            xs,
         )
         return carry, div_flags
 
     def L_step_size_adaptation(state, params, num_steps, rng_key):
-        num_steps1, num_steps2 = round(num_steps * frac_tune1), round(
-            num_steps * frac_tune2
+        num_steps1, num_steps2 = (
+            round(num_steps * frac_tune1),
+            round(num_steps * frac_tune2),
         )
 
         L_step_size_adaptation_keys = jax.random.split(
@@ -383,18 +387,23 @@ def make_adaptation_L(kernel, logdensity_fn, frac, l_factor):
 
             return next_state, next_state.position
 
-        state, samples = jax.lax.scan(
-            f=step,
-            init=state,
-            xs=adaptation_L_keys,
-        )
+        state, samples = jax.jit(partial(jax.lax.scan, step))(state, adaptation_L_keys)
 
         flat_samples = jax.vmap(lambda x: ravel_pytree(x)[0])(samples)
         ess = effective_sample_size(flat_samples[None, ...])
 
-        return state, params._replace(
-            L=l_factor * params.step_size * jnp.mean(num_steps_3 / ess)
+        # ESS is 0 for degenerate dims since #1020; they carry no
+        # autocorrelation information, so average tau over the informative
+        # (finite) dims only, and leave L unchanged if none are finite.
+        tau = num_steps_3 / ess
+        finite = jnp.isfinite(tau)
+        new_L = jnp.where(
+            jnp.any(finite),
+            l_factor * params.step_size * jnp.mean(tau, where=finite),
+            params.L,
         )
+
+        return state, params._replace(L=new_L)
 
     return adaptation_L
 

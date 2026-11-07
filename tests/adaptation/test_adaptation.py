@@ -21,6 +21,7 @@ from blackjax.adaptation.chees_adaptation import base as chees_base
 from blackjax.adaptation.mass_matrix import WelfordAlgorithmState, welford_algorithm
 from blackjax.adaptation.metric_buffers import MomentBlock, cgl_update_batch
 from blackjax.diagnostics import effective_sample_size
+from blackjax.mcmc.dynamic_hmc import halton_sequence
 from blackjax.util import run_inference_algorithm
 
 
@@ -689,8 +690,6 @@ def test_chees_length_floor_e2e_smoke_recovers_slow_direction():
 
 def test_halton_sequence_raise_value():
     """Test that halton sequence raises value error when max_bits is too large."""
-    from blackjax.mcmc.dynamic_hmc import halton_sequence
-
     with pytest.raises(ValueError, match="max_bits"):
         halton_sequence(jnp.array([0], dtype=jnp.int32), max_bits=32)
 

@@ -21,6 +21,7 @@ Coverage:
 - TestWBranchSpectrum, TestChainConsistencyPsi: W-branch signal gates.
 - TestNullEdgeFormula, TestUnimodality2WindowConfirmation: calibration correctness.
 """
+
 import warnings
 
 import jax
@@ -51,6 +52,7 @@ from blackjax.adaptation.meta._detection import (
 )
 from blackjax.adaptation.meta._router import _build_pc_centered_time_major_pool
 from blackjax.adaptation.meta._signals import _compute_r2_score_linearity
+from blackjax.adaptation.staged_adaptation import _resolve_metric_and_schedule
 from blackjax.mcmc.metrics import LowRankInverseMassMatrix
 from tests.adaptation._meta_fixtures import (
     _fill_mc_state,
@@ -102,9 +104,6 @@ class TestMultiChainGate(BlackJAXTest):
         — M=1 recovers the v1 single-chain path exactly with no hidden
         state discrepancy.
         """
-        import blackjax
-        from blackjax.adaptation.staged_adaptation import _resolve_metric_and_schedule
-
         # Routing: n_chains=1 must resolve to build_meta_adaptation_core
         core_n1, _ = _resolve_metric_and_schedule(
             "auto", None, max_grad_budget=5000, n_chains=1
@@ -347,8 +346,6 @@ class TestMultiChainGate(BlackJAXTest):
                 gl.append(jnp.asarray(grads_m, jnp.float32))
             return jnp.stack(dl), jnp.stack(gl)
 
-        from blackjax.adaptation.meta._detection import _compute_within_chain_stats
-
         n_arr = jnp.int32(n)
         # WEAK signal: chain means at origin (zero offset) → no between-chain scatter
         draws_weak, _ = _make_slow_chains_with_offset(0.0, 0)
@@ -404,8 +401,6 @@ class TestMultiChainGate(BlackJAXTest):
         Structural guarantee: has_escalated must be False after 3 windows.
         """
         d, n, M = 20, 500, 4
-        import warnings
-
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")  # suppress M<6 warning for M=4 null test
             core = build_multi_chain_meta_core(50000, n_chains=M, max_rank=10)
@@ -431,8 +426,6 @@ class TestMultiChainGate(BlackJAXTest):
         The nested-R-hat hook is an opaque pass-through: extract_multi_chain_verdict
         does not validate the shape, but it must appear in flags['pooled_draws_by_window'].
         """
-        import warnings
-
         d, M = 10, 4
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")  # suppress M<6 warning for M=4 smoke

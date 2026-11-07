@@ -137,6 +137,7 @@ from blackjax.adaptation.metric_estimators import (
 )
 from blackjax.diagnostics import effective_sample_size
 from blackjax.mcmc.metrics import LowRankInverseMassMatrix
+from blackjax.types import Numeric
 
 __all__ = [
     "MCLMCLRDAdaptationState",
@@ -227,8 +228,8 @@ class MCLMCLRDAdaptationState(NamedTuple):
             ``"law"`` and ``"default"`` paths compute it for observability).
     """
 
-    L: float
-    step_size: float
+    L: Numeric
+    step_size: Numeric
     inverse_mass_matrix: LowRankInverseMassMatrix
     diagnostics: dict
 

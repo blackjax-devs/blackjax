@@ -45,7 +45,9 @@ Typical usage::
     # new_state.theta_star  — MAP latent at accepted phi
     # new_state.random_generator_arg  — advanced Halton index
 """
-from typing import Callable, NamedTuple
+
+from collections.abc import Callable
+from typing import NamedTuple, cast
 
 import jax
 
@@ -116,8 +118,14 @@ def init(
     (logdensity, theta_star), logdensity_grad = jax.value_and_grad(
         laplace, has_aux=True
     )(position)
+    # position is stored unconverted, like hmc.HMCState: build_kernel below
+    # re-feeds LaplaceDynamicHMCState.position into a DynamicHMCState.
     return LaplaceDynamicHMCState(
-        position, logdensity, logdensity_grad, theta_star, random_generator_arg
+        cast(ArrayTree, position),
+        logdensity,
+        logdensity_grad,
+        theta_star,
+        random_generator_arg,
     )
 
 

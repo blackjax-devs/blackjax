@@ -25,6 +25,7 @@ import numpy as np
 from absl.testing import absltest
 from jax.sharding import Mesh, NamedSharding
 
+from blackjax.adaptation.laps import laps as run_laps
 from blackjax.eca import ensemble_execute_fn
 
 
@@ -101,7 +102,6 @@ class ECAMultiDeviceTest(absltest.TestCase):
         The bug path: laps_burn_in passes a sharded `signs` array as `args` to a
         second ensemble_execute_fn call.  Before the fix that raised NotImplementedError.
         """
-        from blackjax.adaptation.laps import laps as run_laps
 
         def logdensity(x):
             return -0.5 * jnp.sum(x**2)

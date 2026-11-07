@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """All things resampling."""
+
+from collections.abc import Callable
 from functools import partial
-from typing import Callable
 
 import jax
 import jax.numpy as jnp
@@ -76,11 +77,8 @@ def multinomial(rng_key: PRNGKey, weights: Array, num_samples: int) -> Array:
     # O(N) loop as our code is meant to work on GPU where searchsorted is
     # O(log(N)) anyway.
 
-    n = weights.shape[0]
-    linspace = _sorted_uniforms(rng_key, num_samples)
-    cumsum = jnp.cumsum(weights)
-    idx = jnp.searchsorted(cumsum, linspace)
-    return jnp.clip(idx, 0, n - 1)
+    queries = _sorted_uniforms(rng_key, num_samples)
+    return _inverse_cdf(weights, queries)
 
 
 @partial(
@@ -147,15 +145,40 @@ def _systematic_or_stratified(
     idx: Array
         Array of size `num_samples` to use for resampling.
     """
-    n = weights.shape[0]
     if is_systematic:
         u = jax.random.uniform(rng_key, ())
     else:
         u = jax.random.uniform(rng_key, (num_samples,))
-    cumsum = jnp.cumsum(weights)
-    linspace = (jnp.arange(num_samples, dtype=weights.dtype) + u) / num_samples
-    idx = jnp.searchsorted(cumsum, linspace)
-    return jnp.clip(idx, 0, n - 1)
+    return _inverse_cdf_indices(weights, u, num_samples)
+
+
+def _inverse_cdf_indices(weights: Array, u: Array, num_samples: int) -> Array:
+    """Map explicit systematic or stratified uniforms to particle indices."""
+    queries = (jnp.arange(num_samples, dtype=weights.dtype) + u) / num_samples
+    return _inverse_cdf(weights, queries)
+
+
+def _sorted_uniforms_from(us: Array) -> Array:
+    """Compute sorted uniforms from explicit uniform draws.
+
+    Given uniform draws in [0, 1), computes sorted uniforms via exponential-order
+    statistics without numerical issues. Uses -log1p(-u) instead of -log(u) to
+    handle u == 0.0 gracefully (which occurs at probability 2^-23 per draw).
+
+    Parameters
+    ----------
+    us: Array
+        Array of uniform random variables in [0, 1).
+
+    Returns
+    -------
+    Array
+        Array of size len(us) - 1 containing sorted uniform random variables in [0, 1).
+    """
+    # -log1p(-u) ~ Exp(1) and is finite on u in [0, 1);
+    # -log(u) is inf at u == 0
+    z = jnp.cumsum(-jnp.log1p(-us))
+    return z[:-1] / z[-1]
 
 
 def _sorted_uniforms(rng_key: PRNGKey, n: int) -> Array:
@@ -176,5 +199,31 @@ def _sorted_uniforms(rng_key: PRNGKey, n: int) -> Array:
         Array of size n containing sorted uniform random variables.
     """
     us = jax.random.uniform(rng_key, (n + 1,))
-    z = jnp.cumsum(-jnp.log(us))
-    return z[:-1] / z[-1]
+    return _sorted_uniforms_from(us)
+
+
+def _inverse_cdf(weights: Array, queries: Array) -> Array:
+    """Map queries to particle indices via inverse CDF.
+
+    Given normalized weights and query values in [0, 1), returns indices via
+    the inverse CDF on half-open intervals. Ensures a zero-weight particle is
+    never selected by clipping queries strictly below the total mass.
+
+    Parameters
+    ----------
+    weights: Array
+        Normalized weights (non-negative, sum to 1).
+    queries: Array
+        Query values in [0, 1).
+
+    Returns
+    -------
+    Array
+        Particle indices corresponding to each query.
+    """
+    cumsum = jnp.cumsum(weights)
+    # Keep queries strictly below the total mass so a rounded-up query cannot
+    # be clipped onto a trailing zero-weight particle.
+    queries = jnp.minimum(queries, jnp.nextafter(cumsum[-1], -jnp.inf))
+    idx = jnp.searchsorted(cumsum, queries, side="right")
+    return jnp.clip(idx, 0, weights.shape[0] - 1)

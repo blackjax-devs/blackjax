@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for the MCLMC Kernel"""
-from typing import Callable, NamedTuple
+
+from collections.abc import Callable
+from typing import NamedTuple, cast
 
 import jax
 import jax.numpy as jnp
@@ -24,7 +26,7 @@ from blackjax.mcmc.integrators import (
     with_isokinetic_maruyama,
 )
 from blackjax.mcmc.metrics import LowRankInverseMassMatrix
-from blackjax.types import ArrayLike, PRNGKey
+from blackjax.types import ArrayLike, ArrayTree, PRNGKey
 from blackjax.util import generate_unit_vector, pytree_size
 
 __all__ = [
@@ -61,7 +63,11 @@ def init(position: ArrayLike, logdensity_fn, rng_key):
     logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
 
     return IntegratorState(
-        position=position,
+        # position is stored unconverted, like every other init() in the
+        # library that forwards its user-supplied position into an
+        # ArrayTree-typed state field; pytree_size above already treats it
+        # as a general PyTree rather than a single leaf.
+        position=cast(ArrayTree, position),
         momentum=generate_unit_vector(rng_key, position),
         logdensity=logdensity,
         logdensity_grad=logdensity_grad,

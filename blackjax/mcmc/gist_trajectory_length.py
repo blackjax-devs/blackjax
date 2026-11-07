@@ -22,6 +22,7 @@
     - ``from blackjax.mcmc.composed import trajectory_length``
     - ``from blackjax.mcmc.composed.trajectory_length import GISTTrajectoryLengthInfo``
 """
+
 from __future__ import annotations
 
 import warnings as _warnings

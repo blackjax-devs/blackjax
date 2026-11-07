@@ -5,6 +5,7 @@ total sampling time in many situations, and we need to make sure that
 internal changes do not trigger more compilations than is necessary.
 
 """
+
 import chex
 import jax
 import jax.numpy as jnp

@@ -26,12 +26,13 @@
     - ``from blackjax.mcmc.composed import build_kernel``
     - ``from blackjax.mcmc.composed._seam import as_top_level_api``
 """
+
 from __future__ import annotations
 
 import warnings as _warnings
 
 _warnings.warn(
-    "blackjax.mcmc.gist is deprecated; " "import from blackjax.mcmc.composed instead.",
+    "blackjax.mcmc.gist is deprecated; import from blackjax.mcmc.composed instead.",
     DeprecationWarning,
     stacklevel=1,
 )

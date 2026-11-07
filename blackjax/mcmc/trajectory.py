@@ -37,7 +37,9 @@ trajectory is being sampled. While the former is faster, we risk saturating the
 memory by keeping states that will subsequently be discarded.
 
 """
-from typing import Callable, NamedTuple
+
+from collections.abc import Callable
+from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp

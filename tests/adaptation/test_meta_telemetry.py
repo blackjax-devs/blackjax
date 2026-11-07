@@ -30,6 +30,7 @@ Three groups:
 The buffer helpers produce fixed pseudorandom blocks -- deterministic states for
 a controller call, not draws from an exactly-iid source.
 """
+
 import chex
 import jax
 import jax.numpy as jnp
@@ -37,6 +38,7 @@ import numpy as np
 from absl.testing import absltest, parameterized
 
 import blackjax
+import blackjax.adaptation.meta as meta
 from blackjax.adaptation.low_rank_adaptation import build_growing_window_schedule
 from blackjax.adaptation.meta import (
     build_meta_adaptation_core,
@@ -1099,8 +1101,6 @@ class PublicSurfaceTest(chex.TestCase):
     """The branch codes must be reachable without importing a private module."""
 
     def test_branch_and_route_codes_are_public(self):
-        import blackjax.adaptation.meta as meta
-
         for name in (
             "BRANCH_NONE",
             "BRANCH_W",

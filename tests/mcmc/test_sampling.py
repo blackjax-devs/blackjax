@@ -16,6 +16,7 @@ from jax.flatten_util import ravel_pytree
 import blackjax.diagnostics as diagnostics
 import blackjax.mcmc.metrics as metrics
 import blackjax.mcmc.random_walk
+from blackjax import mgrad_gaussian
 from blackjax.adaptation.base import get_filter_adapt_info_fn, return_all_adapt_info
 from blackjax.adaptation.laps import laps as run_laps
 from blackjax.mcmc.adjusted_mclmc import rescale
@@ -556,8 +557,7 @@ class LinearRegressionTest(chex.TestCase):
         assert (
             jnp.abs(
                 jnp.dot(
-                    (inverse_mass_matrix**2)
-                    / jnp.linalg.norm(inverse_mass_matrix**2),
+                    (inverse_mass_matrix**2) / jnp.linalg.norm(inverse_mass_matrix**2),
                     eigs / jnp.linalg.norm(eigs),
                 )
                 - 1
@@ -796,9 +796,9 @@ class LinearRegressionTest(chex.TestCase):
                 f"{first_bad_iter} of {step_sizes.size}"
             )
         mean_acceptance = float(np.mean(np.asarray(info["phase_2"]["acc_prob"])))
-        assert (
-            mean_acceptance > 0.01
-        ), f"adjusted phase accepted nothing (mean acceptance {mean_acceptance})"
+        assert mean_acceptance > 0.01, (
+            f"adjusted phase accepted nothing (mean acceptance {mean_acceptance})"
+        )
 
         # Median location (robust to one stray chain) and two-sided dispersion
         # (an ensemble that never moved has sd 1.0, not ~0.02).
@@ -812,9 +812,9 @@ class LinearRegressionTest(chex.TestCase):
         equilibrated = np.mean(np.all(np.abs(z_scores) < 6.0, axis=1))
         # not f"{x:.0%}": pycodestyle 2.10.0 flags E231 on PEP 701 f-strings
         equilibrated_pct = round(100 * equilibrated)
-        assert (
-            equilibrated >= 0.9
-        ), f"only {equilibrated_pct}% of chains are within 6 posterior sd"
+        assert equilibrated >= 0.9, (
+            f"only {equilibrated_pct}% of chains are within 6 posterior sd"
+        )
 
     @parameterized.named_parameters(
         {"testcase_name": "typed_key", "use_typed_key": True},
@@ -1058,8 +1058,6 @@ class LatentGaussianTest(chex.TestCase):
 
     @chex.all_variants(with_pmap=False)
     def test_latent_gaussian(self):
-        from blackjax import mgrad_gaussian
-
         inference_algorithm = mgrad_gaussian(
             lambda x: -0.5 * jnp.sum((x - 1.0) ** 2),
             covariance=self.C,

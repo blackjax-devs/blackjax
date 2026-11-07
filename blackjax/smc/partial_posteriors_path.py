@@ -1,4 +1,5 @@
-from typing import Callable, NamedTuple
+from collections.abc import Callable
+from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -21,7 +22,7 @@ class PartialPosteriorsSMCState(NamedTuple):
         in the computation of the observed likelihood.
     """
 
-    particles: ArrayTree
+    particles: ArrayLikeTree
     weights: Array
     data_mask: Array
 

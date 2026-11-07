@@ -28,6 +28,7 @@ Carpenter, Kleppe, Marsden, "Incorporating Local Step-Size Adaptivity into
 the No-U-Turn Sampler using Gibbs Self Tuning", arXiv:2408.08259 -- the
 published sources of the composition machinery.
 """
+
 from blackjax.mcmc.composed import step_size, trajectory_length
 from blackjax.mcmc.composed._seam import GISTInfo, GISTState, build_kernel, init
 

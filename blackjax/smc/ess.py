@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """All things related to SMC effective sample size"""
-from typing import Callable
 
+from collections.abc import Callable
+
+import jax
 import jax.numpy as jnp
 from jax.scipy.special import logsumexp
 
@@ -49,6 +51,8 @@ def log_ess(log_weights: Array) -> float | Array:
     log_ess: float | Array
         The logarithm of the effective sample size.
     """
+    # ESS is invariant to a common offset; remove it before subtracting log sums.
+    log_weights = log_weights - jax.lax.stop_gradient(jnp.max(log_weights))
     return 2 * logsumexp(log_weights) - logsumexp(2 * log_weights)
 
 

@@ -11,17 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Public API for the Contour Stochastic gradient Langevin Dynamics kernel :cite:p:`deng2020contour,deng2022interacting`.
+"""Public API for the Contour Stochastic gradient Langevin Dynamics kernel :cite:p:`deng2020contour,deng2022interacting`."""
 
-"""
-from typing import Callable, NamedTuple
+from collections.abc import Callable
+from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp
 
 from blackjax.base import SamplingAlgorithm
 from blackjax.sgmcmc.diffusions import overdamped_langevin
-from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import Array, ArrayLikeTree, Numeric, PRNGKey
 
 __all__ = ["ContourSGLDState", "init", "build_kernel", "as_top_level_api"]
 
@@ -41,9 +41,10 @@ class ContourSGLDState(NamedTuple):
         Index `i` such that the current position belongs to :math:`S_i`.
 
     """
-    position: ArrayTree
+
+    position: ArrayLikeTree
     energy_pdf: Array
-    energy_idx: int
+    energy_idx: Numeric
 
 
 def init(position: ArrayLikeTree, num_partitions=512) -> ContourSGLDState:

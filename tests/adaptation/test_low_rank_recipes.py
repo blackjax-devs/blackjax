@@ -30,6 +30,9 @@ Coverage:
   (reset + accumulating) vs frozen inline references on an anisotropic target
   (``recompute_every ∈ {1, 5, 25}``, ``atol=0.0``).
 """
+
+from functools import partial
+
 import jax
 import jax.flatten_util as fu
 import jax.numpy as jnp
@@ -42,15 +45,13 @@ from blackjax.adaptation.base import return_all_adapt_info
 from blackjax.adaptation.low_rank_adaptation import (
     LowRankAdaptationState,
     _accumulating_buffer_capacity,
-)
-from blackjax.adaptation.low_rank_adaptation import _compute_low_rank_metric as lra_clrm
-from blackjax.adaptation.low_rank_adaptation import (
     _default_low_rank_adaptation_info_fn,
     _engine_state_to_low_rank_adaptation_state,
     _make_low_rank_bridge_info_fn,
     build_growing_window_schedule,
     window_adaptation_low_rank,
 )
+from blackjax.adaptation.low_rank_adaptation import _compute_low_rank_metric as lra_clrm
 from blackjax.adaptation.metric_estimators import _compute_low_rank_metric
 from blackjax.adaptation.metric_recipes import (
     REGISTRY,
@@ -980,8 +981,6 @@ class LowRankBridgeFnTest(BlackJAXTest):
     """_engine_state_to_low_rank_adaptation_state and _make_low_rank_bridge_info_fn."""
 
     def _make_engine_state(self, n_dims=4, max_rank=3):
-        from blackjax.adaptation.step_size import dual_averaging_adaptation
-
         da_init, _, _ = dual_averaging_adaptation(0.80)
         ss_state = da_init(0.5)
         imm = LowRankInverseMassMatrix(
@@ -1491,10 +1490,9 @@ def _reference_run_reset(rng_key, position, num_steps, n_dims, logdensity_fn=Non
         0,
     )
     keys = jax.random.split(rng_key, num_steps)
-    last_state, info = jax.lax.scan(
-        one_step,
-        (init_state, init_adaptation_state),
-        (jnp.arange(num_steps), keys, schedule),
+    # jitted to match the engine's dispatch (float reassociation)
+    last_state, info = jax.jit(partial(jax.lax.scan, one_step))(
+        (init_state, init_adaptation_state), (jnp.arange(num_steps), keys, schedule)
     )
     _, last_warmup_state, *_ = last_state
     step_size = jnp.exp(last_warmup_state.ss_state.log_step_size_avg)
@@ -1843,10 +1841,9 @@ def _reference_run_accumulating(
         0,
     )
     keys = jax.random.split(rng_key, num_steps)
-    last_state, info = jax.lax.scan(
-        one_step,
-        (init_state, init_adaptation_state),
-        (jnp.arange(num_steps), keys, schedule),
+    # jitted to match the engine's dispatch (float reassociation)
+    last_state, info = jax.jit(partial(jax.lax.scan, one_step))(
+        (init_state, init_adaptation_state), (jnp.arange(num_steps), keys, schedule)
     )
     _, last_warmup_state, *_ = last_state
     step_size = jnp.exp(last_warmup_state.ss_state.log_step_size_avg)

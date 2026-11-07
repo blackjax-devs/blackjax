@@ -35,9 +35,12 @@ Notes
 ``build_schedule`` is defined here (canonical location) and re-exported from
 ``window_adaptation`` for backward compatibility.  Import from either module.
 """
+
 import inspect
 import warnings
-from typing import Any, Callable, NamedTuple
+from collections.abc import Callable
+from functools import partial
+from typing import Any, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -50,7 +53,7 @@ from blackjax.adaptation.step_size import (
     dual_averaging_adaptation,
 )
 from blackjax.base import AdaptationAlgorithm
-from blackjax.types import Array, ArrayLikeTree, PRNGKey
+from blackjax.types import Array, ArrayLikeTree, Numeric, PRNGKey
 from blackjax.util import pytree_size
 
 __all__ = [
@@ -99,7 +102,7 @@ class StagedAdaptationState(NamedTuple):
 
     ss_state: DualAveragingAdaptationState
     imm_state: Any  # MassMatrixAdaptationState | FisherMassMatrixAdaptationState
-    step_size: float
+    step_size: Numeric
     inverse_mass_matrix: Array
 
 
@@ -376,7 +379,7 @@ def _make_engine(
 
         return ws
 
-    def final(ws: StagedAdaptationState) -> tuple[float, Array]:
+    def final(ws: StagedAdaptationState) -> tuple[Array, Array]:
         """Return the final step size and inverse mass matrix after warmup."""
         step_size = jnp.exp(ws.ss_state.log_step_size_avg)
         inverse_mass_matrix = ws.imm_state.inverse_mass_matrix
@@ -395,7 +398,7 @@ def build_schedule(
     initial_buffer_size: int = 75,
     final_buffer_size: int = 50,
     first_window_size: int = 25,
-) -> list[tuple[int, bool]]:
+) -> Array:
     """Return the schedule for Stan's warmup.
 
     The schedule below is intended to be as close as possible to Stan's :cite:p:`stan_hmc_param`.
@@ -478,9 +481,12 @@ def build_schedule(
         schedule += [(0, False)] * (num_steps - 1 - final_buffer_start)
         schedule.append((0, False))
 
-    schedule = jnp.array(schedule)
+    # Renamed from `schedule` (the Array result shadowed the
+    # list[tuple[int, bool]] built above under a different, incompatible
+    # type).
+    schedule_array = jnp.array(schedule)
 
-    return schedule
+    return schedule_array
 
 
 # ---------------------------------------------------------------------------
@@ -982,10 +988,8 @@ def staged_adaptation(
             start_state = (init_state, init_adaptation_state)
             keys = jax.random.split(rng_key, num_steps)
             schedule = _eff_schedule_fn(num_steps)
-            last_state, info = jax.lax.scan(
-                one_step,
-                start_state,
-                (jnp.arange(num_steps), keys, schedule),
+            last_state, info = jax.jit(partial(jax.lax.scan, one_step))(
+                start_state, (jnp.arange(num_steps), keys, schedule)
             )
 
             last_chain_state, last_warmup_state, *_ = last_state
@@ -1073,10 +1077,8 @@ def staged_adaptation(
             start_state = (init_states, init_adaptation_state)
             keys = jax.random.split(rng_key, num_steps)
             schedule = _eff_schedule_fn(num_steps)
-            last_state, info = jax.lax.scan(
-                one_step_mc,
-                start_state,
-                (jnp.arange(num_steps), keys, schedule),
+            last_state, info = jax.jit(partial(jax.lax.scan, one_step_mc))(
+                start_state, (jnp.arange(num_steps), keys, schedule)
             )
 
             last_chain_state, last_warmup_state, *_ = last_state

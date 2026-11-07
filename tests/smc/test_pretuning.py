@@ -169,15 +169,17 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
 
     @chex.variants(with_jit=True)
     def test_tempered(self):
-        step_provider = lambda logprior_fn, loglikelihood_fn, pretune: blackjax.smc.pretuning.build_kernel(
-            blackjax.tempered_smc,
-            logprior_fn,
-            loglikelihood_fn,
-            blackjax.hmc.build_kernel(),
-            blackjax.hmc.init,
-            resampling.systematic,
-            num_mcmc_steps=3,
-            pretune_fn=pretune,
+        step_provider = lambda logprior_fn, loglikelihood_fn, pretune: (
+            blackjax.smc.pretuning.build_kernel(
+                blackjax.tempered_smc,
+                logprior_fn,
+                loglikelihood_fn,
+                blackjax.hmc.build_kernel(),
+                blackjax.hmc.init,
+                resampling.systematic,
+                num_mcmc_steps=3,
+                pretune_fn=pretune,
+            )
         )
 
         def loop(smc_kernel, init_particles, initial_parameters):
@@ -203,16 +205,18 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
 
     @chex.variants(with_jit=True)
     def test_adaptive_tempered(self):
-        step_provider = lambda logprior_fn, loglikelihood_fn, pretune: blackjax.smc.pretuning.build_kernel(
-            blackjax.adaptive_tempered_smc,
-            logprior_fn,
-            loglikelihood_fn,
-            blackjax.hmc.build_kernel(),
-            blackjax.hmc.init,
-            resampling.systematic,
-            num_mcmc_steps=3,
-            pretune_fn=pretune,
-            target_ess=0.5,
+        step_provider = lambda logprior_fn, loglikelihood_fn, pretune: (
+            blackjax.smc.pretuning.build_kernel(
+                blackjax.adaptive_tempered_smc,
+                logprior_fn,
+                loglikelihood_fn,
+                blackjax.hmc.build_kernel(),
+                blackjax.hmc.init,
+                resampling.systematic,
+                num_mcmc_steps=3,
+                pretune_fn=pretune,
+                target_ess=0.5,
+            )
         )
 
         def loop(smc_kernel, init_particles, initial_parameters):

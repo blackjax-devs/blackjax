@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for Periodic Orbital Kernel"""
-from typing import Callable, NamedTuple
+
+from collections.abc import Callable
+from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -71,8 +73,8 @@ class PeriodicOrbitalInfo(NamedTuple):
     """
 
     momentums: ArrayTree
-    weights_mean: float
-    weights_variance: float
+    weights_mean: Array
+    weights_variance: Array
 
 
 def init(
@@ -193,8 +195,10 @@ def build_kernel(
         choice_indx = jax.random.choice(key_choice, len(weights), p=weights)
         position = jax.tree.map(lambda positions: positions[choice_indx], positions)
         direction = directions[choice_indx]
-        period = jnp.max(directions) + 1
-        direction = jnp.mod(direction + jnp.array(period / 2, int), period)
+        # Renamed from `period` (the Array result shadowed the kernel's own
+        # `period: int` parameter under a different, incompatible type).
+        orbit_period = jnp.max(directions) + 1
+        direction = jnp.mod(direction + jnp.array(orbit_period / 2, int), orbit_period)
         logdensity = logdensities[choice_indx]
         logdensity_grad = jax.tree.map(
             lambda p_energy_grad: p_energy_grad[choice_indx], logdensities_grad

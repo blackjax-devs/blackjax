@@ -15,11 +15,15 @@ from typing import NamedTuple
 
 import jax
 
-from blackjax.types import ArrayTree
+from blackjax.types import ArrayLikeTree
 
 
 class AdaptationResults(NamedTuple):
-    state: ArrayTree
+    # Callers pass their own concrete sampler State NamedTuple here (e.g.
+    # HMCState, GHMCState); those mix plain float/int fields (acceptance
+    # rate, slice, ...) with ArrayTree ones, so ArrayLikeTree -- not the
+    # stricter ArrayTree -- is what actually covers every call site.
+    state: ArrayLikeTree
     parameters: dict
 
 

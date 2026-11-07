@@ -11,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, NamedTuple, Protocol
+from collections.abc import Callable
+from typing import Any, NamedTuple, Protocol
 
 import jax
 import jax.numpy as jnp
@@ -176,7 +177,7 @@ def step(
     )
 
 
-def extend_params(params: Array) -> Array:
+def extend_params(params: ArrayLikeTree) -> ArrayTree:
     """Extend parameters to be used for all particles in SMC.
 
     Given a dictionary of params, repeats them for every single particle. The
@@ -185,12 +186,12 @@ def extend_params(params: Array) -> Array:
 
     Parameters
     ----------
-    params: Array
+    params: ArrayLikeTree
         Parameters to extend for all particles.
 
     Returns
     -------
-    Array
+    ArrayTree
         Extended parameters with an additional dimension for particles.
     """
 

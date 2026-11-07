@@ -4,47 +4,43 @@ exclude: |
     )$
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.4.0
+  rev: v6.0.0
   hooks:
     -   id: check-merge-conflict
     -   id: debug-statements
     -   id: end-of-file-fixer
     -   id: requirements-txt-fixer
     -   id: trailing-whitespace
-- repo: https://github.com/pycqa/isort
-  rev: 5.12.0
-  hooks:
-    - id: isort
-      args: [--profile, black]
-- repo: https://github.com/asottile/pyupgrade
-  rev: v2.31.1
-  hooks:
-    - id: pyupgrade
-      args: [--py37-plus]
-- repo: https://github.com/pycqa/flake8
-  rev: 6.0.0
-  hooks:
-   - id: flake8
-     args: ['--ignore=E501,E203,E302,E402,E731,W503,E221,E222']
-- repo: https://github.com/psf/black
-  rev: 23.1.0
-  hooks:
-    - id: black
-- repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.0.1
+- repo: local
   hooks:
     - id: mypy
-- repo: https://github.com/nbQA-dev/nbQA
-  rev: 1.3.1
+      name: mypy (project env, real jax types)
+      # mirrors-mypy runs in an isolated env with no jax/numpy installed, so
+      # every jax type resolved to Any and the hook checked almost nothing
+      # (Issue#1278). Running mypy inside the project's own uv env instead
+      # checks against the real jax/numpy stubs.
+      # pass_filenames: false + explicit targets (not per-changed-file) so
+      # the hook always runs the exact invocation verified to be clean
+      # (`mypy --config-file mypy.ini blackjax tests`), independent of which
+      # files happen to be staged.
+      entry: uv run --frozen mypy --config-file mypy.ini blackjax tests
+      language: system
+      pass_filenames: false
+      types: [python]
+      files: ^(blackjax|tests)/
+      require_serial: true
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.16.10
   hooks:
-    - id: nbqa-black
-    - id: nbqa-pyupgrade
-      args: [--py37-plus]
-    - id: nbqa-isort
-      args: ['--profile=black']
-    - id: nbqa-flake8
+    - id: ruff-check
+      args: [--fix]
+    - id: ruff-format
+      # ruff-format's default types_or includes markdown; restrict to Python
+      # to match the old black/isort/flake8 scope (never touched .md files,
+      # some of which are Jupytext-synced notebooks).
+      types_or: [python, pyi, jupyter]
 - repo: https://github.com/jorisroovers/gitlint
-  rev: v0.18.0
+  rev: v0.19.1
   hooks:
     - id: gitlint
     - id: gitlint-ci

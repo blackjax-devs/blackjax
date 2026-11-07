@@ -82,8 +82,10 @@ replace these with proper constructor objects once the schema is stable across
 all recipe families.  Import directly from ``blackjax.adaptation.metric_recipes``
 — :class:`MetricRecipe` is not exported at the ``blackjax`` top level.
 """
+
 import dataclasses
-from typing import Callable, NamedTuple
+from collections.abc import Callable
+from typing import NamedTuple
 
 import jax
 import jax.flatten_util as fu
@@ -100,7 +102,7 @@ from blackjax.adaptation.metric_estimators import (
     sample_covariance_eigh_low_rank,
 )
 from blackjax.mcmc.metrics import LowRankInverseMassMatrix
-from blackjax.types import Array, ArrayLikeTree
+from blackjax.types import Array, ArrayLikeTree, Numeric
 
 __all__ = [
     "LowRankMetricCoreState",
@@ -285,7 +287,7 @@ def seed_low_rank_sigma_from_grad(
 # ---------------------------------------------------------------------------
 
 
-def _shift_buffer_left(buf: Array, shift: Array) -> Array:
+def _shift_buffer_left(buf: Array, shift: Numeric) -> Array:
     """Drop the first ``shift`` rows of ``buf``, shifting the remainder forward.
 
     Implements nutpie's partial-forget buffer pop under JAX's static-shape

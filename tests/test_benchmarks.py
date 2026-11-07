@@ -5,6 +5,7 @@ second and other metrics to make sure that the results are "correct", and
 obviously more models. It should also be run in CI.
 
 """
+
 import datetime
 import functools
 import time
@@ -122,9 +123,7 @@ def make_horseshoe_logdensity(
         # Log-priors (constrained space)
         lp = stats.norm.logpdf(alpha, 0.0, 2.0)
         lp += jnp.log(2.0) + stats.norm.logpdf(sigma, 0.0, 2.0)  # HalfNormal(2)
-        lp += (
-            jnp.log(2.0) - jnp.log(jnp.pi) - jnp.log1p(tau_tilde**2)
-        )  # HalfCauchy(1)
+        lp += jnp.log(2.0) - jnp.log(jnp.pi) - jnp.log1p(tau_tilde**2)  # HalfCauchy(1)
         lp += (
             half_slab_df * jnp.log(half_slab_df)  # InvGamma(a,a)
             - jax.scipy.special.gammaln(half_slab_df)
@@ -268,9 +267,7 @@ def test_horseshoe_nuts_flat_vs_dict(benchmark):
         "  Model: Finnish horseshoe  N=100 M=200  1 chain  1000 samples  (shared warmup)"
     )
     print()
-    hdr = (
-        f"  {'Metric':<28} {'flat (1 leaf)':>16} {'dict (6 leaves)':>16}"  # noqa: E231
-    )
+    hdr = f"  {'Metric':<28} {'flat (1 leaf)':>16} {'dict (6 leaves)':>16}"  # noqa: E231
     print(hdr)
     print("  " + "-" * 62)
     for key, label, fmt in [
@@ -278,9 +275,7 @@ def test_horseshoe_nuts_flat_vs_dict(benchmark):
         ("min_ess", "min ESS", ".1f"),
         ("ess_per_s", "min ESS/s", ".1f"),
     ]:
-        row = (
-            f"  {label:<28} {r_flat[key]:>16{fmt}} {r_dict[key]:>16{fmt}}"  # noqa: E231
-        )
+        row = f"  {label:<28} {r_flat[key]:>16{fmt}} {r_dict[key]:>16{fmt}}"  # noqa: E231
         print(row)
     speedup = r_dict["t_sample"] / r_flat["t_sample"]
     print("  " + "-" * 62)
@@ -303,12 +298,12 @@ def test_horseshoe_nuts_flat_vs_dict(benchmark):
         )
     print()
 
-    assert (
-        r_flat["min_ess"] > 10
-    ), f"flat min ESS suspiciously low: {r_flat['min_ess']:.1f}"  # noqa: E231
-    assert (
-        r_dict["min_ess"] > 10
-    ), f"dict min ESS suspiciously low: {r_dict['min_ess']:.1f}"  # noqa: E231
+    assert r_flat["min_ess"] > 10, (
+        f"flat min ESS suspiciously low: {r_flat['min_ess']:.1f}"
+    )  # noqa: E231
+    assert r_dict["min_ess"] > 10, (
+        f"dict min ESS suspiciously low: {r_dict['min_ess']:.1f}"
+    )  # noqa: E231
 
 
 @pytest.mark.benchmark

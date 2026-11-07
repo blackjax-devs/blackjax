@@ -29,8 +29,9 @@ delegates to :func:`~blackjax.adaptation.staged_adaptation.staged_adaptation`).
 Fisher-diagonal adaptation is accessible via
 ``staged_adaptation(metric="fisher_diag")`` only.
 """
+
 import warnings
-from typing import Callable
+from collections.abc import Callable
 
 import jax
 import jax.numpy as jnp
@@ -40,10 +41,8 @@ from blackjax.adaptation.base import return_all_adapt_info
 from blackjax.adaptation.mass_matrix import mass_matrix_adaptation
 from blackjax.adaptation.metric_recipes import lookup_recipe
 from blackjax.adaptation.staged_adaptation import (
-    build_schedule,  # canonical definition in staged_adaptation; re-exported here
-)
-from blackjax.adaptation.staged_adaptation import (
     StagedAdaptationState,
+    build_schedule,  # canonical definition in staged_adaptation; re-exported here
     staged_adaptation,
 )
 from blackjax.adaptation.step_size import dual_averaging_adaptation
@@ -275,7 +274,7 @@ def base(
 
         return warmup_state
 
-    def final(warmup_state: WindowAdaptationState) -> tuple[float, Array]:
+    def final(warmup_state: WindowAdaptationState) -> tuple[Array, Array]:
         """Return the final values for the step size and mass matrix."""
         step_size = jnp.exp(warmup_state.ss_state.log_step_size_avg)
         inverse_mass_matrix = warmup_state.imm_state.inverse_mass_matrix
@@ -417,8 +416,7 @@ def window_adaptation(
     # Validate imm_shrinkage_to_previous before any JIT-traced path.
     if imm_shrinkage_to_previous < 0.0:
         raise ValueError(
-            f"imm_shrinkage_to_previous must be >= 0.0, "
-            f"got {imm_shrinkage_to_previous}"
+            f"imm_shrinkage_to_previous must be >= 0.0, got {imm_shrinkage_to_previous}"
         )
 
     # Map the old parameter names to a registered MetricRecipe and build

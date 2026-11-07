@@ -11,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import jax.numpy as jnp
 
@@ -34,7 +35,7 @@ def build_kernel(
     target_ess: float,
     root_solver: Callable = solver.dichotomy,
     batch_size: int = 0,
-    **extra_parameters: dict[str, Any],
+    **extra_parameters: Any,
 ) -> Callable:
     """Build a Tempered SMC step using an adaptive schedule.
 
@@ -98,7 +99,7 @@ def build_kernel(
         mcmc_init_fn,
         resampling_fn,
         batch_size=batch_size,
-        **extra_parameters,  # type: ignore
+        **extra_parameters,
     )
 
     def kernel(
@@ -130,7 +131,7 @@ def as_top_level_api(
     root_solver: Callable = solver.dichotomy,
     num_mcmc_steps: int = 10,
     batch_size: int = 0,
-    **extra_parameters: dict[str, Any],
+    **extra_parameters: Any,
 ) -> SamplingAlgorithm:
     """Implements the user interface for the Adaptive Tempered SMC kernel.
 

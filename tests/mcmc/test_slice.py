@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for the unified Slice sampling family."""
+
 import chex
 import jax
 import jax.numpy as jnp
@@ -86,6 +87,29 @@ class IntervalProcedureTest(chex.TestCase):
         # extends one random side per step and stepping-out splits its budget
         # across the sides, so only their union is guaranteed to span the slice.
         self.assertTrue(float(left) < -3.0 or float(right) > 3.0)
+
+    def test_stepping_out_evaluates_each_end_once_under_vmap(self):
+        """Under vmap each stepping-out step must evaluate the log-density once.
+
+        JAX re-evaluates a batched ``while_loop`` predicate inside the loop body
+        to select which elements to update. If ``in_slice`` is called in the
+        condition, every expansion then costs two evaluations, and in float32
+        the two copies can round differently near the slice level, so the loop
+        may never terminate. With the test carried in the loop state, a bracket
+        costs one evaluation per expansion plus one per starting end point.
+        """
+        calls = []
+
+        def in_slice(t):
+            jax.debug.callback(lambda _: calls.append(1), t)
+            return jnp.abs(t) < 3.0
+
+        step = jax.jit(jax.vmap(lambda k: stepping_out(k, in_slice, 1.0, 10)[:3]))
+        for seed in range(5):
+            calls.clear()
+            _, _, num_expansions = step(jax.random.split(jax.random.key(seed), 1))
+            jax.effects_barrier()
+            self.assertEqual(len(calls), int(num_expansions[0]) + 2)
 
 
 class SingleStepTest(chex.TestCase):

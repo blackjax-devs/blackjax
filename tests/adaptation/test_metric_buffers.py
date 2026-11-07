@@ -2019,7 +2019,9 @@ class _FrozenLRDAccumulatorState(NamedTuple):
 
     mean: jnp.ndarray
     m2: jnp.ndarray
-    count: jnp.ndarray
+    # `count` shadows tuple.count (Callable[[Any], int]); mypy's typeshed
+    # stub for tuple has no way to express a NamedTuple field overriding it.
+    count: jnp.ndarray  # type: ignore[assignment]
 
 
 def _frozen_lrd_accumulator_init(d: int) -> _FrozenLRDAccumulatorState:

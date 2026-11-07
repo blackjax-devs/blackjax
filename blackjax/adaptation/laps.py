@@ -38,7 +38,9 @@ from blackjax.mcmc.integrators import (
 class AdaptationState(NamedTuple):
     steps_per_sample: float
     step_size: float
-    stepsize_adaptation_state: Any  # the state of the bisection algorithm to find a stepsize
+    stepsize_adaptation_state: (
+        Any  # the state of the bisection algorithm to find a stepsize
+    )
     iteration: int
 
 

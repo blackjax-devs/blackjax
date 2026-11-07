@@ -31,6 +31,9 @@ outputs.  The shim parity guarantee is enforced by the existing adaptation
 tests (``test_adaptation.py``, ``test_window_adaptation_fisher_diag.py``)
 which now run through the shim path.
 """
+
+import warnings
+
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -42,6 +45,7 @@ from blackjax.adaptation.staged_adaptation import (
     build_schedule,
     staged_adaptation,
 )
+from blackjax.adaptation.step_size import dual_averaging_adaptation
 from blackjax.adaptation.window_adaptation import (
     WindowAdaptationState,
     _pick_recipe_name,
@@ -68,8 +72,6 @@ class StagedAdaptationStateAliasTest(BlackJAXTest):
         # Build a state via the engine to get a genuine StagedAdaptationState.
         core = lookup_recipe("welford_diag").build_core()
         state_0 = core.init(3)
-        from blackjax.adaptation.step_size import dual_averaging_adaptation
-
         da_init, _, _ = dual_averaging_adaptation(0.8)
         ss_state = da_init(1.0)
         sa_state = StagedAdaptationState(
@@ -462,8 +464,6 @@ class StagedAdaptationIMMSeedBehavioralTest(BlackJAXTest):
         # For tests with custom initial_inverse_mass_matrix, we need to construct
         # the core explicitly via lookup_recipe
         if imm is not None:
-            from blackjax.adaptation.metric_recipes import lookup_recipe
-
             if metric == "welford_diag" and imm.ndim == 1:
                 # Diagonal metric with seed
                 core = lookup_recipe("welford_diag").build_core(
@@ -582,8 +582,6 @@ class StagedAdaptationIMMSeedBehavioralTest(BlackJAXTest):
         rng_key = self.next_key()
 
         # For staged_adaptation with shrinkage, construct the core
-        from blackjax.adaptation.metric_recipes import lookup_recipe
-
         # Explicit 0.0
         core_explicit = lookup_recipe("welford_diag").build_core(
             imm_shrinkage_to_previous=0.0
@@ -634,8 +632,6 @@ class StagedAdaptationIMMSeedBehavioralTest(BlackJAXTest):
         rng_key = self.next_key()
         # Seed that is 100x larger than optimal — will bias the result
         wrong_seed = jnp.array([100.0, 100.0, 100.0])
-
-        from blackjax.adaptation.metric_recipes import lookup_recipe
 
         # No shrinkage: seed is quickly overwritten by Welford
         core_no_shrink = lookup_recipe("welford_diag").build_core(
@@ -689,8 +685,6 @@ class StagedAdaptationIMMSeedBehavioralTest(BlackJAXTest):
         rng_key = self.next_key()
         # Use a diagonal PD matrix as the dense seed
         wrong_seed = jnp.diag(jnp.array([100.0, 100.0, 100.0]))
-
-        from blackjax.adaptation.metric_recipes import lookup_recipe
 
         # No shrinkage: dense case
         core_dense_no_shrink = lookup_recipe("welford_dense").build_core(
@@ -1047,8 +1041,6 @@ class WarmupTreedepthCapTest(BlackJAXTest):
         ill-conditioned target and dispersed inits so un-capped runs would hit
         the default depth limit (2**10 = 1024 steps).
         """
-        import warnings
-
         d = 20
         M = 8
         max_grad_budget = 20_000
@@ -1096,8 +1088,6 @@ class WarmupTreedepthCapTest(BlackJAXTest):
         If the user passed max_num_doublings=8, the returned dict must have 8,
         not 5 (the warmup cap must not override the user's sampling preference).
         """
-        import warnings
-
         d = 5
         M = 8  # use the recommended minimum (>=6) to avoid the collinearity warning
         logdensity_fn = self._make_ill_cond_logdensity(d=d)
@@ -1184,8 +1174,6 @@ class WarmupCapSignatureGuardTest(BlackJAXTest):
         max_num_doublings into every kernel's extra_parameters, even though
         only NUTS accepts that kwarg.  HMC raises TypeError on an unknown kwarg.
         """
-        import warnings
-
         d = 5
         M = 8  # Use >= 6 (recommended minimum) to avoid the collinearity UserWarning
 
@@ -1215,8 +1203,6 @@ class WarmupCapSignatureGuardTest(BlackJAXTest):
         Verifies that the signature guard does not accidentally remove the cap
         for NUTS — NUTS explicitly accepts max_num_doublings.
         """
-        import warnings
-
         d = 20
         M = 8
         max_grad_budget = 20_000

@@ -11,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple
+from collections.abc import Callable
+from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -69,7 +70,9 @@ def approximate(
     logdensity_fn: Callable,
     initial_position: ArrayLikeTree,
     num_samples: int = 200,
-    *,  # lgbfs parameters
+    *,
+    batch_size: int = 0,
+    # lbfgs parameters
     maxiter=30,
     maxcor=10,
     maxls=1000,
@@ -96,6 +99,14 @@ def approximate(
         starting point of the L-BFGS optimization routine
     num_samples
         number of samples to draw to estimate ELBO
+    batch_size
+        Batch size for optimization-path entries and, within each entry,
+        log-density evaluations when estimating ELBOs. A positive value uses
+        ``jax.lax.map`` to trade parallelism for lower intermediate memory;
+        ``0`` (the default) keeps fully vectorized evaluation. This must be
+        static when using ``jax.jit``. Sampling and the dense inverse-Hessian
+        representation are unchanged. Memory savings are not guaranteed when
+        path length and ELBO sample count differ substantially.
     maxiter
         Maximum number of iterations of the L-BFGS algorithm.
     maxcor
@@ -151,7 +162,7 @@ def approximate(
     s_padded = jnp.pad(s_masked, ((maxcor, 0), (0, 0)), mode="constant")
     z_padded = jnp.pad(z_masked, ((maxcor, 0), (0, 0)), mode="constant")
 
-    def path_finder_body_fn(args: tuple[int, jax.Array]):
+    def path_finder_body_fn(args: tuple[jax.Array, jax.Array]):
         """The for loop body in Algorithm 1 of the Pathfinder paper."""
 
         i, key_i = args
@@ -175,7 +186,10 @@ def approximate(
             gamma=gamma,
         )
 
-        logp = -jax.vmap(objective_fn)(phi)
+        if batch_size > 0:
+            logp = -jax.lax.map(objective_fn, phi, batch_size=batch_size)
+        else:
+            logp = -jax.vmap(objective_fn)(phi)
         elbo = (logp - logq).mean()
 
         return elbo, beta, gamma
@@ -184,7 +198,12 @@ def approximate(
     rng_keys = jax.random.split(rng_key, path_size)
     path_indices = jnp.arange(path_size)
 
-    elbo, beta, gamma = jax.vmap(path_finder_body_fn)((path_indices, rng_keys))
+    if batch_size > 0:
+        elbo, beta, gamma = jax.lax.map(
+            path_finder_body_fn, (path_indices, rng_keys), batch_size=batch_size
+        )
+    else:
+        elbo, beta, gamma = jax.vmap(path_finder_body_fn)((path_indices, rng_keys))
 
     elbo = jnp.where(
         (jnp.arange(path_size) < (status.iter_num)) & jnp.isfinite(elbo),

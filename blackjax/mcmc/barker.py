@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for Barker's proposal with a Gaussian base kernel."""
-from typing import Callable, NamedTuple
+
+from collections.abc import Callable
+from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -38,7 +40,7 @@ class BarkerState(NamedTuple):
 
     """
 
-    position: ArrayTree
+    position: ArrayLikeTree
     logdensity: float
     logdensity_grad: ArrayTree
 
@@ -279,7 +281,7 @@ def _barker_sample(key, mean, a, scale, metric):
 
 
 def _log1pexp(a):
-    return jnp.log1p(jnp.exp(a))
+    return jax.nn.softplus(a)
 
 
 def _barker_logpdf(x, mean, a, scale):

@@ -11,9 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple
+from collections.abc import Callable
+from typing import NamedTuple
 
 import jax.numpy as jnp
+
+from blackjax.types import Numeric
 
 __all__ = [
     "DualAveragingState",
@@ -43,11 +46,11 @@ class DualAveragingState(NamedTuple):
 
     """
 
-    log_x: float
-    log_x_avg: float
+    log_x: Numeric
+    log_x_avg: Numeric
     step: int
-    avg_error: float
-    mu: float
+    avg_error: Numeric
+    mu: Numeric
 
 
 def dual_averaging(
@@ -91,11 +94,11 @@ def dual_averaging(
         where :math:`\\x_init` is the initial value of the state.
 
         """
-        mu: float = jnp.log(10 * x_init)
+        mu: Numeric = jnp.log(10 * x_init)
         step = 1
-        avg_error: float = 0.0
-        log_x: float = jnp.log(x_init)
-        log_x_avg: float = 0.0
+        avg_error: Numeric = 0.0
+        log_x: Numeric = jnp.log(x_init)
+        log_x_avg: Numeric = 0.0
         return DualAveragingState(log_x, log_x_avg, step, avg_error, mu)
 
     def update(da_state: DualAveragingState, gradient) -> DualAveragingState:
@@ -122,7 +125,7 @@ def dual_averaging(
         log_x_avg = eta_t * log_step + (1 - eta_t) * avg_log_step
         return DualAveragingState(log_x, log_x_avg, step + 1, avg_error, mu)
 
-    def final(da_state: DualAveragingState) -> float:
+    def final(da_state: DualAveragingState) -> Numeric:
         """Returns the state that minimizes the objective function."""
         return jnp.exp(da_state.log_x_avg)
 

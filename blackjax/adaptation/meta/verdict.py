@@ -20,6 +20,7 @@ Functions
 :func:`extract_multi_chain_verdict` — multi-chain verdict from
     :class:`~blackjax.adaptation.meta._state.MultiChainMetaAdaptationCoreState`.
 """
+
 from __future__ import annotations
 
 from typing import Any

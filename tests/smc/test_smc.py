@@ -1,4 +1,5 @@
 """Test the generic SMC sampler"""
+
 import functools
 
 import chex

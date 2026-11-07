@@ -20,6 +20,7 @@ Coverage:
 - TestBranchCompatibilityInvariants, TestNewStateFieldsPopulated, TestSharedEpsilonDA,
   TestWBranchE2ESmoke, TestEndToEndEscalation: multi-chain e2e tests.
 """
+
 import warnings
 
 import jax
@@ -27,6 +28,7 @@ import jax.numpy as jnp
 import numpy as np
 
 import blackjax
+from blackjax.adaptation.low_rank_adaptation import build_growing_window_schedule
 from blackjax.adaptation.meta import (
     MetaAdaptationVerdict,
     build_meta_adaptation_core,
@@ -52,7 +54,12 @@ from blackjax.adaptation.meta._signals import (
     _compute_whitened_spectrum,
 )
 from blackjax.adaptation.metric_recipes import MetricCore
-from blackjax.adaptation.staged_adaptation import _make_engine
+from blackjax.adaptation.staged_adaptation import (
+    _make_engine,
+    _resolve_metric_and_schedule,
+    build_schedule,
+)
+from blackjax.adaptation.step_size import dual_averaging_adaptation
 from blackjax.mcmc.metrics import LowRankInverseMassMatrix
 from tests.adaptation._meta_fixtures import (
     _fill_mc_state,
@@ -208,8 +215,7 @@ class TestEscalationDecisionTable(BlackJAXTest):
         self.assertGreater(
             s_gap,
             _S_MIN,
-            "Fixture must have high S_gap for isolation; got "
-            + str(s_gap),  # noqa: E702
+            "Fixture must have high S_gap for isolation; got " + str(s_gap),  # noqa: E702
         )
         # R² gate blocks.
         r2 = float(np.asarray(state.r2_latest))
@@ -534,14 +540,6 @@ class TestRecovershClassical(BlackJAXTest):
         Both are fixed via _resolve_metric_and_schedule: the function is called
         directly so the returned schedule identity is observable.
         """
-        from blackjax.adaptation.low_rank_adaptation import (
-            build_growing_window_schedule,
-        )
-        from blackjax.adaptation.staged_adaptation import (
-            _resolve_metric_and_schedule,
-            build_schedule,
-        )
-
         # auto + no explicit schedule → growing window (the override).
         _, sched_auto_default = _resolve_metric_and_schedule(
             "auto", None, max_grad_budget=5000
@@ -867,13 +865,33 @@ class TestRecovershClassical(BlackJAXTest):
         For axis-aligned u=e_1 those off-diagonals are all zero, D^{-1}SigmaD^{-1}=I,
         S_gap=1 and the controller NEVER escalates (U=0 always).  A random u produces
         residual off-diagonal structure with a whitened top eigenvalue well above
-        _S_MIN=2.0, driving escalation within ~400 slow-window steps.
+        _S_MIN=2.0, driving escalation within the slow-window budget below.
+
+        Budget choice: the default growing-window schedule
+        (``build_growing_window_schedule``, early_window_size=10, window_size=80)
+        uses FIXED absolute window sizes for everything but the early/final-buffer
+        fractions, so at num_steps=400 there are only two main-phase windows (80,
+        then 140 once the ``is_late`` rule absorbs the remainder) -- i.e. only one
+        pairwise comparison against ``_S_GAP_STABILITY_TOL=0.3``.  Estimating a
+        d=5 whitened-spectrum S_gap from one ~80-140-draw autocorrelated NUTS
+        window is intrinsically noisy, so that single stability check is close to
+        a coin flip regardless of spike strength: at num_steps=400, over 60
+        random seeds, only ~70% escalate in both f32 and x64 on jax 0.10.2, and
+        this fixture's old seed escalated with per-dtype margins thin enough to
+        flip under legitimate cross-platform/cross-jax-version floating-point
+        drift (observed: passed on jax 0.10.0 on both aarch64 and x86_64, failed
+        on jax 0.10.2 on x86_64 -- same seed, same assertions). num_steps=1600
+        gives the schedule several large, well-supported main-phase windows
+        instead of one, which raises the both-dtype escalation rate to ~98% on
+        jax 0.10.2 / ~92% on jax 0.10.0 over the same 60 seeds (vs ~70% at 400),
+        without touching any controller threshold.
         """
         n_dims = 5
         lam_spike = 25.0
 
-        # Fixed random unit vector (seed 42) so the fixture is deterministic.
-        u_raw = jax.random.normal(jax.random.key(42), (n_dims,))
+        # Fixed random unit vector, seeded by authoring date, so the fixture is
+        # deterministic.
+        u_raw = jax.random.normal(jax.random.key(20261002), (n_dims,))
         u_dir = u_raw / jnp.linalg.norm(u_raw)
 
         # Sigma^{-1} = I - (lam-1)/lam * outer(u, u)  [matrix-inversion lemma]
@@ -886,10 +904,10 @@ class TestRecovershClassical(BlackJAXTest):
 
         # --- f32 run ---
         warmup = blackjax.staged_adaptation(
-            blackjax.nuts, logdensity_fn, metric="auto", max_grad_budget=20000
+            blackjax.nuts, logdensity_fn, metric="auto", max_grad_budget=80000
         )
         key = jax.random.key(100)
-        results, _ = warmup.run(key, jnp.zeros(n_dims), num_steps=400)
+        results, _ = warmup.run(key, jnp.zeros(n_dims), num_steps=1600)
         imm = results.parameters["inverse_mass_matrix"]
         self.assertIsInstance(imm, LowRankInverseMassMatrix)
         self.assertTrue(
@@ -910,10 +928,10 @@ class TestRecovershClassical(BlackJAXTest):
         try:
             jax.config.update("jax_enable_x64", True)
             warmup64 = blackjax.staged_adaptation(
-                blackjax.nuts, logdensity_fn, metric="auto", max_grad_budget=20000
+                blackjax.nuts, logdensity_fn, metric="auto", max_grad_budget=80000
             )
             key64 = jax.random.key(101)
-            results64, _ = warmup64.run(key64, jnp.zeros(n_dims), num_steps=400)
+            results64, _ = warmup64.run(key64, jnp.zeros(n_dims), num_steps=1600)
             imm64 = results64.parameters["inverse_mass_matrix"]
             self.assertIsInstance(imm64, LowRankInverseMassMatrix)
             self.assertTrue(
@@ -1461,9 +1479,6 @@ class TestMeanPoolGainDefect(BlackJAXTest):
         This test asserts the CORRECT (mean-pool) behavior.  It FAILs with the
         M-sequential lax.scan implementation and PASSes after the mean-pool fix.
         """
-        from blackjax.adaptation.meta import build_meta_adaptation_core
-        from blackjax.adaptation.step_size import dual_averaging_adaptation
-
         target_ar = 0.80
         M = 4
         ar_uniform = 0.75  # same rate on all chains
@@ -1525,8 +1540,6 @@ class TestMeanPoolGainDefect(BlackJAXTest):
         with the M-sequential implementation (counter advances by M) and PASSes
         after the mean-pool fix.
         """
-        from blackjax.adaptation.meta import build_meta_adaptation_core
-
         M = 6
         per_chain = jnp.full((M,), 0.78)
 
@@ -1563,9 +1576,6 @@ class TestSharedEpsilonDA(BlackJAXTest):
         mean observation.  The engine must produce the same step_size_avg as a
         single da_update at mean(per_chain), not M sequential updates.
         """
-        from blackjax.adaptation.meta import build_meta_adaptation_core
-        from blackjax.adaptation.step_size import dual_averaging_adaptation
-
         target_ar = 0.80
         M = 4
         per_chain = jnp.array([0.55, 0.65, 0.75, 0.85])
@@ -1604,8 +1614,6 @@ class TestSharedEpsilonDA(BlackJAXTest):
 
     def test_step_counter_increments_once_per_step(self):
         """After n_da_updates=M (mean-pool), the DA step counter increments by 1."""
-        from blackjax.adaptation.meta import build_meta_adaptation_core
-
         M = 3
         per_chain = jnp.array([0.70, 0.75, 0.80])
 
@@ -1649,9 +1657,6 @@ class TestSharedEpsilonDA(BlackJAXTest):
         The mean-pool result must match a single da_update at the mean
         acceptance rate.
         """
-        from blackjax.adaptation.meta import build_meta_adaptation_core
-        from blackjax.adaptation.step_size import dual_averaging_adaptation
-
         M = 8  # matches the recommended n_chains minimum
         ar_val = 0.78
         per_chain = jnp.full((M,), ar_val)

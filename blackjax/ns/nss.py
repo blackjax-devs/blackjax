@@ -19,17 +19,16 @@ MCMC kernel (Yallup, Kroupa & Handley, 2026, arXiv:2601.23252). The default
 :func:`build_swig_kernel` offers an axis-aligned slice-within-Gibbs alternative.
 """
 
+from collections.abc import Callable
 from functools import partial
-from typing import Callable
 
 import jax
 import jax.flatten_util
 import jax.numpy as jnp
 
 from blackjax import SamplingAlgorithm
-from blackjax.mcmc.slice import SliceInfo
+from blackjax.mcmc.slice import SliceInfo, random_order, stepping_out
 from blackjax.mcmc.slice import build_kernel as build_slice_kernel
-from blackjax.mcmc.slice import random_order, stepping_out
 from blackjax.ns.adaptive import init
 from blackjax.ns.base import NSInfo, NSState, init_state_strategy
 from blackjax.ns.from_mcmc import build_kernel as build_from_mcmc_kernel

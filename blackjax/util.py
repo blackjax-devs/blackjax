@@ -1,7 +1,8 @@
 """Utility functions for BlackJax."""
 
+from collections.abc import Callable
 from functools import partial
-from typing import Callable, NamedTuple
+from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -151,8 +152,8 @@ def run_inference_algorithm(
     rng_key: PRNGKey,
     inference_algorithm: SamplingAlgorithm | VIAlgorithm,
     num_steps: int,
-    initial_state: ArrayLikeTree = None,
-    initial_position: ArrayLikeTree = None,
+    initial_state: ArrayLikeTree | None = None,
+    initial_position: ArrayLikeTree | None = None,
     transform: Callable = lambda state, info: (state, info),
 ) -> tuple:
     """Wrapper to run an inference algorithm.
@@ -197,6 +198,8 @@ def run_inference_algorithm(
         )
 
     if initial_state is None:
+        # Guaranteed non-None by the "exactly one must be provided" check above.
+        assert initial_position is not None
         rng_key, init_key = split(rng_key, 2)
         initial_state = inference_algorithm.init(initial_position, init_key)
 
@@ -207,8 +210,10 @@ def run_inference_algorithm(
         state, info = inference_algorithm.step(rng_key, state)
         return state, transform(state, info)
 
-    xs = jnp.arange(num_steps), keys
-    final_state, history = lax.scan(one_step, initial_state, xs)
+    # jit the loop: eager lax.scan dispatch is slow on CPU (jax-ml/jax#37465)
+    final_state, history = jit(partial(lax.scan, one_step))(
+        initial_state, (jnp.arange(num_steps), keys)
+    )
 
     return final_state, history
 
@@ -221,6 +226,9 @@ def store_only_expectation_values(
 ):
     """Takes a sampling algorithm and constructs from it a new sampling algorithm object. The new sampling algorithm has the same
      kernel but only stores the streaming expectation values of some observables, not the full states; to save memory.
+
+    The first ``burn_in`` kernel steps are excluded from the running average.
+    During burn-in, the stored average is zero after each kernel step.
 
     It saves incremental_value_transform(E[state_transform(x)]) at each step i, where expectation is computed with samples up to i-th sample.
 
@@ -266,14 +274,16 @@ def store_only_expectation_values(
         state, info = sampling_algorithm.step(
             rng_key, state
         )  # update the state with the sampling algorithm
-        averaging_state = incremental_value_update(
+        step_count, average = averaging_state
+        # The burn-in clock advances even when no sample enters the average.
+        sample_count = jnp.maximum(step_count - burn_in, 0)
+        _, average = incremental_value_update(
             state_transform(state),
-            averaging_state,
-            weight=(
-                averaging_state[0] >= burn_in
-            ),  # If we want to eliminate some number of steps as a burn-in
+            (sample_count, average),
+            weight=step_count >= burn_in,
             zero_prevention=1e-10 * (burn_in > 0),
         )
+        averaging_state = (step_count + 1, average)
         # update the expectation value with the running average
         return (state, averaging_state), info
 

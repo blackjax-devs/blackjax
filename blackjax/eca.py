@@ -54,10 +54,10 @@ def eca_step(
             state, info, key_adaptation
         )
         expected_value_summary_statistics = jax.tree.map(
-            lambda summary_statistics: lax.psum(
-                jnp.sum(summary_statistics, axis=0), axis_name="chains"
-            )
-            / num_chains,
+            lambda summary_statistics: (
+                lax.psum(jnp.sum(summary_statistics, axis=0), axis_name="chains")
+                / num_chains
+            ),
             summary_statistics,
         )
 

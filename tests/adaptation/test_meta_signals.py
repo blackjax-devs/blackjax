@@ -17,6 +17,7 @@ Coverage:
 - TestCriterionR2Gate: R² gate separates linear-residual from curvature geometry.
 - TestCriterionSGap: S_gap ordering agrees with measured payoff ordering.
 """
+
 import jax.numpy as jnp
 import numpy as np
 
@@ -33,6 +34,7 @@ from blackjax.adaptation.meta._signals import (
     _compute_s_gap,
     _compute_whitened_spectrum,
 )
+from blackjax.adaptation.metric_estimators import _compute_low_rank_metric
 from tests.adaptation._meta_fixtures import (
     _make_correlated_buffer,
     _make_curvature_buffer,
@@ -175,8 +177,6 @@ class TestCriterionSGap(BlackJAXTest):
         n_arr = jnp.array(n, dtype=jnp.int32)
 
         # Whiten with Fisher sigma (as the controller does)
-        from blackjax.adaptation.metric_estimators import _compute_low_rank_metric
-
         sigma_lr, _, _, _ = _compute_low_rank_metric(
             draws, grads, n_arr, max_rank, 1e-5, 2.0
         )
@@ -196,7 +196,6 @@ class TestCriterionSGap(BlackJAXTest):
         """
         d, n, max_rank = 20, 400, 5
         n_arr = jnp.array(n, dtype=jnp.int32)
-        from blackjax.adaptation.metric_estimators import _compute_low_rank_metric
 
         # High-payoff: correlated spike
         draws_h, grads_h = _make_correlated_buffer(

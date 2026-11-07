@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Shared test utilities for BlackJAX tests."""
+
 import datetime
 
 import chex
@@ -185,15 +186,7 @@ def assert_grand_mean_within_robust_tolerance(
     robust_se = 1.4826 * mad / np.sqrt(n_chains)
     threshold = max(atol_floor, k_sigma * robust_se)
     assert abs(grand_mean - expected_mean) < threshold, (
-        "Grand mean {:.6f} is inconsistent with expected {:.6f} "
-        "(difference {:.6f} >= threshold {:.6f}). "
-        "atol_floor={:.3f}, robust_se={:.6f}, n_chains={:d}.".format(
-            grand_mean,
-            expected_mean,
-            abs(grand_mean - expected_mean),
-            threshold,
-            atol_floor,
-            robust_se,
-            n_chains,
-        )
+        f"Grand mean {grand_mean:.6f} is inconsistent with expected {expected_mean:.6f} "
+        f"(difference {abs(grand_mean - expected_mean):.6f} >= threshold {threshold:.6f}). "
+        f"atol_floor={atol_floor:.3f}, robust_se={robust_se:.6f}, n_chains={n_chains:d}."
     )

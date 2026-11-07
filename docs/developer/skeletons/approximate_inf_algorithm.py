@@ -19,7 +19,9 @@ in the blanks, and delete these module-level comments.
 
 See ``docs/developer/new_algorithm_guide.md`` for the complete walkthrough.
 """
-from typing import Callable, NamedTuple
+
+from collections.abc import Callable
+from typing import NamedTuple
 
 import jax
 from optax import GradientTransformation

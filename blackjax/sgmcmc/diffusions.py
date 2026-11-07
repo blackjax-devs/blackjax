@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Solvers for Langevin diffusions."""
+
 import operator
 
 import jax
 import jax.numpy as jnp
 
-from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import ArrayLikeTree, PRNGKey
 from blackjax.util import generate_gaussian_noise, pytree_size
 
 __all__ = ["overdamped_langevin", "sghmc", "sgnht"]
@@ -36,12 +37,12 @@ def overdamped_langevin():
         logdensity_grad: ArrayLikeTree,
         step_size: float,
         temperature: float = 1.0,
-    ) -> ArrayTree:
+    ) -> ArrayLikeTree:
         noise = generate_gaussian_noise(rng_key, position)
         position = jax.tree.map(
-            lambda p, g, n: p
-            + step_size * g
-            + jnp.sqrt(2 * temperature * step_size) * n,
+            lambda p, g, n: (
+                p + step_size * g + jnp.sqrt(2 * temperature * step_size) * n
+            ),
             position,
             logdensity_grad,
             noise,
@@ -71,12 +72,16 @@ def sghmc(alpha: float = 0.01, beta: float = 0):
         noise = generate_gaussian_noise(rng_key, position)
         position = jax.tree.map(lambda x, p: x + step_size * p, position, momentum)
         momentum = jax.tree.map(
-            lambda p, g, n: (1.0 - alpha * step_size) * p
-            + step_size * g
-            + jnp.sqrt(
-                step_size * temperature * (2 * alpha - step_size * temperature * beta)
-            )
-            * n,
+            lambda p, g, n: (
+                (1.0 - alpha * step_size) * p
+                + step_size * g
+                + jnp.sqrt(
+                    step_size
+                    * temperature
+                    * (2 * alpha - step_size * temperature * beta)
+                )
+                * n
+            ),
             momentum,
             logdensity_grad,
             noise,
@@ -106,12 +111,16 @@ def sgnht(alpha: float = 0.01, beta: float = 0):
         noise = generate_gaussian_noise(rng_key, position)
         position = jax.tree.map(lambda x, p: x + step_size * p, position, momentum)
         momentum = jax.tree.map(
-            lambda p, g, n: (1.0 - xi * step_size) * p
-            + step_size * g
-            + jnp.sqrt(
-                step_size * temperature * (2 * alpha - step_size * temperature * beta)
-            )
-            * n,
+            lambda p, g, n: (
+                (1.0 - xi * step_size) * p
+                + step_size * g
+                + jnp.sqrt(
+                    step_size
+                    * temperature
+                    * (2 * alpha - step_size * temperature * beta)
+                )
+                * n
+            ),
             momentum,
             logdensity_grad,
             noise,

@@ -11,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple
+from collections.abc import Callable
+from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -727,6 +728,9 @@ def meads_adaptation(
             # two jax.lax.cond branches disagree on output shapes. A rank-d metric
             # equals the full dense metric, so this clamp is lossless.
             nonlocal low_rank_k
+            # Guaranteed non-None: set to a concrete int above, in the same
+            # `low_rank_rank is not None` branch this is nested under.
+            assert low_rank_k is not None
             low_rank_k = min(low_rank_k, d)
             init_lrd_accum = MomentBlock(
                 count=jnp.zeros(()), mean=jnp.zeros((d,)), m2=jnp.zeros((d, d))
@@ -757,6 +761,10 @@ def meads_adaptation(
             # low_rank_k is set to a non-None int whenever low_rank_rank is
             # not None (validated above); assert narrows it for mypy.
             assert low_rank_k is not None
+            # last_lrd_accum mirrors init_lrd_accum, which is only ever a
+            # MomentBlock (never None) in this same low_rank_rank is not
+            # None branch.
+            assert last_lrd_accum is not None
             d_final = flat_final_pos.shape[-1]
             use_accumulated_final = last_lrd_accum.count >= 2 * d_final
             final_sigma, final_U, final_lam = jax.lax.cond(

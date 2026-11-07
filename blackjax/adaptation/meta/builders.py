@@ -22,6 +22,7 @@ Functions
 :func:`build_meta_adaptation_core` — single-chain MetricCore builder.
 :func:`build_multi_chain_meta_core` — multi-chain MetricCore builder.
 """
+
 from __future__ import annotations
 
 import jax

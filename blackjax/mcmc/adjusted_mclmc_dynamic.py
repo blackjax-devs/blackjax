@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for the Metropolis Hastings Microcanonical Hamiltonian Monte Carlo (MHMCHMC) Kernel. This is closely related to the Microcanonical Langevin Monte Carlo (MCLMC) Kernel, which is an unadjusted method. This kernel adds a Metropolis-Hastings correction to the MCLMC kernel. It also only refreshes the momentum variable after each MH step, rather than during the integration of the trajectory. Hence "Hamiltonian" and not "Langevin"."""
-from typing import Callable
+
+from collections.abc import Callable
+from typing import cast
 
 import jax
 import jax.numpy as jnp
@@ -22,7 +24,7 @@ from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.mcmc.adjusted_mclmc import adjusted_mclmc_proposal, rescale
 from blackjax.mcmc.dynamic_hmc import DynamicHMCState, halton_sequence
 from blackjax.mcmc.hmc import HMCInfo
-from blackjax.types import Array, ArrayLikeTree, PRNGKey
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_unit_vector
 
 __all__ = ["init", "build_kernel", "as_top_level_api"]
@@ -48,7 +50,11 @@ def init(
     The initial DynamicHMCState.
     """
     logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
-    return DynamicHMCState(position, logdensity, logdensity_grad, random_generator_arg)
+    # position is stored unconverted, like dynamic_hmc.init; build_kernel
+    # below re-feeds DynamicHMCState.position into an IntegratorState.
+    return DynamicHMCState(
+        cast(ArrayTree, position), logdensity, logdensity_grad, random_generator_arg
+    )
 
 
 def build_kernel(
@@ -194,7 +200,7 @@ def as_top_level_api(
     )
 
 
-def trajectory_length(t: int, mu: float):
+def trajectory_length(t: Array, mu: float):
     """Quasi-random trajectory length using the Halton sequence.
 
     Parameters

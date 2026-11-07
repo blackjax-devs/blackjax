@@ -17,8 +17,10 @@ import chex
 import jax
 import jax.numpy as jnp
 import numpy as np
+import pytest
 from absl.testing import absltest
 
+import blackjax
 from blackjax.mcmc.elliptical_slice import (
     EllipSliceInfo,
     EllipSliceState,
@@ -203,8 +205,6 @@ class EllipSliceKernelTest(BlackJAXTest):
 
     def test_wrong_cov_dim_raises(self):
         """build_kernel raises ValueError for 3-d cov_matrix."""
-        import pytest
-
         with pytest.raises(ValueError, match="wrong number of dimensions"):
             build_kernel(jnp.ones((2, 2, 2)), jnp.zeros(2))
 
@@ -219,8 +219,6 @@ class EllipSliceTopLevelAPITest(BlackJAXTest):
 
     def test_init_and_step(self):
         """Top-level API: init + step runs and returns EllipSliceState."""
-        import blackjax
-
         ndim = 3
         cov = jnp.eye(ndim)
         mean = jnp.zeros(ndim)
@@ -232,8 +230,6 @@ class EllipSliceTopLevelAPITest(BlackJAXTest):
 
     def test_top_level_jit(self):
         """Top-level step is JIT-compilable."""
-        import blackjax
-
         ndim = 2
         cov = jnp.eye(ndim)
         mean = jnp.zeros(ndim)

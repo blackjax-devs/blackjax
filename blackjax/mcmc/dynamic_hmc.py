@@ -13,7 +13,8 @@
 # limitations under the License.
 """Public API for the Dynamic HMC Kernel"""
 
-from typing import Callable, NamedTuple
+from collections.abc import Callable
+from typing import NamedTuple, cast
 
 import jax
 import jax.numpy as jnp
@@ -21,10 +22,9 @@ import jax.numpy as jnp
 import blackjax.mcmc.integrators as integrators
 from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.mcmc.adjusted_mclmc import rescale
-from blackjax.mcmc.hmc import HMCInfo, HMCState
+from blackjax.mcmc.hmc import HMCInfo, HMCState, hmc_proposal
 from blackjax.mcmc.hmc import build_kernel as build_static_hmc_kernel
-from blackjax.mcmc.hmc import hmc_proposal
-from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, Numeric, PRNGKey
 
 __all__ = [
     "DynamicHMCState",
@@ -53,10 +53,22 @@ class DynamicHMCState(NamedTuple):
 def init(
     position: ArrayLikeTree,
     logdensity_fn: Callable,
-    random_generator_arg: Array,
+    random_generator_arg: Numeric,
 ):
     logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
-    return DynamicHMCState(position, logdensity, logdensity_grad, random_generator_arg)
+    # position is stored unconverted, like hmc.HMCState: adjusted_mclmc_dynamic
+    # re-feeds DynamicHMCState.position straight into an IntegratorState.
+    # random_generator_arg is accepted as a plain int Halton-sequence index
+    # too (chees_adaptation seeds it with a literal 0), but the field stays
+    # Array: every downstream consumer (halton_sequence, trajectory_length)
+    # calls .dtype on it, which a bare Python int would not survive at
+    # runtime any more than it does today.
+    return DynamicHMCState(
+        cast(ArrayTree, position),
+        logdensity,
+        logdensity_grad,
+        cast(Array, random_generator_arg),
+    )
 
 
 def build_kernel(
@@ -202,7 +214,7 @@ def as_top_level_api(
     )
 
 
-def halton_sequence(i: Array, max_bits: int = 10) -> float:
+def halton_sequence(i: Array, max_bits: int = 10) -> Array:
     """Generate the (i+1)-th element of the Halton sequence.
 
     Warning: max_bits should be less than the bit width of i.dtype to prevent integer overflow (e.g., max_bits <= 63 for int64).
@@ -217,7 +229,7 @@ def halton_sequence(i: Array, max_bits: int = 10) -> float:
 
 def halton_trajectory_length(
     i: Array, trajectory_length_adjustment: float, max_bits: int = 10
-) -> int:
+) -> Array:
     """Generate a quasi-random number of integration steps."""
     s = rescale(trajectory_length_adjustment)
     return jnp.asarray(jnp.rint(0.5 + halton_sequence(i, max_bits) * s), dtype=int)

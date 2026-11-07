@@ -146,9 +146,7 @@ def adjusted_mclmc_find_L_and_step_size(
             max=max,
             tuning_factor=tuning_factor,
             target_num_integration_steps=target_num_integration_steps,
-        )(
-            state, params, num_steps, window_key
-        )
+        )(state, params, num_steps, window_key)
         total_num_tuning_integrator_steps += num_tuning_integrator_steps
 
     if frac_tune3 != 0:
@@ -167,9 +165,7 @@ def adjusted_mclmc_find_L_and_step_size(
                 l_factor=0.5,
                 max=max,
                 eigenvector=eigenvector,
-            )(
-                state, params, num_steps, part2_key1
-            )
+            )(state, params, num_steps, part2_key1)
 
             total_num_tuning_integrator_steps += num_tuning_integrator_steps
 
@@ -189,9 +185,7 @@ def adjusted_mclmc_find_L_and_step_size(
                 diagonal_preconditioning=diagonal_preconditioning,
                 max=max,
                 tuning_factor=tuning_factor,
-            )(
-                state, params, num_steps, part2_key2
-            )
+            )(state, params, num_steps, part2_key2)
 
             total_num_tuning_integrator_steps += num_tuning_integrator_steps
 
@@ -325,8 +319,9 @@ def adjusted_mclmc_make_L_step_size_adaptation(
         )
 
     def L_step_size_adaptation(state, params, num_steps, rng_key):
-        num_steps1, num_steps2 = int(num_steps * frac_tune1), int(
-            num_steps * frac_tune2
+        num_steps1, num_steps2 = (
+            int(num_steps * frac_tune1),
+            int(num_steps * frac_tune2),
         )
 
         check_key, rng_key = jax.random.split(rng_key, 2)

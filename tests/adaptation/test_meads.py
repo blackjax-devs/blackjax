@@ -1,4 +1,5 @@
 """Unit tests for the full K-fold MEADS adaptation (issue #781)."""
+
 import chex
 import jax
 import jax.numpy as jnp

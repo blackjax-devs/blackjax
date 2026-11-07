@@ -12,15 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for laplace_dhmc and laplace_dmhmc."""
+
 import chex
 import jax
 import jax.numpy as jnp
 import jax.scipy.stats as stats
+import numpy as np
 from absl.testing import absltest
 
 import blackjax
 from blackjax.mcmc.hmc import multinomial_hmc_proposal
-from blackjax.mcmc.laplace_dynamic_hmc import LaplaceDynamicHMCState
+from blackjax.mcmc.laplace_dynamic_hmc import LaplaceDynamicHMCState, init
 from blackjax.mcmc.laplace_marginal import LaplaceHMCInfo, laplace_marginal_factory
 from tests.fixtures import BlackJAXTest
 
@@ -49,15 +51,11 @@ class TestLaplaceDynamicHMCState(BlackJAXTest):
         )
 
     def test_init_returns_laplace_dynamic_hmc_state(self):
-        from blackjax.mcmc.laplace_dynamic_hmc import init
-
         phi = jnp.array(0.0)
         state = init(phi, self.laplace, self.next_key())
         self.assertIsInstance(state, LaplaceDynamicHMCState)
 
     def test_init_all_fields_finite(self):
-        from blackjax.mcmc.laplace_dynamic_hmc import init
-
         phi = jnp.array(0.0)
         state = init(phi, self.laplace, self.next_key())
         self.assertTrue(jnp.isfinite(state.logdensity))
@@ -69,13 +67,9 @@ class TestLaplaceDynamicHMCState(BlackJAXTest):
         )  # shape depends on PRNG key style
 
     def test_init_theta_star_consistent(self):
-        from blackjax.mcmc.laplace_dynamic_hmc import init
-
         phi = jnp.array(0.5)
         state = init(phi, self.laplace, self.next_key())
         expected = self.laplace.solve_theta(phi)
-        import numpy as np
-
         np.testing.assert_allclose(state.theta_star, expected, atol=1e-4)
 
 

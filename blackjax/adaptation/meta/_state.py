@@ -20,6 +20,7 @@ Five types:
 - :class:`MultiChainMetaAdaptationTelemetryCoreState` — the same, plus a publication record.
 - :class:`MetaAdaptationVerdict` — Python-side verdict extracted after the warmup scan.
 """
+
 from __future__ import annotations
 
 from typing import Any, NamedTuple
@@ -124,7 +125,9 @@ class MetaAdaptationVerdict(NamedTuple):
     metric: LowRankInverseMassMatrix
     effective_rank: int  # deployed rank: count of |lam_i − 1| > _LAM_NONTRIVIAL_TOL (0 for diagonal route)
     confidence: str  # "high" | "low"
-    exit_reason: str  # "warmup_complete" | "airm_velocity_converged" | "warmup_budget_exhausted"
+    exit_reason: (
+        str  # "warmup_complete" | "airm_velocity_converged" | "warmup_budget_exhausted"
+    )
     budget_used_steps: int
     budget_returned_steps: int  # advisory (see docstring)
     budget_used_grads: int  # -1 if info stream not provided
@@ -176,15 +179,29 @@ class MultiChainMetaAdaptationCoreState(NamedTuple):
     airm_vel_curr: Array  # AIRM velocity proxy from most recent window
     is_slow_mixing: Array  # always False in the multi-chain path (pooled diagnostic)
     # Multi-chain-specific carry
-    chain_collinearity: Array  # collinearity score f₁ from most recent window (NaN initially)
-    unimodality_passed: Array  # True = gap-stat found unimodal distribution (False = mode-split flag)
-    deferred_to_ensemble: Array  # True = other gates passed but unimodality blocked (P1→P3 handoff)
+    chain_collinearity: (
+        Array  # collinearity score f₁ from most recent window (NaN initially)
+    )
+    unimodality_passed: (
+        Array  # True = gap-stat found unimodal distribution (False = mode-split flag)
+    )
+    deferred_to_ensemble: (
+        Array  # True = other gates passed but unimodality blocked (P1→P3 handoff)
+    )
     # W-branch diagnostics + T-branch guard state
-    within_lam1: Array  # top eigenvalue of pooled within-chain residual (NaN until first window)
-    chain_consistency_psi: Array  # Ψ cross-chain consistency cosine (NaN until first window)
+    within_lam1: (
+        Array  # top eigenvalue of pooled within-chain residual (NaN until first window)
+    )
+    chain_consistency_psi: (
+        Array  # Ψ cross-chain consistency cosine (NaN until first window)
+    )
     r1_top: Array  # lag-1 autocorr in top W-branch direction (NaN until first window)
-    detection_branch: Array  # _DETECTION_BRANCH_* code from the most recent firing window
-    unimodality_flag_count: Array  # consecutive windows gap-stat flagged (for 2-window confirmation)
+    detection_branch: (
+        Array  # _DETECTION_BRANCH_* code from the most recent firing window
+    )
+    unimodality_flag_count: (
+        Array  # consecutive windows gap-stat flagged (for 2-window confirmation)
+    )
 
 
 class MultiChainMetaAdaptationTelemetryCoreState(NamedTuple):
@@ -223,14 +240,28 @@ class MultiChainMetaAdaptationTelemetryCoreState(NamedTuple):
     airm_vel_curr: Array  # AIRM velocity proxy from most recent window
     is_slow_mixing: Array  # always False in the multi-chain path (pooled diagnostic)
     # Multi-chain-specific carry
-    chain_collinearity: Array  # collinearity score f₁ from most recent window (NaN initially)
-    unimodality_passed: Array  # True = gap-stat found unimodal distribution (False = mode-split flag)
-    deferred_to_ensemble: Array  # True = other gates passed but unimodality blocked (P1→P3 handoff)
+    chain_collinearity: (
+        Array  # collinearity score f₁ from most recent window (NaN initially)
+    )
+    unimodality_passed: (
+        Array  # True = gap-stat found unimodal distribution (False = mode-split flag)
+    )
+    deferred_to_ensemble: (
+        Array  # True = other gates passed but unimodality blocked (P1→P3 handoff)
+    )
     # W-branch diagnostics + T-branch guard state
-    within_lam1: Array  # top eigenvalue of pooled within-chain residual (NaN until first window)
-    chain_consistency_psi: Array  # Ψ cross-chain consistency cosine (NaN until first window)
+    within_lam1: (
+        Array  # top eigenvalue of pooled within-chain residual (NaN until first window)
+    )
+    chain_consistency_psi: (
+        Array  # Ψ cross-chain consistency cosine (NaN until first window)
+    )
     r1_top: Array  # lag-1 autocorr in top W-branch direction (NaN until first window)
-    detection_branch: Array  # _DETECTION_BRANCH_* code from the most recent firing window
-    unimodality_flag_count: Array  # consecutive windows gap-stat flagged (for 2-window confirmation)
+    detection_branch: (
+        Array  # _DETECTION_BRANCH_* code from the most recent firing window
+    )
+    unimodality_flag_count: (
+        Array  # consecutive windows gap-stat flagged (for 2-window confirmation)
+    )
     # --- telemetry ---
     publication: Any = None

@@ -22,7 +22,7 @@ References
        https://doi.org/10.1093/mnras/stab590
 """
 
-from typing import Callable
+from collections.abc import Callable
 
 import jax
 import jax.numpy as jnp

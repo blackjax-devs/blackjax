@@ -83,7 +83,9 @@ allocation ``jax.lax.scan`` would otherwise stack for no benefit); pass
 ``adaptation_info_fn=blackjax.adaptation.base.return_all_adapt_info``
 explicitly to keep them.
 """
-from typing import Callable, NamedTuple
+
+from collections.abc import Callable
+from typing import NamedTuple
 
 import jax.flatten_util as fu
 import jax.numpy as jnp
@@ -108,7 +110,7 @@ from blackjax.adaptation.staged_adaptation import (
 from blackjax.adaptation.step_size import DualAveragingAdaptationState
 from blackjax.adaptation.window_adaptation import build_schedule
 from blackjax.base import AdaptationAlgorithm
-from blackjax.types import Array, ArrayLikeTree, PRNGKey
+from blackjax.types import Array, ArrayLikeTree, Numeric, PRNGKey
 from blackjax.util import pytree_size
 
 __all__ = [
@@ -163,9 +165,9 @@ class LowRankAdaptationState(NamedTuple):
     mu_star: Array
     U: Array
     lam: Array
-    step_size: float
-    draws_buffer: Array
-    grads_buffer: Array
+    step_size: Numeric
+    draws_buffer: Array | None
+    grads_buffer: Array | None
     buffer_idx: int
     background_split: int
     recompute_counter: int

@@ -1,4 +1,5 @@
 """Test MCMC diagnostics."""
+
 import functools
 import itertools
 
@@ -10,6 +11,7 @@ import pytest
 from absl.testing import absltest, parameterized
 from scipy.stats import norm, rankdata
 
+import blackjax
 import blackjax.diagnostics as diagnostics
 
 test_cases = [
@@ -38,6 +40,45 @@ def insert_list(input_list, loc, elem):
     else:
         input_list.insert(loc, elem)
     return input_list
+
+
+def _reference_stan_ess(x):
+    """NumPy port of Stan's ESS estimator (as in ArviZ ``_ess``) for (nchains, nsamples)."""
+    num_chains, num_samples = x.shape
+    centered = x - x.mean(axis=1, keepdims=True)
+    acov = np.stack(
+        [
+            np.array(
+                [c[: num_samples - t] @ c[t:] / num_samples for t in range(num_samples)]
+            )
+            for c in centered
+        ]
+    )
+    mean_var = acov[:, 0].mean() * num_samples / (num_samples - 1.0)
+    var_plus = mean_var * (num_samples - 1.0) / num_samples
+    if num_chains > 1:
+        var_plus += x.mean(axis=1).var(ddof=1)
+    rho = np.zeros(num_samples)
+    rho_even, rho_odd = 1.0, 1.0 - (mean_var - acov[:, 1].mean()) / var_plus
+    rho[0], rho[1] = rho_even, rho_odd
+    t = 1
+    while t < num_samples - 3 and rho_even + rho_odd > 0.0:
+        rho_even = 1.0 - (mean_var - acov[:, t + 1].mean()) / var_plus
+        rho_odd = 1.0 - (mean_var - acov[:, t + 2].mean()) / var_plus
+        if rho_even + rho_odd >= 0:
+            rho[t + 1], rho[t + 2] = rho_even, rho_odd
+        t += 2
+    max_t = t - 2
+    if rho_even > 0:
+        rho[max_t + 1] = rho_even
+    t = 1
+    while t <= max_t - 2:
+        if rho[t + 1] + rho[t + 2] > rho[t - 1] + rho[t]:
+            rho[t + 1] = rho[t + 2] = (rho[t - 1] + rho[t]) / 2.0
+        t += 2
+    tau = -1.0 + 2.0 * rho[: max_t + 1].sum() + rho[max_t + 1 : max_t + 2].sum()
+    tau = max(tau, 1.0 / np.log10(num_chains * num_samples))
+    return num_chains * num_samples / tau
 
 
 class DiagnosticsTest(chex.TestCase):
@@ -124,6 +165,28 @@ class DiagnosticsTest(chex.TestCase):
 
         assert ess > num_samples
 
+    @parameterized.parameters(
+        itertools.product([-0.5, 0.0, 0.5, 0.9, 0.99], [(1, 300), (4, 61), (2, 20)])
+    )
+    def test_ess_matches_stan_estimator(self, phi, shape):
+        # AR(1) chains: the positive-sequence truncation, the monotone
+        # sequence and the final improved term must follow Stan exactly.
+        num_chains, num_samples = shape
+        noise = np.asarray(
+            jax.random.normal(
+                jax.random.key(self.test_seed), (num_chains, num_samples)
+            ),
+            dtype=np.float64,
+        )
+        samples = np.zeros_like(noise)
+        samples[:, 0] = noise[:, 0]
+        for t in range(1, num_samples):
+            samples[:, t] = phi * samples[:, t - 1] + noise[:, t]
+
+        ess = diagnostics.effective_sample_size(jnp.asarray(samples))
+
+        np.testing.assert_allclose(ess, _reference_stan_ess(samples), rtol=1e-5)
+
 
 # ---------------------------------------------------------------------------
 # Tests for ess_bulk, ess_tail, and pareto_khat
@@ -161,9 +224,9 @@ class RhatTest(chex.TestCase):
     def test_converged_chains_near_one(self):
         # IID samples → R̂ should be very close to 1.
         result = float(diagnostics.rhat(self._iid_normal()))
-        assert (
-            abs(result - 1.0) < 0.05
-        ), f"rhat for iid samples should be ≈1, got {round(result, 4)}"
+        assert abs(result - 1.0) < 0.05, (
+            f"rhat for iid samples should be ≈1, got {round(result, 4)}"
+        )
 
     def test_non_converged_chains_above_one(self):
         # Chains with distinct means → R̂ >> 1.
@@ -176,9 +239,9 @@ class RhatTest(chex.TestCase):
             ]
         )
         result = float(diagnostics.rhat(chains))
-        assert (
-            result > 1.1
-        ), f"rhat for non-converged chains should be > 1.1, got {round(result, 4)}"
+        assert result > 1.1, (
+            f"rhat for non-converged chains should be > 1.1, got {round(result, 4)}"
+        )
 
     def test_scale_nonconvergence_detected(self):
         # Chains with same mean but very different variances (scale non-convergence).
@@ -189,9 +252,9 @@ class RhatTest(chex.TestCase):
         chains = jnp.concatenate([chain_narrow, chain_wide], axis=0)
         result = float(diagnostics.rhat(chains))
         # Scale non-convergence → R̂ should be clearly above 1.
-        assert (
-            result > 1.05
-        ), f"rhat should detect scale non-convergence (> 1.05), got {round(result, 4)}"
+        assert result > 1.05, (
+            f"rhat should detect scale non-convergence (> 1.05), got {round(result, 4)}"
+        )
 
     def test_axis_invariance(self):
         # Swapped chain/sample axes must give the same result.
@@ -209,8 +272,6 @@ class RhatTest(chex.TestCase):
 
     def test_top_level_api(self):
         # blackjax.rhat must be the rank-normalized version, not the classic one.
-        import blackjax
-
         samples = self._iid_normal()
         bj = float(blackjax.rhat(samples))
         direct = float(diagnostics.rhat(samples))
@@ -402,7 +463,9 @@ class EssTailTest(chex.TestCase):
         samples = np.array(self._iid_normal())
         bj = float(diagnostics.ess_tail(jnp.asarray(samples)))
         idata = az.convert_to_dataset({"x": samples})
-        az_val = float(np.asarray(az.ess(idata, method="tail")["x"]).ravel()[0])
+        az_val = float(
+            np.asarray(az.ess(idata, method="tail", prob=(0.05, 0.95))["x"]).ravel()[0]
+        )
         rel = abs(bj - az_val) / max(abs(az_val), 1.0)
         assert rel < 0.10, (
             f"ess_tail normal: blackjax={round(bj, 2)}"
@@ -414,7 +477,9 @@ class EssTailTest(chex.TestCase):
         samples = np.array(jax.random.t(self.rng, df=3.0, shape=(_NCHAINS, _NSAMPLES)))
         bj = float(diagnostics.ess_tail(jnp.asarray(samples)))
         idata = az.convert_to_dataset({"x": samples})
-        az_val = float(np.asarray(az.ess(idata, method="tail")["x"]).ravel()[0])
+        az_val = float(
+            np.asarray(az.ess(idata, method="tail", prob=(0.05, 0.95))["x"]).ravel()[0]
+        )
         rel = abs(bj - az_val) / max(abs(az_val), 1.0)
         assert rel < 0.10, (
             f"ess_tail t(3): blackjax={round(bj, 2)}"
@@ -422,8 +487,9 @@ class EssTailTest(chex.TestCase):
         )
 
     def test_prob_param_default_matches_arviz(self):
-        # Default prob=0.90 gives (0.05, 0.95) quantiles — same as az.ess(method="tail").
-        # Verify bit-match (within floating-point rounding) on normal and t(3) data.
+        # Default prob=0.90 gives (0.05, 0.95) quantiles.
+        # arviz>=1.0 changed its default tail probabilities, so we explicitly pass prob=(0.05, 0.95)
+        # to match blackjax's default. Verify bit-match (within floating-point rounding) on normal and t(3) data.
         az = pytest.importorskip("arviz")
         for dist_name, samples in [
             ("normal", np.array(self._iid_normal())),
@@ -434,7 +500,11 @@ class EssTailTest(chex.TestCase):
         ]:
             bj = float(diagnostics.ess_tail(jnp.asarray(samples)))
             idata = az.convert_to_dataset({"x": samples})
-            az_val = float(np.asarray(az.ess(idata, method="tail")["x"]).ravel()[0])
+            az_val = float(
+                np.asarray(
+                    az.ess(idata, method="tail", prob=(0.05, 0.95))["x"]
+                ).ravel()[0]
+            )
             rel = abs(bj - az_val) / max(abs(az_val), 1.0)
             assert rel < 0.01, (
                 f"ess_tail default prob=0.90 ({dist_name}): "
@@ -455,9 +525,9 @@ class EssTailTest(chex.TestCase):
         bj_80 = float(diagnostics.ess_tail(samples, prob=0.80))
         # prob=0.80 → 10th/90th percentiles (less extreme tail); ESS can differ.
         assert bj_80 > 0 and bj_90 > 0, "ess_tail must be positive for any prob"
-        assert (
-            bj_80 != bj_90
-        ), f"Different prob values must give different ESS, got same value {bj_90}"
+        assert bj_80 != bj_90, (
+            f"Different prob values must give different ESS, got same value {bj_90}"
+        )
 
     def test_funnel_tail_ess(self):
         # Neal's funnel: x[0] ~ N(0,9), x[1:] ~ N(0, exp(x[0]/2)).
@@ -505,8 +575,7 @@ def _reference_rank_normalize(x):
 def _reference_split(x):
     """Split each chain of a ``(nchains, nsamples, ...)`` array in half."""
     half = x.shape[1] // 2
-    x = x[:, : 2 * half]
-    return np.concatenate([x[:, :half], x[:, half:]], axis=0)
+    return np.concatenate([x[:, :half], x[:, x.shape[1] - half :]], axis=0)
 
 
 def _reference_split_rhat(x):
@@ -656,9 +725,9 @@ class RankNormalizeTiesTest(chex.TestCase):
     def test_nan_component_cannot_be_ranked(self):
         pooled = jnp.array([1.0, jnp.nan, 0.0, 2.0, 0.0])
         ranks = np.asarray(diagnostics._average_ranks(pooled))
-        assert np.all(
-            np.isnan(ranks)
-        ), f"a component holding a missing observation has no ranking: {ranks}"
+        assert np.all(np.isnan(ranks)), (
+            f"a component holding a missing observation has no ranking: {ranks}"
+        )
 
     def test_nan_does_not_poison_a_finite_sibling_component(self):
         draws = self._contaminated()
@@ -679,9 +748,9 @@ class RankNormalizeTiesTest(chex.TestCase):
         fn = getattr(diagnostics, name)
         draws = self._contaminated()
         result = np.asarray(fn(draws))
-        assert np.isnan(
-            result[0]
-        ), f"{name} reported {result[0]} for a NaN-contaminated component"
+        assert np.isnan(result[0]), (
+            f"{name} reported {result[0]} for a NaN-contaminated component"
+        )
         # The clean sibling must equal what it would give computed alone.
         alone = np.asarray(fn(draws[..., 1]))
         assert np.isfinite(result[1]), f"{name} poisoned a clean sibling"
@@ -705,9 +774,9 @@ class RankNormalizeTiesTest(chex.TestCase):
             dirty = base.copy()
             dirty[position] = np.nan
             results.append(float(diagnostics.ess_bulk(jnp.asarray(dirty))))
-        assert all(
-            np.isnan(r) for r in results
-        ), f"NaN handling depends on position in the pool: {results}"
+        assert all(np.isnan(r) for r in results), (
+            f"NaN handling depends on position in the pool: {results}"
+        )
 
     def test_raw_ess_does_not_invent_a_sample_size_for_nan(self):
         # Geyer's truncation gates on partial sums being > 0; every such
@@ -797,14 +866,14 @@ class RankNormalizeTiesTest(chex.TestCase):
 
     def test_nan_in_a_trimmed_odd_draw_is_not_seen(self):
         # Pins the exact scope of the NaN contract.  With an odd number of
-        # draws _split_chains trims the last one, so a NaN sitting only there
+        # draws _split_chains trims the middle one, so a NaN sitting only there
         # is never used and the diagnostics stay finite.  A NaN among the
         # draws actually used propagates as normal.
         base = np.asarray(
             jax.random.normal(self.rng, shape=(4, 65)), dtype=np.float64
         ).copy()
         trimmed = base.copy()
-        trimmed[1, 64] = np.nan
+        trimmed[1, 32] = np.nan
         assert np.isfinite(float(diagnostics.ess_bulk(jnp.asarray(trimmed))))
         used = base.copy()
         used[1, 3] = np.nan
@@ -838,9 +907,9 @@ class RankNormalizeTiesTest(chex.TestCase):
         )
         total = 8 * 96
         result = np.asarray(diagnostics.ess_bulk(draws))
-        assert np.all(
-            result > 0.5 * total
-        ), f"bulk ESS for iid Bernoulli draws collapsed: {result} (N={total})"
+        assert np.all(result > 0.5 * total), (
+            f"bulk ESS for iid Bernoulli draws collapsed: {result} (N={total})"
+        )
 
     def test_binary_draws_match_arviz(self):
         az = pytest.importorskip("arviz")
@@ -855,6 +924,32 @@ class RankNormalizeTiesTest(chex.TestCase):
         bj_ess = np.asarray(diagnostics.ess_bulk(jnp.asarray(draws)))
         np.testing.assert_allclose(bj_rhat, az_rhat, rtol=1e-4)
         np.testing.assert_allclose(bj_ess, az_ess, rtol=1e-3)
+
+    def test_odd_draw_count_matches_arviz(self):
+        # Autocorrelated chains with an odd number of draws: the split drops
+        # the middle draw and the tail quantiles use every draw, as in ArviZ.
+        az = pytest.importorskip("arviz")
+        noise = np.asarray(
+            jax.random.normal(self.rng, shape=(4, 101, 3)), dtype=np.float64
+        )
+        draws = np.cumsum(noise, axis=1) * 0.2 + noise
+        idata = az.convert_to_dataset({"x": draws})
+        x = jnp.asarray(draws)
+        np.testing.assert_allclose(
+            diagnostics.ess_bulk(x),
+            np.asarray(az.ess(idata, method="bulk")["x"]),
+            rtol=1e-5,
+        )
+        np.testing.assert_allclose(
+            diagnostics.ess_tail(x),
+            np.asarray(az.ess(idata, method="tail")["x"]),
+            rtol=1e-5,
+        )
+        np.testing.assert_allclose(
+            diagnostics.rhat(x),
+            np.asarray(az.rhat(idata, method="rank")["x"]),
+            rtol=1e-5,
+        )
 
     def _rejection_trace(self, proposals, accepted):
         """Carry the last accepted proposal forward — a Metropolis-like trace."""
@@ -907,9 +1002,9 @@ class RankNormalizeTiesTest(chex.TestCase):
             jnp.tile(jnp.array([0.0, 1.0]), nsamples // 2)[None, :], (4, 1)
         )
         result = float(diagnostics.ess_bulk(draws))
-        assert (
-            result > 4 * nsamples
-        ), f"antithetic bulk ESS was capped: {result} <= {4 * nsamples}"
+        assert result > 4 * nsamples, (
+            f"antithetic bulk ESS was capped: {result} <= {4 * nsamples}"
+        )
 
     # -- axes, dtypes, transformations ----------------------------------
 
@@ -996,9 +1091,9 @@ class ParetoKhatTest(chex.TestCase):
         x_cauchy = jax.random.cauchy(self.rng, shape=(2000,))
         k_norm = float(diagnostics.pareto_khat(x_norm))
         k_cauchy = float(diagnostics.pareto_khat(x_cauchy))
-        assert (
-            k_cauchy > k_norm
-        ), f"Cauchy k={round(k_cauchy, 4)} should exceed normal k={round(k_norm, 4)}"
+        assert k_cauchy > k_norm, (
+            f"Cauchy k={round(k_cauchy, 4)} should exceed normal k={round(k_norm, 4)}"
+        )
 
     def test_both_is_max_of_upper_lower(self):
         x = jax.random.normal(self.rng, shape=(1000,))
@@ -1033,12 +1128,12 @@ class ParetoKhatTest(chex.TestCase):
         x = np.array(jax.random.normal(self.rng, shape=(1000,)))
         bj_k = float(diagnostics.pareto_khat(jnp.asarray(x)))
         got_k = round(bj_k, 4)
-        assert np.isfinite(
-            bj_k
-        ), f"pareto_khat must be finite for normal samples, got {got_k}"
-        assert (
-            bj_k < 0.3
-        ), f"pareto_khat for normal should be <0.3 (light tail), got {got_k}"
+        assert np.isfinite(bj_k), (
+            f"pareto_khat must be finite for normal samples, got {got_k}"
+        )
+        assert bj_k < 0.3, (
+            f"pareto_khat for normal should be <0.3 (light tail), got {got_k}"
+        )
 
     def test_arviz_calibration_cauchy(self):
         # For Cauchy samples (extreme tails), both should give k > 0.3.
@@ -1046,9 +1141,9 @@ class ParetoKhatTest(chex.TestCase):
         x = np.array(jax.random.cauchy(self.rng, shape=(1000,)))
         bj_k = float(diagnostics.pareto_khat(jnp.asarray(x)))
         got_k = round(bj_k, 4)
-        assert (
-            bj_k > 0.3
-        ), f"pareto_khat for Cauchy heavy tail expected >0.3 got {got_k}"
+        assert bj_k > 0.3, (
+            f"pareto_khat for Cauchy heavy tail expected >0.3 got {got_k}"
+        )
 
 
 def _build_is_divergent(chain_specs, n_draws):

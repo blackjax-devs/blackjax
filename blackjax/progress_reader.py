@@ -15,6 +15,7 @@
 
 Usage: python -m blackjax.progress_reader /tmp/bjx_progress.txt
 """
+
 import argparse
 import time
 

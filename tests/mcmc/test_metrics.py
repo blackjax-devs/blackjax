@@ -6,9 +6,15 @@ import jax.numpy as jnp
 import numpy as np
 from absl.testing import absltest, parameterized
 from jax import random
+from jax.flatten_util import ravel_pytree
 from jax.scipy import linalg
 
 from blackjax.mcmc import metrics
+from blackjax.optimizers.lbfgs import (
+    lbfgs_inverse_hessian_factors,
+    lbfgs_inverse_hessian_formula_1,
+)
+from blackjax.util import generate_gaussian_noise
 
 
 def _x64_ctx(dtype):
@@ -326,9 +332,6 @@ class GaussianEuclideanLowRankTest(chex.TestCase):
 
     def _scale_matrix(self, inv, trans):
         """Return the d×d matrix represented by metric.scale(·, inv=inv, trans=trans)."""
-        import jax
-        from jax.flatten_util import ravel_pytree
-
         rows = jax.vmap(
             lambda e: ravel_pytree(
                 self.metric.scale(self.pos, e, inv=inv, trans=trans)
@@ -346,9 +349,6 @@ class GaussianEuclideanLowRankTest(chex.TestCase):
 
     def test_expected_kinetic_energy(self):
         """E[K(p)] = d/2 when p ~ N(0, M)."""
-        import jax
-        from jax.flatten_util import ravel_pytree
-
         n = 50_000
         keys = random.split(self.key, n)
         ps = jax.vmap(
@@ -359,9 +359,6 @@ class GaussianEuclideanLowRankTest(chex.TestCase):
 
     def test_momentum_covariance(self):
         """E[pp^T] = M when p ~ sample_momentum."""
-        import jax
-        from jax.flatten_util import ravel_pytree
-
         n = 80_000
         keys = random.split(self.key, n)
         ps = jax.vmap(
@@ -392,8 +389,6 @@ class GaussianEuclideanLowRankTest(chex.TestCase):
 
     def test_diagonal_case_matches_euclidean(self):
         """With lam=ones and U=zeros the metric reduces to diagonal gaussian_euclidean."""
-        from jax.flatten_util import ravel_pytree
-
         U_zero = jnp.zeros((self.d, 2))
         lam_one = jnp.ones(2)
         lr_metric = metrics.gaussian_euclidean_low_rank(self.sigma, U_zero, lam_one)
@@ -527,8 +522,8 @@ class EshOperatorParityTest(chex.TestCase):
             g = random.normal(k5, (d,)).astype(dtype)
 
             # Frozen original forward_L (verbatim from integrators.py pre-refactor)
-            frozen_forward_L = lambda v: sigma * (
-                v + U @ ((sqrt_lam - 1.0) * (U.T @ v))
+            frozen_forward_L = lambda v: (
+                sigma * (v + U @ ((sqrt_lam - 1.0) * (U.T @ v)))
             )
 
             # Frozen original adjoint_L
@@ -588,10 +583,6 @@ class GaussianEuclideanLowRankRefactorParityTest(chex.TestCase):
 
     def _make_frozen_metric(self, sigma, U, lam):
         """Frozen reference implementation of gaussian_euclidean_low_rank pre-refactor."""
-        from jax.flatten_util import ravel_pytree
-
-        from blackjax.util import generate_gaussian_noise
-
         inv_sigma = 1.0 / sigma
         sqrt_lam = jnp.sqrt(lam)
         inv_sqrt_lam = 1.0 / sqrt_lam
@@ -663,8 +654,6 @@ class GaussianEuclideanLowRankRefactorParityTest(chex.TestCase):
     )
     def test_metric_operations_parity(self, d, k, dtype):
         """All metric operations match frozen original across d, k, dtype."""
-        from jax.flatten_util import ravel_pytree
-
         atol = 1e-5 if dtype == "float32" else 1e-11
         key = random.key(2024_01_04 + d * 100 + k)
 
@@ -756,11 +745,6 @@ class LbfgsAdapterParityTest(chex.TestCase):
         # Diagonal alpha: small positive values
         alpha = _make_positive_vector(k3, d)
         # Compute (beta, gamma) from lbfgs_inverse_hessian_factors
-        from blackjax.optimizers.lbfgs import (
-            lbfgs_inverse_hessian_factors,
-            lbfgs_inverse_hessian_formula_1,
-        )
-
         beta, gamma = lbfgs_inverse_hessian_factors(S, Z, alpha)
         return alpha, beta, gamma, lbfgs_inverse_hessian_formula_1
 

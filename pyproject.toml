@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "blackjax"
 authors= [{name = "The Blackjax team", email = "remi@thetypicalset.com"}]
 description = "Flexible and fast sampling in Python"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 keywords=[
     "probability",
     "machine learning",
@@ -22,9 +22,8 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: MacOS",
     "Operating System :: POSIX",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Education",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
@@ -72,9 +71,35 @@ exclude = [
 [tool.setuptools_scm]
 write_to = "blackjax/_version.py"
 
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+extend-exclude = ["blackjax/_version.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "PLC0415"]
+ignore = [
+    "E501",  # line length: ruff-format owns it (was ignored in flake8)
+    "E731",  # lambda assignment (was ignored in flake8)
+    "E402",  # module import not at top of file (was ignored in flake8)
+    "E741",  # ambiguous variable name (was ignored in flake8)
+    "UP040",  # PEP 695 type alias rewrite: changes runtime semantics, out of scope
+    "UP046",  # PEP 695 generic class rewrite: changes runtime semantics, out of scope
+    "UP047",  # PEP 695 generic function rewrite: changes runtime semantics, out of scope
+]
+
+[tool.ruff.lint.per-file-ignores]
+# PLC0415 (no function-level imports) applies to tests/ only, mirroring the
+# old repo-local pre-commit hook scoped to `files: ^tests/`.
+"!tests/**" = ["PLC0415"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["blackjax"]
+
 [dependency-groups]
 dev = [
     "chex>=0.1.83",
+    "mypy>=2.4",
     "pre-commit",
     "pytest",
     "pytest-benchmark",

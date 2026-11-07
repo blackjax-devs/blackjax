@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for the HMC Kernel"""
-from typing import Callable, NamedTuple
+
+from collections.abc import Callable
+from typing import NamedTuple, cast
 
 import jax
 import jax.numpy as jnp
@@ -23,7 +25,7 @@ import blackjax.mcmc.trajectory as trajectory
 from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.mcmc.proposal import safe_energy_diff, static_binomial_sampling
 from blackjax.mcmc.trajectory import hmc_energy
-from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, Numeric, PRNGKey
 
 __all__ = [
     "HMCState",
@@ -79,17 +81,22 @@ class HMCInfo(NamedTuple):
     """
 
     momentum: ArrayTree
-    acceptance_rate: float
+    acceptance_rate: Numeric
     is_accepted: bool
-    is_divergent: bool
-    energy: float
+    is_divergent: Array
+    energy: Numeric
     proposal: integrators.IntegratorState
     num_integration_steps: int
 
 
 def init(position: ArrayLikeTree, logdensity_fn: Callable):
     logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
-    return HMCState(position, logdensity, logdensity_grad)
+    # position is stored unconverted: every consumer (this kernel's own
+    # proposal step, as well as nuts/adjusted_mclmc/coupled_hmc) re-feeds
+    # HMCState.position straight into an IntegratorState, so it must already
+    # be an ArrayTree in practice even though init() accepts the wider
+    # ArrayLikeTree contract.
+    return HMCState(cast(ArrayTree, position), logdensity, logdensity_grad)
 
 
 def flip_momentum(

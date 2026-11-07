@@ -1,4 +1,5 @@
 """Test the solving functions"""
+
 import itertools
 
 import chex

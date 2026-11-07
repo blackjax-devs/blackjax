@@ -1,4 +1,5 @@
 """Test the pathfinder algorithm."""
+
 import functools
 
 import chex

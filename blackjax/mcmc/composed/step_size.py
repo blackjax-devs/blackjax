@@ -42,7 +42,9 @@ References
    "asymmetric"``, provided for cross-validation against the original paper
    only -- can get stuck near the mode/in the tails).
 """
-from typing import Callable, NamedTuple, cast
+
+from collections.abc import Callable
+from typing import NamedTuple, cast
 
 import jax
 import jax.numpy as jnp
@@ -55,7 +57,7 @@ from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.mcmc.composed import _seam as seam
 from blackjax.mcmc.integrators import IntegratorState
 from blackjax.mcmc.proposal import safe_energy_diff
-from blackjax.types import Array, PRNGKey
+from blackjax.types import Array, ArrayTree, PRNGKey
 
 __all__ = [
     "GISTStepSizeInfo",
@@ -126,7 +128,7 @@ class GISTStepSizeInfo(NamedTuple):
         actually used to build the proposal.
     """
 
-    momentum: Array
+    momentum: ArrayTree
     tuning_parameter: StepSizeTuningParameter
     is_accepted: Array
     is_divergent: Array
@@ -177,7 +179,7 @@ def step_size_selector(
     """
     if criterion not in ("symmetric", "asymmetric"):
         raise ValueError(
-            "criterion must be 'symmetric' or 'asymmetric', got " f"{criterion!r}"
+            f"criterion must be 'symmetric' or 'asymmetric', got {criterion!r}"
         )
     is_symmetric = criterion == "symmetric"
 
@@ -377,7 +379,7 @@ def build_kernel(
     """
     if criterion not in ("symmetric", "asymmetric"):
         raise ValueError(
-            "criterion must be 'symmetric' or 'asymmetric', got " f"{criterion!r}"
+            f"criterion must be 'symmetric' or 'asymmetric', got {criterion!r}"
         )
     gist_step = seam._step
 

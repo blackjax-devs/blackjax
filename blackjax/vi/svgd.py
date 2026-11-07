@@ -1,5 +1,6 @@
 import functools
-from typing import Any, Callable, NamedTuple
+from collections.abc import Callable
+from typing import Any, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -19,7 +20,7 @@ __all__ = [
 
 
 class SVGDState(NamedTuple):
-    particles: ArrayTree
+    particles: ArrayLikeTree
     kernel_parameters: dict[str, ArrayTree]
     opt_state: Any
 

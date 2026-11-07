@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Implementation of the Pathfinder warmup for the HMC family of sampling algorithms."""
+
 import warnings
-from typing import Callable, Literal, NamedTuple
+from collections.abc import Callable
+from typing import Literal, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -27,7 +29,7 @@ from blackjax.adaptation.step_size import (
 )
 from blackjax.base import AdaptationAlgorithm
 from blackjax.optimizers.lbfgs import lbfgs_inverse_hessian_formula_1
-from blackjax.types import Array, ArrayLikeTree, PRNGKey
+from blackjax.types import Array, ArrayLikeTree, Numeric, PRNGKey
 from blackjax.vi.multipathfinder import (
     MultipathfinderState,
     multi_approximate,
@@ -39,7 +41,7 @@ __all__ = ["PathfinderAdaptationState", "base", "pathfinder_adaptation"]
 
 class PathfinderAdaptationState(NamedTuple):
     ss_state: DualAveragingAdaptationState
-    step_size: float
+    step_size: Numeric
     inverse_mass_matrix: Array
 
 
@@ -249,7 +251,7 @@ def base(
             new_ss_state, new_step_size, adaptation_state.inverse_mass_matrix
         )
 
-    def final(warmup_state: PathfinderAdaptationState) -> tuple[float, Array]:
+    def final(warmup_state: PathfinderAdaptationState) -> tuple[Array, Array]:
         """Return the final values for the step size and inverse mass matrix."""
         step_size = jnp.exp(warmup_state.ss_state.log_step_size_avg)
         inverse_mass_matrix = warmup_state.inverse_mass_matrix
@@ -342,6 +344,14 @@ def pathfinder_adaptation(
 
     Notes
     -----
+    **Memory use:** The inverse mass matrix is dense in every dispatch below,
+    requiring :math:`O(d^2)` storage for ``d`` parameters. This also applies to
+    single-path adaptation: the L-BFGS history does not make the returned
+    inverse mass matrix diagonal or low-rank. For high-dimensional problems
+    where a dense metric is too expensive, consider :func:`window_adaptation`
+    with ``is_mass_matrix_diagonal=True`` instead. This changes the warmup
+    algorithm; ``pathfinder_adaptation`` has no diagonal-metric option.
+
     **Dispatch table** --- the ``(num_chains, effective_n_paths)`` combination
     selects the internal code path:
 
@@ -513,7 +523,7 @@ def pathfinder_adaptation(
 
     def _run_multichain_single_path(rng_key, position, num_steps):
         """Single Pathfinder fit; broadcast init and IMM to num_chains; vmap DA."""
-        pf_key, rng_key = jax.random.split(rng_key)
+        pf_key, sample_key, rng_key = jax.random.split(rng_key, 3)
         pathfinder_state, _ = vi.pathfinder.approximate(pf_key, logdensity_fn, position)
         # Derive the L-BFGS-based IMM from the single Pathfinder fit.
         # lbfgs_inverse_hessian_formula_1 returns a dense (d, d) matrix.
@@ -524,7 +534,7 @@ def pathfinder_adaptation(
         )  # (d, d)
 
         # Sample num_chains init positions from the single Pathfinder fit.
-        sample_keys = jax.random.split(rng_key, num_chains)
+        sample_keys = jax.random.split(sample_key, num_chains)
 
         @jax.vmap
         def sample_one(key):

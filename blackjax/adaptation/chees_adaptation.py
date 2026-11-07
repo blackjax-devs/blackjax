@@ -1,7 +1,8 @@
 """Public API for ChEES-HMC"""
 
+from collections.abc import Callable
 from functools import partial
-from typing import Callable, NamedTuple
+from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -14,7 +15,7 @@ from blackjax.adaptation.base import AdaptationResults, return_all_adapt_info
 from blackjax.adaptation.mass_matrix import welford_algorithm
 from blackjax.adaptation.metric_buffers import MomentBlock, cgl_update_batch
 from blackjax.base import AdaptationAlgorithm
-from blackjax.types import Array, ArrayLikeTree, PRNGKey
+from blackjax.types import Array, ArrayLikeTree, Numeric, PRNGKey
 from blackjax.util import pytree_size
 
 # optimal tuning for HMC, see https://arxiv.org/abs/1001.4460
@@ -50,7 +51,7 @@ class ChEESAdaptationState(NamedTuple):
 
     step_size: float
     log_step_size_moving_average: float
-    trajectory_length: float
+    trajectory_length: Numeric
     log_trajectory_length_moving_average: float
     da_state: dual_averaging.DualAveragingState
     optim_state: optax.OptState
@@ -755,14 +756,16 @@ def chees_adaptation(
 
         if jitter_generator is not None:
             rng_key, carry_key = jax.random.split(rng_key)
-            jitter_gn = lambda i: jitter_generator(
-                jax.random.fold_in(carry_key, i)
-            ) * jitter_amount + (1.0 - jitter_amount)
+            jitter_gn = lambda i: (
+                jitter_generator(jax.random.fold_in(carry_key, i)) * jitter_amount
+                + (1.0 - jitter_amount)
+            )
         else:
             max_bits = np.ceil(np.log2(num_steps + max_sampling_steps))
-            jitter_gn = lambda i: dynamic_hmc.halton_sequence(
-                i, max_bits
-            ) * jitter_amount + (1.0 - jitter_amount)
+            jitter_gn = lambda i: (
+                dynamic_hmc.halton_sequence(i, max_bits) * jitter_amount
+                + (1.0 - jitter_amount)
+            )
 
         def integration_steps_fn(random_generator_arg, num_leapfrog_steps):
             return jnp.asarray(
@@ -938,12 +941,15 @@ def chees_adaptation(
 
         keys_step = jax.random.split(rng_key, num_steps)
         (
-            last_states,
-            last_adaptation_state,
-            last_mm_accum,
-            last_cov_accum,
-            last_eig_state,
-        ), info = jax.lax.scan(
+            (
+                last_states,
+                last_adaptation_state,
+                last_mm_accum,
+                last_cov_accum,
+                last_eig_state,
+            ),
+            info,
+        ) = jax.lax.scan(
             one_step,
             (
                 init_states,
@@ -969,6 +975,12 @@ def chees_adaptation(
         # disabled (mass_matrix_estimation=None OR _length_floor=False) --
         # see `enable_length_floor`'s derivation above.
         if enable_length_floor:
+            # enable_length_floor = estimate_mass_matrix and _length_floor, so
+            # estimate_mass_matrix is True here and these were never set to
+            # None above.
+            assert last_mm_accum is not None
+            assert last_cov_accum is not None
+            assert last_eig_state is not None
             final_engaged = last_mm_accum.sample_size >= mm_engagement_threshold
             final_eig_state = _recompute_eig_state(
                 last_cov_accum,

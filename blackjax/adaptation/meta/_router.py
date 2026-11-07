@@ -22,6 +22,7 @@ Functions
 :func:`_geometric_mean_deploy_scale` — geometric-mean metric variance for the
     slow direction.
 """
+
 from __future__ import annotations
 
 import jax
@@ -176,9 +177,7 @@ def _compute_projected_gain_r2_mc(
         FtF_sh + jnp.float32(1e-8) * jnp.eye(k + 1, dtype=FtF_sh.dtype),
         FtS_sh,
         rcond=None,
-    )[
-        0
-    ]  # (k+1, k)
+    )[0]  # (k+1, k)
 
     # ---- Per-chain r2_shared and r2_perchain via vmap ----
     # Transpose to chain-major so vmap sees chain as batch dim.

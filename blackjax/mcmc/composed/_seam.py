@@ -43,7 +43,9 @@ References
    adaptive Hamiltonian Monte Carlo", arXiv:2404.15253, Statistical Surveys
    2026, Vol. 20, pp. 135-179. Algorithm 1 (p.6), eq. 9 (p.7).
 """
-from typing import Callable, NamedTuple
+
+from collections.abc import Callable
+from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp
