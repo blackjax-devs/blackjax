@@ -1466,6 +1466,62 @@ class ConstrainedNormal(chex.TestCase):
             inference_algorithm, self.key, initial_state, 4500, 1_000
         )
 
+    @chex.all_variants(with_pmap=False)
+    def test_hr(self):
+        constraint = LinearConstraint(A=self.A, b=self.b)
+        inference_algorithm = blackjax.ehr(
+            self.constrained_normal_logprob,
+            constraint,
+            step_size=0.2,
+        )
+        initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
+        self.constrained_normal_test_case(
+            inference_algorithm, self.key, initial_state, 4500, 1_000
+        )
+
+    @chex.all_variants(with_pmap=False)
+    def test_lhr(self):
+        constraint = LinearConstraint(A=self.A, b=self.b)
+        inference_algorithm = blackjax.lhr(
+            self.constrained_normal_logprob,
+            constraint,
+            step_size=0.2,
+        )
+        initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
+        self.constrained_normal_test_case(
+            inference_algorithm, self.key, initial_state, 4500, 1_000
+        )
+
+    @chex.all_variants(with_pmap=False)
+    def test_smhr(self):
+        mass_matrix_fn = lambda x: jax.numpy.array([[1.0, 0.0], [0.0, 1.0]])
+        constraint = LinearConstraint(A=self.A, b=self.b)
+        inference_algorithm = blackjax.smhr(
+            self.constrained_normal_logprob,
+            constraint,
+            step_size=0.2,
+            mass_matrix_fn=mass_matrix_fn,
+        )
+        initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
+        self.constrained_normal_test_case(
+            inference_algorithm, self.key, initial_state, 4500, 1_000
+        )
+
+    @chex.all_variants(with_pmap=False)
+    def test_smlhr(self):
+        mass_matrix_fn = lambda x: jax.numpy.array([[1.0, 0.0], [0.0, 1.0]])
+        constraint = LinearConstraint(A=self.A, b=self.b)
+        inference_algorithm = blackjax.smlhr(
+            self.constrained_normal_logprob,
+            constraint,
+            step_size=0.2,
+            mass_matrix_fn=mass_matrix_fn,
+        )
+        initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
+        self.constrained_normal_test_case(
+            inference_algorithm, self.key, initial_state, 4500, 1_000
+        )
+
 
 class GeneralConstraintNormal(chex.TestCase):
     """Test lhr with a GeneralConstraint using _newton_intersect.
@@ -1481,6 +1537,29 @@ class GeneralConstraintNormal(chex.TestCase):
         self.logp = constrain(lambda x: -0.5 * jnp.dot(x, x), self.constraint)
         # Initial point strictly inside the feasible region: exp(-2) ≈ 0.135 < 1.0
         self.x0 = jnp.array([-2.0, 1.0])
+
+    @chex.all_variants(with_pmap=False)
+    def test_dikin_general_constraint(self):
+        """lhr samples stay in the feasible region (exp(x0) <= x1)."""
+        inference_algorithm = blackjax.dikin(self.logp, self.constraint, 1e0)
+        initial_state = inference_algorithm.init(self.x0)
+
+        num_steps = 2000
+        burnin = 200
+
+        _, (states, _) = self.variant(
+            functools.partial(
+                run_inference_algorithm,
+                inference_algorithm=inference_algorithm,
+                num_steps=num_steps,
+            )
+        )(rng_key=self.key, initial_state=initial_state)
+
+        samples = states.position[burnin:]
+        # Every sample must satisfy the constraint: exp(x[0]) <= x[1]
+        assert (jnp.exp(samples[:, 0]) <= samples[:, 1] + 1e-5).all(), (
+            "GeneralConstraint violated: found sample with exp(x0) > x1"
+        )
 
     @chex.all_variants(with_pmap=False)
     def test_lhr_general_constraint(self):

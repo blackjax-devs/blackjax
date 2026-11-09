@@ -286,12 +286,16 @@ def _quadratic_barrier_hessian(constraint: QuadraticConstraint, x: Array) -> Arr
 
 
 def _general_barrier_hessian(fn: Callable, x: Array) -> Array:
-    """Hessian of the log-barrier for a general constraint  fn: R^n → R^m."""
-    c = fn(x)  # (m,)
-    J = jax.jacobian(fn)(x)  # (m, n)  — ∇c_i as rows
+    """Hessian of the log-barrier for a general constraint  fn: R^n → R^m.
+
+    ``fn`` may return a scalar (m=1) or a 1-D array; both are handled.
+    """
+    fn1d = lambda z: jnp.atleast_1d(fn(z))  # noqa: E731
+    c = fn1d(x)  # (m,)
+    J = jax.jacobian(fn1d)(x)  # (m, n)  — ∇c_i as rows
 
     # Per-output Hessians via vmap over hessian of each scalar c_i
-    H_all = jax.vmap(lambda i: jax.hessian(lambda z: fn(z)[i])(x))(
+    H_all = jax.vmap(lambda i: jax.hessian(lambda z: fn1d(z)[i])(x))(
         jnp.arange(c.shape[0])
     )  # (m, n, n)
 
@@ -358,8 +362,9 @@ def ad_scaled_gradients(attr: str = "fn") -> Callable:
 
     def _handler(constraint, x):
         fn = getattr(constraint, attr)
-        cv = fn(x)  # (m,)
-        J = jax.jacobian(fn)(x)  # (m, n)
+        fn1d = lambda z: jnp.atleast_1d(fn(z))  # noqa: E731
+        cv = fn1d(x)  # (m,)
+        J = jax.jacobian(fn1d)(x)  # (m, n)
         return J / cv[:, None]
 
     return _handler
@@ -480,7 +485,7 @@ register_constraint(
     intersect_fn=lambda c, eps, max_iter: (
         lambda x, u: _newton_intersect(c.fn, x, u, eps, max_iter)
     ),
-    oracle_fn=lambda c, x: c.fn(x),
+    oracle_fn=lambda c, x: jnp.atleast_1d(c.fn(x)),
     barrier_hessian_fn=lambda c, x: _general_barrier_hessian(c.fn, x),
     scaled_gradients_fn=ad_scaled_gradients(attr="fn"),
 )
