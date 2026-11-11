@@ -153,6 +153,104 @@ class SGHMCDiffusionTest(BlackJAXTest):
         chex.assert_trees_all_equal_shapes(momentum, new_momentum)
 
 
+class SGHMCLieTrotterDiffusionTest(BlackJAXTest):
+    """Tests for the SGHMC Lie-Trotter diffusion solver."""
+
+    def setUp(self):
+        super().setUp()
+        self.step_size = 1e-1
+        self.alpha = 0.7
+        self.step = diffusions.sghmc_lie_trotter(self.alpha)
+
+    def test_returns_position_and_momentum_for_pytree(self):
+        """Step returns a (position, momentum) pair with correct PyTree shapes."""
+        position = {"a": jnp.zeros(2), "b": jnp.zeros(3)}
+        momentum = {"a": jnp.ones(2), "b": jnp.ones(3)}
+
+        def grad_estimator(position, minibatch):
+            del minibatch
+            return jax.tree.map(jnp.ones_like, position)
+
+        new_position, new_momentum = self.step(
+            self.next_key(),
+            position,
+            momentum,
+            grad_estimator,
+            jnp.zeros(1),
+            self.step_size,
+        )
+        chex.assert_trees_all_equal_shapes(position, new_position)
+        chex.assert_trees_all_equal_shapes(momentum, new_momentum)
+
+    def test_temperature_zero_matches_deterministic_leapfrog_without_friction(self):
+        """With alpha=0 and temperature=0, the update is one leapfrog step."""
+        step = diffusions.sghmc_lie_trotter(alpha=0.0)
+        position = jnp.array([1.0])
+        momentum = jnp.array([0.5])
+
+        def grad_estimator(position, minibatch):
+            del minibatch
+            return -position
+
+        new_position, new_momentum = step(
+            self.next_key(),
+            position,
+            momentum,
+            grad_estimator,
+            jnp.zeros(1),
+            self.step_size,
+            temperature=0.0,
+        )
+
+        half_momentum = momentum + 0.5 * self.step_size * (-position)
+        expected_position = position + self.step_size * half_momentum
+        expected_momentum = half_momentum + 0.5 * self.step_size * (-expected_position)
+        np.testing.assert_allclose(new_position, expected_position, atol=1e-6)
+        np.testing.assert_allclose(new_momentum, expected_momentum, atol=1e-6)
+
+    def test_ou_friction_reduces_momentum_exactly(self):
+        """With zero temperature, the OU update applies exact friction."""
+        position = jnp.zeros(2)
+        momentum = jnp.ones(2)
+
+        def grad_estimator(position, minibatch):
+            del minibatch
+            return jax.tree.map(jnp.zeros_like, position)
+
+        _, new_momentum = self.step(
+            self.next_key(),
+            position,
+            momentum,
+            grad_estimator,
+            jnp.zeros(1),
+            self.step_size,
+            temperature=0.0,
+        )
+        expected_momentum = jnp.exp(-self.alpha * self.step_size) * momentum
+        np.testing.assert_allclose(new_momentum, expected_momentum, atol=1e-6)
+
+    def test_jit_compatible(self):
+        """Step function is JIT-compilable."""
+        position = jnp.ones(3)
+        momentum = jnp.ones(3)
+
+        def grad_estimator(position, minibatch):
+            del minibatch
+            return jax.tree.map(jnp.ones_like, position)
+
+        jit_step = jax.jit(self.step, static_argnums=(3,))
+        new_position, new_momentum = jit_step(
+            self.next_key(),
+            position,
+            momentum,
+            grad_estimator,
+            jnp.zeros(1),
+            self.step_size,
+        )
+        self.assertEqual(new_position.shape, (3,))
+        self.assertEqual(new_momentum.shape, (3,))
+
+
 class SGNHTDiffusionTest(BlackJAXTest):
     """Tests for the SGNHT diffusion solver."""
 
