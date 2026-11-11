@@ -174,6 +174,7 @@ marked *Sampling Book* are covered in depth at
 | `blackjax.rhat` | Potential Scale Reduction (R̂) | [Diagnostics Guide](examples/diagnostics.md) | [API](autoapi/blackjax/diagnostics/index) |
 | `run_inference_algorithm` | `lax.scan`-based inference loop utility | [Speed-up Guide](examples/speed_up_guide.md) | [API](autoapi/blackjax/util/index) |
 | `store_only_expectation_values` | Memory-efficient streaming expectations | — | [API](autoapi/blackjax/util/index) |
+| `rejection_sampling.build_kernel` | Independent draws with a known proposal envelope | [Rejection Sampling](examples/rejection_sampling.md) | [API](autoapi/blackjax/rejection_sampling/index) |
 
 ```{toctree}
 ---
@@ -183,6 +184,7 @@ hidden:
 Quickstart <examples/quickstart.md>
 MCMC Diagnostics <examples/diagnostics.md>
 Speed-up Guide <examples/speed_up_guide.md>
+Rejection Sampling <examples/rejection_sampling.md>
 ```
 
 ```{toctree}
