@@ -14,10 +14,10 @@
 """Unit tests for the jaxtap-powered progress bar."""
 
 import os
-import stat
 import tempfile
 import threading
 import warnings
+from unittest import mock
 
 import chex
 import jax
@@ -277,23 +277,22 @@ class ProgressBarTest(BlackJAXTest):
         self.assertEqual(state.current_step, n - 1)
 
     def test_unwritable_output_file_completes_with_one_warning(self):
-        """An ``output_file`` write failure must not crash the run --
-        ``_step_callback`` is a total function -- and must warn exactly
-        once, not once per remaining step (adversarial-review finding #B14,
-        the sole crash path found)."""
-        if os.geteuid() == 0:
-            self.skipTest("running as root bypasses directory permissions")
-
-        tmpdir = tempfile.mkdtemp()
-        readonly_dir = os.path.join(tmpdir, "readonly")
-        os.makedirs(readonly_dir)
-        os.chmod(readonly_dir, stat.S_IREAD | stat.S_IEXEC)
-        bad_path = os.path.join(readonly_dir, "progress.txt")
+        """An output write failure must warn once without interrupting the scan."""
 
         def body(carry, x):
             return carry + x, carry
 
-        try:
+        # Inject the write failure instead of relying on POSIX permissions, which
+        # are unavailable on Windows and do not stop a privileged process.
+        with (
+            tempfile.TemporaryDirectory() as tmpdir,
+            mock.patch(
+                "blackjax.progress_bar.open",
+                side_effect=PermissionError("simulated output write failure"),
+                create=True,
+            ) as writer,
+        ):
+            bad_path = os.path.join(tmpdir, "progress.txt")
             with warnings.catch_warnings(record=True) as caught:
                 warnings.simplefilter("always")
                 with blackjax.progress_bar(
@@ -309,9 +308,9 @@ class ProgressBarTest(BlackJAXTest):
             ]
             self.assertEqual(len(output_file_warnings), 1)
             self.assertEqual(state.current_step, 49)
+            self.assertIsNone(state.output_file)
+            writer.assert_called_once_with(bad_path + ".tmp", "w")
             np.testing.assert_allclose(final, float(jnp.arange(50.0).sum()))
-        finally:
-            os.chmod(readonly_dir, stat.S_IRWXU)
 
     def test_print_rate_zero_no_crash(self):
         """``print_rate=0`` (an innocent typo) must not
@@ -327,36 +326,23 @@ class ProgressBarTest(BlackJAXTest):
         self.assertEqual(state.current_step, 29)
 
     def test_step_callback_survives_promoted_warnings(self):
-        """The never-raise invariant must hold even when the active
-        warnings filter promotes ``UserWarning`` to an error (this
-        project's own ``pytest.ini`` does): driving ``_step_callback``
-        directly against an unwritable ``output_file`` must not raise, and
-        ``output_file`` must still end up disabled (TL round-2 finding --
-        the courtesy warning itself was escaping as the very crash item A
-        exists to prevent)."""
-        if os.geteuid() == 0:
-            self.skipTest("running as root bypasses directory permissions")
-
-        tmpdir = tempfile.mkdtemp()
-        readonly_dir = os.path.join(tmpdir, "readonly")
-        os.makedirs(readonly_dir)
-        os.chmod(readonly_dir, stat.S_IREAD | stat.S_IEXEC)
-        bad_path = os.path.join(readonly_dir, "progress.txt")
-
-        try:
+        """A write failure must stay nonfatal when UserWarning becomes an error."""
+        with (
+            tempfile.TemporaryDirectory() as tmpdir,
+            mock.patch(
+                "blackjax.progress_bar.open",
+                side_effect=PermissionError("simulated output write failure"),
+                create=True,
+            ) as writer,
+        ):
+            bad_path = os.path.join(tmpdir, "progress.txt")
             state = ProgressState(label="direct", print_rate=1, output_file=bad_path)
             state.n_steps = 10
             with warnings.catch_warnings():
                 warnings.simplefilter("error")
-                try:
-                    state._step_callback(jnp.array(0))
-                except Exception as e:  # pragma: no cover -- failure path
-                    self.fail(
-                        f"_step_callback raised under a promoted warnings filter: {e!r}"
-                    )
+                state._step_callback(jnp.array(0))
             self.assertIsNone(state.output_file)
-        finally:
-            os.chmod(readonly_dir, stat.S_IRWXU)
+            writer.assert_called_once_with(bad_path + ".tmp", "w")
 
     def test_concurrent_first_enter_no_self_capture(self):
         """Two threads racing to be the FIRST ``progress_bar()`` entrant
