@@ -53,7 +53,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g58dcc8bc7" />
+  <meta name="docsearch:version" content="0.1.dev1+ge8db80fa5" />
   
     
     <script src="../../../_static/searchtools.js"></script>
@@ -578,8 +578,14 @@
         <span class="k">def</span><span class="w"> </span><span class="nf">log_weights_fn</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">logposterior_fn</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">previous_logposterior_fn</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 
+        <span class="c1"># Mutation precedes reweighting, so preserve the previous target.</span>
         <span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">delegate</span><span class="p">(</span>
-            <span class="n">key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">num_mcmc_steps</span><span class="p">,</span> <span class="n">mcmc_parameters</span><span class="p">,</span> <span class="n">logposterior_fn</span><span class="p">,</span> <span class="n">log_weights_fn</span>
+            <span class="n">key</span><span class="p">,</span>
+            <span class="n">state</span><span class="p">,</span>
+            <span class="n">num_mcmc_steps</span><span class="p">,</span>
+            <span class="n">mcmc_parameters</span><span class="p">,</span>
+            <span class="n">previous_logposterior_fn</span><span class="p">,</span>
+            <span class="n">log_weights_fn</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="k">return</span> <span class="p">(</span>

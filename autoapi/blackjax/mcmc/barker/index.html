@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.mcmc.adjusted_mclmc_dynamic" href="../adjusted_mclmc_dynamic/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g58dcc8bc7" />
+  <meta name="docsearch:version" content="0.1.dev1+ge8db80fa5" />
   
     
     <script src="../../../../_static/searchtools.js"></script>
@@ -649,7 +649,10 @@ users only need to pass <cite>blackjax.barker</cite> to SMC, adaptation, etc. al
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>logdensity_fn</strong> – The log-density function we wish to draw samples from.</p></li>
 <li><p><strong>step_size</strong> – The value of the step_size correspnoding to the global scale of the proposal distribution.</p></li>
-<li><p><strong>inverse_mass_matrix</strong> – The inverse mass matrix to use for pre-conditioning (see Appendix G of <span class="bibtex-citation" id="id3">[<a class="reference internal" href="../../../../bib.html#id52" title="Samuel Livingstone and Giacomo Zanella. The Barker Proposal: Combining Robustness and Efficiency in Gradient-Based MCMC. Journal of the Royal Statistical Society Series B: Statistical Methodology, 84(2):496-523, 01 2022. URL: https://doi.org/10.1111/rssb.12482, arXiv:https://academic.oup.com/jrsssb/article-pdf/84/2/496/49322274/jrsssb\_84\_2\_496.pdf, doi:10.1111/rssb.12482.">LZ22</a>]</span>).</p></li>
+<li><p><strong>inverse_mass_matrix</strong> – The inverse mass matrix to use for pre-conditioning (see Appendix G of <span class="bibtex-citation" id="id3">[<a class="reference internal" href="../../../../bib.html#id52" title="Samuel Livingstone and Giacomo Zanella. The Barker Proposal: Combining Robustness and Efficiency in Gradient-Based MCMC. Journal of the Royal Statistical Society Series B: Statistical Methodology, 84(2):496-523, 01 2022. URL: https://doi.org/10.1111/rssb.12482, arXiv:https://academic.oup.com/jrsssb/article-pdf/84/2/496/49322274/jrsssb\_84\_2\_496.pdf, doi:10.1111/rssb.12482.">LZ22</a>]</span>).
+May also be a metric or a callable returning the mass matrix at the current
+position. The Gaussian base proposal has covariance <code class="docutils literal notranslate"><span class="pre">step_size**2</span></code> times
+the mass matrix.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>

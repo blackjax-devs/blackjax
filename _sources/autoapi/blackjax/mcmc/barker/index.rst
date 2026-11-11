@@ -139,6 +139,9 @@ Module Contents
    :param logdensity_fn: The log-density function we wish to draw samples from.
    :param step_size: The value of the step_size correspnoding to the global scale of the proposal distribution.
    :param inverse_mass_matrix: The inverse mass matrix to use for pre-conditioning (see Appendix G of :cite:p:`Livingstone2022Barker`).
+                               May also be a metric or a callable returning the mass matrix at the current
+                               position. The Gaussian base proposal has covariance ``step_size**2`` times
+                               the mass matrix.
 
    :rtype: A ``SamplingAlgorithm``.
 

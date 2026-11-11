@@ -81,7 +81,6 @@ Module Contents
                               of the gradient of the log-density at this position.
    :param zeta: Hyperparameter that controls the geometric property of the flattened
                 density. If `zeta=0` the function reduces to the SGLD step function.
-   :param temperature: Temperature parameter.
    :param num_partitions: The number of partitions we divide the energy landscape into.
    :param energy_gap: The difference in energy :math:`\Delta u` between the successive
                       partitions. Can be determined by running e.g. an optimizer to determine
