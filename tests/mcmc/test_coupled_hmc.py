@@ -1242,26 +1242,21 @@ class CoupledHMCContractTest(BlackJAXTest):
                 coupling="reflection", direction_fn=recording_direction_fn
             )
             mass = jnp.ones((_DIM,), jnp.float64)
-            # A rejected proposal leaves the state in place, which would make the
-            # last check vacuous; redraw until the first chain moves.
-            for _ in range(8):
-                seen.clear()
-                new_state, info = kernel(
-                    self.next_key(),
-                    state,
-                    (_standard_normal_logdensity,) * 2,
-                    (0.2, 0.2),
-                    (mass, mass),
-                    (4, 4),
-                )
-                chex.assert_trees_all_equal(seen["first"], state.first.position)
-                chex.assert_trees_all_equal(seen["second"], state.second.position)
-                if bool(info.first.is_accepted):
-                    break
-            self.assertTrue(bool(info.first.is_accepted))
-            # And it is genuinely the pre-transition state, not the result.
+            _, info = kernel(
+                self.next_key(),
+                state,
+                (_standard_normal_logdensity,) * 2,
+                (0.2, 0.2),
+                (mass, mass),
+                (4, 4),
+            )
+            chex.assert_trees_all_equal(seen["first"], state.first.position)
+            chex.assert_trees_all_equal(seen["second"], state.second.position)
+            # And it is genuinely the pre-transition state, not the integrated
+            # one. Compare with the proposal: it moves whether or not it is
+            # accepted, whereas the returned state stays put on a rejection.
             self.assertFalse(
-                bool(jnp.allclose(seen["first"], new_state.first.position))
+                bool(jnp.allclose(seen["first"], info.first.proposal.position))
             )
 
     def test_common_normal_reports_the_first_marginal_s_innovation(self):
