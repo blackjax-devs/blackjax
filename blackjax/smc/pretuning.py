@@ -81,10 +81,18 @@ def update_parameter_distribution(
     """
     noise_key, resampling_key = jax.random.split(key, 2)
 
+    # One key per parameter, so that parameters of the same shape are not
+    # perturbed by the same draw.
+    leaves = jax.tree.leaves(previous_param_samples)
+    noise_keys = jax.tree.unflatten(
+        jax.tree.structure(previous_param_samples),
+        jax.random.split(noise_key, len(leaves)),
+    )
     noises = jax.tree.map(
-        lambda x, s: generate_gaussian_noise(noise_key, x.astype("float32"), sigma=s),
+        lambda x, s, k: generate_gaussian_noise(k, x.astype("float32"), sigma=s),
         previous_param_samples,
         sigma_parameters,
+        noise_keys,
     )
     new_samples = jax.tree.map(lambda x, y: x + y, noises, previous_param_samples)
 
@@ -149,6 +157,7 @@ def build_pretune(
             return x
 
     def pretune(key, state, logposterior):
+        step_key, update_key = jax.random.split(key)
         unshared_mcmc_parameters, shared_mcmc_step_fn = unshared_parameters_and_step_fn(
             state.parameter_override, mcmc_step_fn
         )
@@ -158,7 +167,7 @@ def build_pretune(
         )
 
         new_state, info = one_step_fn(
-            jax.random.split(key, n_particles),
+            jax.random.split(step_key, n_particles),
             state.sampler_state.particles,
             unshared_mcmc_parameters,
         )
@@ -169,7 +178,7 @@ def build_pretune(
             new_parameter_distribution,
             chain_mixing_measurement,
         ) = update_parameter_distribution(
-            key,
+            update_key,
             previous_param_samples={
                 key: state.parameter_override[key] for key in sigma_parameters
             },
@@ -264,7 +273,7 @@ def build_kernel(
             logposterior_fn,
         )
         state, info = delegate(
-            rng_key,
+            step_key,
             state,
             num_mcmc_steps,
             pretuned_parameters,

@@ -4,7 +4,7 @@ import chex
 import jax
 import jax.numpy as jnp
 import numpy as np
-from absl.testing import absltest
+from absl.testing import absltest, parameterized
 
 import blackjax
 from blackjax.smc import extend_params, resampling
@@ -143,6 +143,29 @@ class TestUpdateParameterDistribution(BlackJAXTest):
             jnp.array([[5.0, 6.0], [5.0, 6.0], [5.0, 6.0]]),
             atol=0.1,
         )
+
+    @parameterized.parameters(((1000,),), ((1000, 2),))
+    def test_same_shape_parameters_get_independent_noise(self, shape):
+        """Parameters of the same shape are perturbed by independent draws."""
+        # All parameters start at zero and every chain gets the same weight, so the
+        # resampled values are the noise draws themselves.
+        num_chains = shape[0]
+        new_parameter_distribution, _ = update_parameter_distribution(
+            self.next_key(),
+            {"step_size": jnp.zeros(shape), "num_integration_steps": jnp.zeros(shape)},
+            self.previous_position,
+            self.next_position,
+            measure_of_chain_mixing=lambda x, y, z: jnp.ones(num_chains),
+            alpha=0,
+            sigma_parameters={"step_size": 1.0, "num_integration_steps": 1.0},
+            acceptance_probability=None,
+        )
+        step_size_samples = np.ravel(new_parameter_distribution["step_size"])
+        integration_steps_samples = np.ravel(
+            new_parameter_distribution["num_integration_steps"]
+        )
+        correlation = np.corrcoef(step_size_samples, integration_steps_samples)[0, 1]
+        assert abs(correlation) < 0.2
 
 
 def tuned_adaptive_tempered_inference_loop(kernel, rng_key, initial_state):
