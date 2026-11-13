@@ -11,8 +11,9 @@ import numpy as np
 import optax
 from absl.testing import absltest, parameterized
 from jax.flatten_util import ravel_pytree
+from jax.flatten_util import ravel_pytree as _ravel
 
-# import blackjax
+import blackjax
 import blackjax.diagnostics as diagnostics
 import blackjax.mcmc.metrics as metrics
 import blackjax.mcmc.random_walk
@@ -20,6 +21,14 @@ from blackjax import mgrad_gaussian
 from blackjax.adaptation.base import get_filter_adapt_info_fn, return_all_adapt_info
 from blackjax.adaptation.laps import laps as run_laps
 from blackjax.mcmc.adjusted_mclmc import rescale
+from blackjax.mcmc.constraints import (
+    ConstraintDict,
+    GeneralConstraint,
+    LinearConstraint,
+    barrier_hessian,
+    constrain,
+    ellipsoid_constraint,
+)
 from blackjax.mcmc.ghmc import _metric_from_momentum_inverse_scale
 from blackjax.mcmc.integrators import isokinetic_mclachlan
 from blackjax.util import run_inference_algorithm
@@ -42,6 +51,14 @@ def irmh_proposal_distribution(rng_key, mean):
     doesn't make the sample overemphasize the center of the target distribution.
     """
     return mean + jax.random.normal(rng_key) * 25.0
+
+
+def irmh_proposal_distribution_(rng_key, mean):
+    """
+    The proposal distribution is chosen to be wider than the target, so that the RMH rejection
+    doesn't make the sample overemphasize the center of the target distribution.
+    """
+    return mean + jax.random.normal(rng_key, shape=mean.shape) * 25.0
 
 
 def rmh_proposal_distribution(rng_key, position):
@@ -1264,6 +1281,434 @@ class UnivariateNormalTest(chex.TestCase):
         self.univariate_normal_test_case(
             inference_algorithm, self.key, initial_state, 20000, 2_000
         )
+
+
+class ConstrainedNormal(chex.TestCase):
+    """Test sampling of a constrained Normal distribution."""
+
+    def setUp(self):
+        super().setUp()
+        self.key = jax.random.key(12)
+        self.A = np.array([[1.0, 1.0], [-1.0, 0.0], [0.0, -1.0]])
+        self.b = np.array([1.0, 0.0, 0.0])
+
+    def constrained_normal_logprob(self, x):
+        return jax.lax.cond(
+            (self.A @ x < self.b).all(),
+            lambda: stats.norm.logpdf(x, loc=0.0, scale=1.0).sum(),
+            lambda: -jnp.inf,
+        )
+
+    def constrained_normal_test_case(
+        self,
+        inference_algorithm,
+        rng_key,
+        initial_state,
+        num_sampling_steps,
+        burnin,
+        postprocess_samples=None,
+        **kwargs,
+    ):
+        inference_key, orbit_key = jax.random.split(rng_key)
+        _, (states, info) = self.variant(
+            functools.partial(
+                run_inference_algorithm,
+                inference_algorithm=inference_algorithm,
+                num_steps=num_sampling_steps,
+                **kwargs,
+            )
+        )(rng_key=inference_key, initial_state=initial_state)
+
+        if postprocess_samples:
+            samples = postprocess_samples(states, orbit_key)
+        else:
+            samples = states.position[burnin:]
+
+        assert (self.A @ samples.T < self.b.reshape(-1, 1)).all()
+
+    @chex.all_variants(with_pmap=False)
+    def test_irmh(self):
+        inference_algorithm = blackjax.irmh(
+            self.constrained_normal_logprob,
+            proposal_distribution=functools.partial(
+                irmh_proposal_distribution_, mean=jnp.array([1.0, 1.0])
+            ),
+        )
+        initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
+
+        self.constrained_normal_test_case(
+            inference_algorithm, self.key, initial_state, 50000, 5000
+        )
+
+    @chex.all_variants(with_pmap=False)
+    def test_nuts(self):
+        inference_algorithm = blackjax.nuts(
+            self.constrained_normal_logprob,
+            step_size=1.0,
+            inverse_mass_matrix=jnp.array([1.0, 1.0]),
+        )
+
+        initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
+
+        self.constrained_normal_test_case(
+            inference_algorithm, self.key, initial_state, 5000, 1000
+        )
+
+    @chex.all_variants(with_pmap=False)
+    def test_rmh(self):
+        inference_algorithm = blackjax.rmh(
+            self.constrained_normal_logprob,
+            proposal_generator=rmh_proposal_distribution,
+        )
+        initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
+
+        self.constrained_normal_test_case(
+            inference_algorithm, self.key, initial_state, 20_000, 5_000
+        )
+
+    @chex.all_variants(with_pmap=False)
+    def test_rmhmc(self):
+        inference_algorithm = blackjax.rmhmc(
+            self.constrained_normal_logprob,
+            mass_matrix=rmhmc_static_mass_matrix_fn,
+            step_size=1.0,
+            num_integration_steps=30,
+        )
+
+        initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
+
+        self.constrained_normal_test_case(
+            inference_algorithm, self.key, initial_state, 6_000, 1_000
+        )
+
+    @chex.all_variants(with_pmap=False)
+    def test_mala(self):
+        inference_algorithm = blackjax.mala(
+            self.constrained_normal_logprob, step_size=0.2
+        )
+        initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
+        self.constrained_normal_test_case(
+            inference_algorithm, self.key, initial_state, 45000, 5_000
+        )
+
+    @chex.all_variants(with_pmap=False)
+    def test_dikin(self):
+        inference_algorithm = blackjax.dikin(
+            self.constrained_normal_logprob,
+            LinearConstraint(A=self.A, b=self.b),
+            step_size=0.2,
+        )
+        initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
+        self.constrained_normal_test_case(
+            inference_algorithm, self.key, initial_state, 45000, 5_000
+        )
+
+    @chex.all_variants(with_pmap=False)
+    def test_vaidya(self):
+        inference_algorithm = blackjax.vaidya(
+            self.constrained_normal_logprob,
+            LinearConstraint(A=self.A, b=self.b),
+            step_size=0.2,
+        )
+        initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
+        self.constrained_normal_test_case(
+            inference_algorithm, self.key, initial_state, 45000, 5_000
+        )
+
+    @chex.all_variants(with_pmap=False)
+    def test_mapla(self):
+        inference_algorithm = blackjax.mapla(
+            self.constrained_normal_logprob,
+            LinearConstraint(A=self.A, b=self.b),
+            step_size=0.2,
+        )
+        initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
+        self.constrained_normal_test_case(
+            inference_algorithm, self.key, initial_state, 45000, 5_000
+        )
+
+    @chex.all_variants(with_pmap=False)
+    def test_smmala(self):
+        mass_matrix_fn = lambda x: jax.numpy.array([[1.0, 0.0], [0.0, 1.0]])
+        inference_algorithm = blackjax.smmala(
+            self.constrained_normal_logprob, mass_matrix_fn, step_size=0.2
+        )
+        initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
+        self.constrained_normal_test_case(
+            inference_algorithm, self.key, initial_state, 45000, 5_000
+        )
+
+    @chex.all_variants(with_pmap=False)
+    def test_posdep_rwmh(self):
+        mass_matrix_fn = lambda x: jax.numpy.array([[1.0, 0.0], [0.0, 1.0]])
+        inference_algorithm = blackjax.posdep_rwmh(
+            self.constrained_normal_logprob, mass_matrix_fn, step_size=0.2
+        )
+        initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
+        self.constrained_normal_test_case(
+            inference_algorithm, self.key, initial_state, 45000, 5_000
+        )
+
+    @chex.all_variants(with_pmap=False)
+    def test_ehr(self):
+        grad = jax.grad(self.constrained_normal_logprob)
+        mass_matrix_fn = lambda x: jax.numpy.array([[1.0, 0.0], [0.0, 1.0]])
+        constraint = LinearConstraint(A=self.A, b=self.b)
+        inference_algorithm = blackjax.ehr(
+            self.constrained_normal_logprob,
+            constraint,
+            step_size=0.2,
+            drift_fn=grad,
+            mass_matrix_fn=mass_matrix_fn,
+        )
+        initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
+        self.constrained_normal_test_case(
+            inference_algorithm, self.key, initial_state, 4500, 1_000
+        )
+
+    @chex.all_variants(with_pmap=False)
+    def test_hr(self):
+        constraint = LinearConstraint(A=self.A, b=self.b)
+        inference_algorithm = blackjax.ehr(
+            self.constrained_normal_logprob,
+            constraint,
+            step_size=0.2,
+        )
+        initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
+        self.constrained_normal_test_case(
+            inference_algorithm, self.key, initial_state, 4500, 1_000
+        )
+
+    @chex.all_variants(with_pmap=False)
+    def test_lhr(self):
+        constraint = LinearConstraint(A=self.A, b=self.b)
+        inference_algorithm = blackjax.lhr(
+            self.constrained_normal_logprob,
+            constraint,
+            step_size=0.2,
+        )
+        initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
+        self.constrained_normal_test_case(
+            inference_algorithm, self.key, initial_state, 4500, 1_000
+        )
+
+    @chex.all_variants(with_pmap=False)
+    def test_smhr(self):
+        mass_matrix_fn = lambda x: jax.numpy.array([[1.0, 0.0], [0.0, 1.0]])
+        constraint = LinearConstraint(A=self.A, b=self.b)
+        inference_algorithm = blackjax.smhr(
+            self.constrained_normal_logprob,
+            constraint,
+            step_size=0.2,
+            mass_matrix_fn=mass_matrix_fn,
+        )
+        initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
+        self.constrained_normal_test_case(
+            inference_algorithm, self.key, initial_state, 4500, 1_000
+        )
+
+    @chex.all_variants(with_pmap=False)
+    def test_smlhr(self):
+        mass_matrix_fn = lambda x: jax.numpy.array([[1.0, 0.0], [0.0, 1.0]])
+        constraint = LinearConstraint(A=self.A, b=self.b)
+        inference_algorithm = blackjax.smlhr(
+            self.constrained_normal_logprob,
+            constraint,
+            step_size=0.2,
+            mass_matrix_fn=mass_matrix_fn,
+        )
+        initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
+        self.constrained_normal_test_case(
+            inference_algorithm, self.key, initial_state, 4500, 1_000
+        )
+
+
+class GeneralConstraintNormal(chex.TestCase):
+    """Test lhr with a GeneralConstraint using _newton_intersect.
+
+    The feasible region is ``{x : exp(x[0]) - x[1] <= 0}``, i.e. above the
+    exponential curve.  The target is a standard normal truncated to this region.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.key = jax.random.key(42)
+        self.constraint = GeneralConstraint(lambda x: jnp.exp(x[0]) - x[1])
+        self.logp = constrain(lambda x: -0.5 * jnp.dot(x, x), self.constraint)
+        # Initial point strictly inside the feasible region: exp(-2) ≈ 0.135 < 1.0
+        self.x0 = jnp.array([-2.0, 1.0])
+
+    @chex.all_variants(with_pmap=False)
+    def test_dikin_general_constraint(self):
+        """lhr samples stay in the feasible region (exp(x0) <= x1)."""
+        inference_algorithm = blackjax.dikin(self.logp, self.constraint, 1e0)
+        initial_state = inference_algorithm.init(self.x0)
+
+        num_steps = 2000
+        burnin = 200
+
+        _, (states, _) = self.variant(
+            functools.partial(
+                run_inference_algorithm,
+                inference_algorithm=inference_algorithm,
+                num_steps=num_steps,
+            )
+        )(rng_key=self.key, initial_state=initial_state)
+
+        samples = states.position[burnin:]
+        # Every sample must satisfy the constraint: exp(x[0]) <= x[1]
+        assert (jnp.exp(samples[:, 0]) <= samples[:, 1] + 1e-5).all(), (
+            "GeneralConstraint violated: found sample with exp(x0) > x1"
+        )
+
+    @chex.all_variants(with_pmap=False)
+    def test_lhr_general_constraint(self):
+        """lhr samples stay in the feasible region (exp(x0) <= x1)."""
+        inference_algorithm = blackjax.lhr(self.logp, self.constraint, 1e0)
+        initial_state = inference_algorithm.init(self.x0)
+
+        num_steps = 2000
+        burnin = 200
+
+        _, (states, _) = self.variant(
+            functools.partial(
+                run_inference_algorithm,
+                inference_algorithm=inference_algorithm,
+                num_steps=num_steps,
+            )
+        )(rng_key=self.key, initial_state=initial_state)
+
+        samples = states.position[burnin:]
+        # Every sample must satisfy the constraint: exp(x[0]) <= x[1]
+        assert (jnp.exp(samples[:, 0]) <= samples[:, 1] + 1e-5).all(), (
+            "GeneralConstraint violated: found sample with exp(x0) > x1"
+        )
+
+
+class ConstrainedNormalArrayTree(chex.TestCase):
+    """Test constrained samplers with an ArrayTree (dict) position.
+
+    The position is a dict ``{'linear': x_lin, 'quad': x_quad}`` where
+    ``x_lin`` lives in a 2-D simplex-like triangle and ``x_quad`` lives
+    inside a 2-D unit ball.  A ``ConstraintDict`` is used to assign a
+    separate constraint object to each leaf.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.key = jax.random.key(42)
+
+        # Linear constraint for the 'linear' leaf: Ax ≤ b  (triangle)
+        self.A_lin = jnp.array([[1.0, 1.0], [-1.0, 0.0], [0.0, -1.0]])
+        self.b_lin = jnp.array([1.0, 0.0, 0.0])
+
+        # Quadratic constraint for the 'quad' leaf: ||x||² − 0.25 ≤ 0  (ball)
+        self.ellipsoid = ellipsoid_constraint(jnp.eye(2), jnp.zeros(2), radius=0.5)
+
+        # Example position (used by ConstraintDict to compute leaf slices)
+        self.example_pos = {
+            "linear": jnp.zeros(2),
+            "quad": jnp.zeros(2),
+        }
+
+        # Initial point strictly inside both feasible regions
+        self.initial_pos = {
+            "linear": jnp.array([0.1, 0.1]),
+            "quad": jnp.array([0.1, 0.1]),
+        }
+
+    def _make_constraint_dict(self):
+        return ConstraintDict(
+            {
+                "linear": LinearConstraint(A=self.A_lin, b=self.b_lin),
+                "quad": self.ellipsoid,
+            },
+            self.example_pos,
+        )
+
+    def logdensity_fn(self, position):
+        x_lin = position["linear"]
+        x_quad = position["quad"]
+        in_lin = (self.A_lin @ x_lin < self.b_lin).all()
+        in_quad = x_quad @ x_quad < 0.25
+        return jax.lax.cond(
+            in_lin & in_quad,
+            lambda: (
+                stats.norm.logpdf(x_lin, loc=0.0, scale=1.0).sum()
+                + stats.norm.logpdf(x_quad, loc=0.0, scale=1.0).sum()
+            ),
+            lambda: -jnp.inf,
+        )
+
+    def _check_feasibility(self, samples):
+        """Assert all samples satisfy both constraints."""
+        x_lin_samples = samples["linear"]  # (T, 2)
+        x_quad_samples = samples["quad"]  # (T, 2)
+        assert (self.A_lin @ x_lin_samples.T < self.b_lin.reshape(-1, 1)).all(), (
+            "LinearConstraint violated in arraytree sampler test"
+        )
+        norms_sq = (x_quad_samples**2).sum(axis=-1)
+        assert (norms_sq < 0.25).all(), (
+            "Ellipsoid constraint violated in arraytree sampler test"
+        )
+
+    def _run_and_check(self, inference_algorithm, num_steps=5000, burnin=500):
+        initial_state = inference_algorithm.init(self.initial_pos)
+        _, (states, _) = self.variant(
+            functools.partial(
+                run_inference_algorithm,
+                inference_algorithm=inference_algorithm,
+                num_steps=num_steps,
+            )
+        )(rng_key=self.key, initial_state=initial_state)
+        samples = jax.tree_util.tree_map(lambda s: s[burnin:], states.position)
+        self._check_feasibility(samples)
+
+    @chex.all_variants(with_pmap=False)
+    def test_dikin_arraytree(self):
+        inference_algorithm = blackjax.dikin(
+            self.logdensity_fn,
+            self._make_constraint_dict(),
+            step_size=0.1,
+        )
+        self._run_and_check(inference_algorithm)
+
+    @chex.all_variants(with_pmap=False)
+    def test_vaidya_arraytree(self):
+        inference_algorithm = blackjax.vaidya(
+            self.logdensity_fn,
+            self._make_constraint_dict(),
+            step_size=0.1,
+        )
+        self._run_and_check(inference_algorithm)
+
+    @chex.all_variants(with_pmap=False)
+    def test_mapla_arraytree(self):
+        inference_algorithm = blackjax.mapla(
+            self.logdensity_fn,
+            self._make_constraint_dict(),
+            step_size=0.05,
+        )
+        self._run_and_check(inference_algorithm)
+
+    @chex.all_variants(with_pmap=False)
+    def test_ehr_arraytree(self):
+        constraint = self._make_constraint_dict()
+        grad_fn = jax.grad(self.logdensity_fn)
+
+        # mass_matrix_fn: barrier Hessian of ConstraintDict at flat position
+        def mass_matrix_fn(position):
+            flat, _ = _ravel(position)
+            return barrier_hessian(constraint, flat)
+
+        inference_algorithm = blackjax.ehr(
+            self.logdensity_fn,
+            constraint,
+            step_size=0.1,
+            drift_fn=grad_fn,
+            mass_matrix_fn=mass_matrix_fn,
+        )
+        self._run_and_check(inference_algorithm, num_steps=2000, burnin=200)
 
 
 class GHMCRichMetricTest(chex.TestCase):

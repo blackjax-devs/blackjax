@@ -19,20 +19,32 @@ from .diagnostics import ess_bulk, ess_tail, pareto_khat, rhat
 from .mcmc import adjusted_mclmc as _adjusted_mclmc
 from .mcmc import adjusted_mclmc_dynamic as _adjusted_mclmc_dynamic
 from .mcmc import barker as _barker
+from .mcmc import dikin as _dikin
 from .mcmc import dynamic_hmc as _dynamic_hmc
+from .mcmc import ehr as _ehr
 from .mcmc import elliptical_slice as _elliptical_slice
 from .mcmc import ghmc as _ghmc
 from .mcmc import hmc as _hmc
 from .mcmc import laplace_dynamic_hmc as _laplace_dynamic_hmc
 from .mcmc import laplace_hmc as _laplace_hmc
 from .mcmc import mala as _mala
+from .mcmc import mapla as _mapla
 from .mcmc import marginal_latent_gaussian, periodic_orbital, random_walk
 from .mcmc import mclmc as _mclmc
 from .mcmc import nuts as _nuts
+from .mcmc import posdep_rwmh as _posdep_rwmh  # dev
 from .mcmc import rmhmc as _rmhmc
 from .mcmc import slice as _slice
+from .mcmc import smmala as _smmala
+from .mcmc import vaidya as _vaidya  # dev
 from .mcmc.composed import step_size as _gist_step_size
 from .mcmc.composed import trajectory_length as _gist_trajectory_length
+from .mcmc.ehr import (
+    hr_as_top_level_api,
+    lhr_as_top_level_api,
+    smhr_as_top_level_api,
+    smlhr_as_top_level_api,
+)
 from .mcmc.random_walk import additive_step_random_walk as _additive_step_random_walk
 from .mcmc.random_walk import (
     irmh_as_top_level_api,
@@ -120,6 +132,8 @@ dhmc = generate_top_level_api_from(_dynamic_hmc)
 dynamic_hmc = dhmc  # backward-compatible alias
 rmhmc = generate_top_level_api_from(_rmhmc)
 mala = generate_top_level_api_from(_mala)
+mapla = generate_top_level_api_from(_mapla)
+smmala = generate_top_level_api_from(_smmala)
 mgrad_gaussian = generate_top_level_api_from(marginal_latent_gaussian)
 laplace_hmc = generate_top_level_api_from(_laplace_hmc)
 orbital_hmc = generate_top_level_api_from(periodic_orbital)
@@ -130,6 +144,13 @@ additive_step_random_walk = GenerateSamplingAPI(
 
 additive_step_random_walk.register_factory("normal_random_walk", normal_random_walk)
 
+dikin = generate_top_level_api_from(_dikin)
+vaidya = generate_top_level_api_from(_vaidya)
+ehr = generate_top_level_api_from(_ehr)
+hr = GenerateSamplingAPI(hr_as_top_level_api, _ehr.init, _ehr.build_kernel)
+lhr = GenerateSamplingAPI(lhr_as_top_level_api, _ehr.init, _ehr.build_kernel)
+smhr = GenerateSamplingAPI(smhr_as_top_level_api, _ehr.init, _ehr.build_kernel)
+smlhr = GenerateSamplingAPI(smlhr_as_top_level_api, _ehr.init, _ehr.build_kernel)
 mclmc = generate_top_level_api_from(_mclmc)
 adjusted_mclmc_dynamic = generate_top_level_api_from(_adjusted_mclmc_dynamic)
 adjusted_mclmc = generate_top_level_api_from(_adjusted_mclmc)
@@ -143,6 +164,8 @@ barker = generate_top_level_api_from(_barker)
 barker_proposal = barker  # backwards-compatible alias
 gist_step_size = generate_top_level_api_from(_gist_step_size)
 gist_trajectory_length = generate_top_level_api_from(_gist_trajectory_length)
+
+posdep_rwmh = generate_top_level_api_from(_posdep_rwmh)
 
 mhmc = GenerateSamplingAPI(
     functools.partial(
@@ -259,11 +282,20 @@ __all__ = [
     "nuts",
     "dhmc",
     "dmhmc",
+    "dikin",
+    "vaidya",
+    "mapla",
     "mala",
+    "smmala",
     "rmhmc",
     "ghmc",
     "barker",
     "elliptical_slice",
+    "ehr",
+    "hr",
+    "lhr",
+    "smhr",
+    "smlhr",
     "slice_sampling",
     "coordinate_slice",
     "gist_step_size",
