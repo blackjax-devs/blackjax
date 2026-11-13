@@ -240,8 +240,6 @@ def iterative_nuts_proposal(
     uturn_check_fn:
         Function that determines whether the trajectory is turning on itself
         (metric-dependant).
-    step_size
-        Size of the integration step.
     max_num_expansions
         The number of sub-trajectory samples we take to build the trajectory.
     divergence_threshold

@@ -210,8 +210,13 @@ class PersistentSamplingUnitTest(chex.TestCase):
         assert log_weights.shape == (num_iterations + 2, num_particles)
         assert isinstance(log_Z, jax.Array) or isinstance(log_Z, float)
 
-        # Check that weights are finite where they should be
-        assert jnp.all(jnp.isfinite(log_weights[: iteration + 1]))
+        # With `include_current=False` only iterations before the current one
+        # carry weight; the remaining rows are masked out to zero weight. The
+        # masked rows are -inf, or the most negative finite float on JAX
+        # releases where `jnp.nan_to_num(nan=-jnp.inf)` re-clipped the
+        # substituted value (jax-ml/jax#42406).
+        assert jnp.all(jnp.isfinite(log_weights[:iteration]))
+        assert jnp.all(jnp.exp(log_weights[iteration:]) == 0.0)
 
     @chex.variants(with_jit=True, without_jit=True)  # type: ignore
     def test_persistent_ess_uniform_weights(self) -> None:

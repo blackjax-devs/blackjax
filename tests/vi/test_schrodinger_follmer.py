@@ -4,13 +4,55 @@ import chex
 import jax
 import jax.numpy as jnp
 import jax.scipy.stats as stats
-from absl.testing import absltest
+from absl.testing import absltest, parameterized
+from jax.flatten_util import ravel_pytree
 
 from blackjax.vi.schrodinger_follmer import as_top_level_api as schrodinger_follmer
 from tests.fixtures import BlackJAXTest
 
 
 class SchrodingerFollmerTest(BlackJAXTest):
+    @chex.all_variants(with_pmap=True)
+    @parameterized.named_parameters(
+        ("scalar", ()),
+        ("vector", (5,)),
+        ("matrix_matching_inner_samples", (4, 3)),
+        ("matrix", (2, 3)),
+        ("tensor", (2, 2, 3)),
+        ("mixed_pytree", None),
+    )
+    def test_coordinate_shape_invariance(self, shape):
+        if shape is None:
+            position = {
+                "matrix": jnp.zeros((4, 3)),
+                "vector": jnp.zeros(3),
+                "scalar": jnp.array(0.0),
+            }
+        else:
+            position = jnp.zeros(shape)
+        flat_position, _ = ravel_pytree(position)
+
+        def logdensity(x):
+            return -0.5 * sum(jnp.sum((a - 0.4) ** 2) for a in jax.tree.leaves(x))
+
+        algorithm = schrodinger_follmer(logdensity, n_steps=4, n_inner_samples=4)
+        state = algorithm.init(position)
+        flat_state = algorithm.init(flat_position)
+        key = jax.random.key(0)
+        next_state, info = self.variant(algorithm.step)(key, state)
+        flat_next_state, flat_info = algorithm.step(key, flat_state)
+        chex.assert_trees_all_close(
+            ravel_pytree(info.drift)[0], flat_info.drift, atol=1e-6
+        )
+        chex.assert_trees_all_close(
+            ravel_pytree(next_state.position)[0], flat_next_state.position, atol=1e-6
+        )
+
+        samples = self.variant(lambda k, s: algorithm.sample(k, s, 3))(key, state)
+        flat_samples = algorithm.sample(key, flat_state, 3)
+        flattened_samples = jax.vmap(lambda x: ravel_pytree(x)[0])(samples.position)
+        chex.assert_trees_all_close(flattened_samples, flat_samples.position, atol=1e-6)
+
     @chex.all_variants(with_pmap=True)
     def test_recover_posterior(self):
         """Simple Normal mean test"""
