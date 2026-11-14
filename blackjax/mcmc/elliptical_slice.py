@@ -200,7 +200,8 @@ def elliptical_proposal(
         # step 1: sample momentum
         momentum = momentum_generator(key_momentum, position)
         # step 2: get slice (y)
-        logy = logdensity + jnp.log(jax.random.uniform(key_uniform))
+        u = jax.random.uniform(key_uniform, minval=jnp.finfo(jnp.float32).tiny)
+        logy = logdensity + jnp.log(u)
         # step 3: get theta (ellipsis move), set inital interval
         theta = 2 * jnp.pi * jax.random.uniform(key_theta)
         theta_min = theta - 2 * jnp.pi

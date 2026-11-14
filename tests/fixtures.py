@@ -20,6 +20,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from jax.flatten_util import ravel_pytree
+from scipy.stats import norm
 
 
 class BlackJAXTest(chex.TestCase):
@@ -189,4 +190,105 @@ def assert_grand_mean_within_robust_tolerance(
         f"Grand mean {grand_mean:.6f} is inconsistent with expected {expected_mean:.6f} "
         f"(difference {abs(grand_mean - expected_mean):.6f} >= threshold {threshold:.6f}). "
         f"atol_floor={atol_floor:.3f}, robust_se={robust_se:.6f}, n_chains={n_chains:d}."
+    )
+
+
+def correlated_gaussian(dim, seed=0):
+    """A rotated Gaussian with scales spread over four decades.
+
+    Returns the mean, the Cholesky factor of the covariance, the log-density
+    and the whitening map ``x -> L^{-1}(x - mean)``.
+    """
+    rng = np.random.default_rng(seed)
+    rotation, _ = np.linalg.qr(rng.normal(size=(dim, dim)))
+    cholesky = rotation * np.logspace(-2, 2, dim)
+    mean = np.arange(dim, dtype=float)
+    inverse_cholesky = np.linalg.inv(cholesky)
+
+    def logdensity_fn(x):
+        whitened = inverse_cholesky.astype(x.dtype) @ (x - mean.astype(x.dtype))
+        return -0.5 * jnp.sum(whitened**2)
+
+    def whiten(x):
+        return (np.asarray(x, dtype=float) - mean) @ inverse_cholesky.T
+
+    return mean, cholesky, logdensity_fn, whiten
+
+
+def whitened_moments(whitened):
+    """First moments and the upper triangle of the second-moment matrix, with
+    their values under a standard normal."""
+    dim = whitened.shape[-1]
+    rows, columns = np.triu_indices(dim)
+    second = whitened[..., rows] * whitened[..., columns]
+    return whitened, np.zeros(dim), second, np.eye(dim)[rows, columns]
+
+
+def rosenbrock_logdensity(x):
+    """``x[0] ~ N(1, 10)`` and ``x[1] | x[0] ~ N(x[0]**2, 0.1)``."""
+    return -(100.0 * (x[1] - x[0] ** 2) ** 2 + (1.0 - x[0]) ** 2) / 20.0
+
+
+def sample_rosenbrock(rng_key, shape):
+    key_first, key_second = jax.random.split(rng_key)
+    first = 1.0 + jnp.sqrt(10.0) * jax.random.normal(key_first, shape)
+    second = first**2 + jnp.sqrt(0.1) * jax.random.normal(key_second, shape)
+    return jnp.stack([first, second], axis=-1)
+
+
+MIXTURE_WEIGHT = 0.3
+MIXTURE_MEANS = np.array([[-1.5, 0.0], [1.5, 0.0]])
+
+
+def mixture_logdensity(x):
+    means = MIXTURE_MEANS.astype(x.dtype)
+    return jnp.logaddexp(
+        jnp.log(MIXTURE_WEIGHT) - 0.5 * jnp.sum((x - means[0]) ** 2),
+        jnp.log(1.0 - MIXTURE_WEIGHT) - 0.5 * jnp.sum((x - means[1]) ** 2),
+    )
+
+
+def sample_mixture(rng_key, shape):
+    key_component, key_noise = jax.random.split(rng_key)
+    component = jax.random.bernoulli(key_component, 1.0 - MIXTURE_WEIGHT, shape)
+    noise = jax.random.normal(key_noise, shape + (2,))
+    return jnp.asarray(MIXTURE_MEANS, noise.dtype)[component.astype(int)] + noise
+
+
+def mixture_moments():
+    """Mean, per-coordinate variance and ``P(x[0] < 0)`` of the mixture."""
+    weights = np.array([MIXTURE_WEIGHT, 1.0 - MIXTURE_WEIGHT])
+    mean = weights @ MIXTURE_MEANS
+    variance = 1.0 + weights @ (MIXTURE_MEANS - mean) ** 2
+    probability_negative = weights @ norm.cdf(-MIXTURE_MEANS[:, 0])
+    return mean, variance, probability_negative
+
+
+def assert_iid_mean(values, expected, num_sigma=5.0):
+    """Check the mean of independent replicates, along the leading axis."""
+    values = np.asarray(values, dtype=float)
+    estimate = values.mean(axis=0)
+    standard_error = values.std(axis=0, ddof=1) / np.sqrt(values.shape[0])
+    np.testing.assert_array_less(
+        np.abs(estimate - expected), num_sigma * standard_error
+    )
+
+
+def assert_chain_mean(
+    values, expected, max_standard_error, num_batches=25, num_sigma=5.0
+):
+    """Batch means of the walker-averaged series of ``values``, which has shape
+    ``(num_steps, num_walkers, ...)``."""
+    series = np.asarray(values, dtype=float).mean(axis=1)
+    batch_length = series.shape[0] // num_batches
+    batch_means = (
+        series[: num_batches * batch_length]
+        .reshape((num_batches, batch_length) + series.shape[1:])
+        .mean(axis=1)
+    )
+    estimate = batch_means.mean(axis=0)
+    standard_error = batch_means.std(axis=0, ddof=1) / np.sqrt(num_batches)
+    np.testing.assert_array_less(standard_error, max_standard_error)
+    np.testing.assert_array_less(
+        np.abs(estimate - expected), num_sigma * standard_error
     )

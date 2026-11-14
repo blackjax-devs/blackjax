@@ -111,6 +111,7 @@ docs = [
     "arviz",
     "flax",
     "funsor>=0.4.7",
+    "gmmx",
     "ipython",
     "jupytext",
     "myst_nb>=1.0.0",
