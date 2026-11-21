@@ -105,7 +105,9 @@ def step(
     log_pdf -= jnp.max(log_pdf, axis=0, keepdims=True)
     pdf = jnp.exp(log_pdf)
 
-    num = jax.tree.map(lambda a: pdf @ a, eps_drift)
+    # Each leaf has shape (n_samples, *parameter_shape): reduce only the
+    # leading Monte Carlo axis, including for matrix and higher-rank leaves.
+    num = jax.tree.map(lambda a: jnp.tensordot(pdf, a, axes=(0, 0)), eps_drift)
     den = scale * jnp.sum(pdf, axis=0)
 
     drift = jax.tree.map(lambda a: a / den, num)

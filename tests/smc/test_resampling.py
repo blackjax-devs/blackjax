@@ -18,6 +18,18 @@ resampling_methods = {
 }
 
 
+# Float32 weights whose cumulative sum rounds to 1 - 2**-24, i.e. strictly below
+# 1.0, followed by a zero-weight particle. They are spelled out instead of being
+# computed with ``jax.nn.softmax`` because the rounding of the normalization is
+# backend-dependent: XLA no longer rewrites ``x / sum`` into ``x * (1 / sum)``
+# (openxla/xla#51932), after which the softmax of
+# ``[0, -1, -2, -3, -4, -inf]`` sums to exactly 1.0.
+SUBNORMALIZED_WEIGHTS = np.array(
+    [0.6364086, 0.23412165, 0.08612854, 0.03168492, 0.011656231, 0.0],
+    dtype=np.float32,
+)
+
+
 def _weighted_avg_and_std(values, weights):
     average = np.average(values, weights=weights)
     variance = np.average((values - average) ** 2, weights=weights)
@@ -33,9 +45,7 @@ class ResamplingTest(chex.TestCase):
     @parameterized.parameters(itertools.product([False, True], [False, True]))
     def test_zero_weight_boundaries(self, is_systematic, upper_boundary):
         if upper_boundary:
-            weights = jax.nn.softmax(
-                jnp.array([0.0, -1.0, -2.0, -3.0, -4.0, -jnp.inf], dtype=jnp.float32)
-            )
+            weights = jnp.asarray(SUBNORMALIZED_WEIGHTS)
             self.assertLess(float(jnp.cumsum(weights)[-1]), 1.0)
             offset = jnp.array(1 - 2**-23, dtype=jnp.float32)
         else:
@@ -132,9 +142,7 @@ class ResamplingTest(chex.TestCase):
     @chex.variants(with_jit=True, without_jit=True)
     def test_inverse_cdf_boundary_queries(self):
         """Verify _inverse_cdf with boundary queries on float32-rounded weights."""
-        # Use 6 elements so float32 softmax cumsum[-1] < 1.0 (triggers the bug)
-        logits = jnp.array([0.0, -1.0, -2.0, -3.0, -4.0, -jnp.inf], dtype=jnp.float32)
-        weights = jax.nn.softmax(logits)
+        weights = jnp.asarray(SUBNORMALIZED_WEIGHTS)
         cumsum = jnp.cumsum(weights)
         # Precondition: cumsum[-1] < 1.0 due to float32 precision
         self.assertLess(float(cumsum[-1]), 1.0)
