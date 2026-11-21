@@ -30,13 +30,11 @@ from blackjax.mcmc.diffusions import (
     DiffusionMetric,
     logdet,
     solve,
-    sqrt_multiply,
-    sqrt_solve,
 )
 from blackjax.mcmc.metrics import _format_covariance
 from blackjax.mcmc.step_distributions import normchi
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
-from blackjax.util import generate_gaussian_noise
+from blackjax.util import linear_map
 
 __all__ = [
     "init",
@@ -152,13 +150,13 @@ def build_kernel(constraint, step_dist=None, eps: float = 1e-8, max_iter: int = 
             p_max = dist.cdf(s_max)
             u = uniform(key)
             p = p_min + u * (p_max - p_min)
-            return dist.ppf(p)
+            return dist.ppf(p), p_max
 
-        def logpdf(x, s_max, step_size=1.0):
+        def logpdf(x, s_max, step_size=1.0, p_max=None):
             def _in():
-                p_max = dist.cdf(s_max)
+                p = dist.cdf(s_max) if p_max is None else p_max
                 logp = dist.logpdf(x)
-                return logp - jnp.log(p_max - p_min)
+                return logp - jnp.log(p - p_min)
 
             logp = lax.cond(
                 x > s_max,
@@ -169,30 +167,34 @@ def build_kernel(constraint, step_dist=None, eps: float = 1e-8, max_iter: int = 
 
         return sample, logpdf
 
-    def make_transition_energy(step_dim, trunc_logpdf):
-        def proposal_logdensity_fn(state, new_state, step_size):
-            delta = jax.tree.map(
-                lambda y, x, g: y - x - state.clip * g,
-                new_state.position,
-                state.position,
-                state.logdensity_grad,
-            )  # Δ = y − x − clip*g  (pytree)
+    def make_acceptance_ratio(step_dim, trunc_logpdf):
+        def proposal_logdensity_fn(
+            state, new_state, step_size, state_pos_flat, state_grad_flat
+        ):
+            """Proposal log-density q(new_state | state).
 
-            # Flatten for norm computation; sqrt_multiply unravels internally.
-            delta_scaled = sqrt_multiply(
-                state.metric,
-                jax.tree.map(lambda d: d / step_size, delta),
+            ``state_pos_flat`` and ``state_grad_flat`` are the already-ravelled
+            position and natural gradient of ``state``, passed in to avoid
+            recomputing ``ravel_pytree`` on arrays the caller already holds.
+            """
+            # Δ = new_state.position − state.position − state.clip * state.grad
+            # Ravel once; derive the M^{1/2}-scaled version via a single matmul.
+            delta_flat, _ = ravel_pytree(
+                jax.tree.map(
+                    lambda y, x, g: y - x - state.clip * g,
+                    new_state.position,
+                    state.position,
+                    state.logdensity_grad,
+                )
             )
-            delta_scaled_flat, _ = ravel_pytree(delta_scaled)
+            delta_scaled_flat = linear_map(
+                state.metric.mass_matrix_sqrt.T, delta_flat / step_size
+            )
             step = jnp.linalg.norm(delta_scaled_flat)
-
-            delta_flat, _ = ravel_pytree(delta)
             direction_flat = delta_flat / step / step_size
 
-            pos_flat, _ = ravel_pytree(state.position)
-            grad_flat, _ = ravel_pytree(state.logdensity_grad)
             s_max = compute_intersection(
-                pos_flat + state.clip * grad_flat,
+                state_pos_flat + state.clip * state_grad_flat,
                 step_size * direction_flat,
             )
 
@@ -201,19 +203,46 @@ def build_kernel(constraint, step_dist=None, eps: float = 1e-8, max_iter: int = 
                 trunc_logp + 0.5 * logdet(state.metric) - (step_dim - 1) * jnp.log(step)
             )
 
-        def transition_energy(state, new_state, step_size):
-            """Transition energy to go from `state` to `new_state`."""
-            proposal_logdensity = lax.cond(
-                jnp.isinf(new_state.logdensity),
-                lambda state, new_state, stepsize: 0.0,
-                proposal_logdensity_fn,
-                state,
-                new_state,
-                step_size,
-            )
-            return -new_state.logdensity + proposal_logdensity
+        def acceptance_ratio(
+            state,
+            new_state,
+            step_size,
+            step,
+            forward_s_max,
+            p_max,
+            new_pos_flat,
+            new_grad_flat,
+        ):
+            """Log acceptance ratio for the state -> new_state transition.
 
-        return transition_energy
+            The forward proposal density is reconstructed from the step and
+            boundary distance already computed while drawing the proposal, so
+            only the reverse direction needs a fresh intersection solve.
+            ``new_pos_flat`` and ``new_grad_flat`` are passed through to the
+            reverse proposal to avoid redundant ``ravel_pytree`` calls.
+            """
+            forward_logdensity = lax.cond(
+                jnp.isinf(new_state.logdensity),
+                lambda: 0.0,
+                lambda: (
+                    trunc_logpdf(step, forward_s_max, p_max=p_max)
+                    + 0.5 * logdet(state.metric)
+                    - (step_dim - 1) * jnp.log(step)
+                ),
+            )
+            reverse_logdensity = lax.cond(
+                jnp.isinf(state.logdensity),
+                lambda: 0.0,
+                lambda: proposal_logdensity_fn(
+                    new_state, state, step_size, new_pos_flat, new_grad_flat
+                ),  # new_pos_flat/new_grad_flat are new_state's flat arrays = state arg here
+            )
+
+            prev_energy = -state.logdensity + reverse_logdensity
+            new_energy = -new_state.logdensity + forward_logdensity
+            return proposal.safe_energy_diff(prev_energy, new_energy)
+
+        return acceptance_ratio
 
     def kernel(
         rng_key: PRNGKey,
@@ -235,27 +264,27 @@ def build_kernel(constraint, step_dist=None, eps: float = 1e-8, max_iter: int = 
         dist = step_dist if step_dist is not None else normchi(step_dim)
         trunc_sample, trunc_logpdf = truncate(dist)
 
-        transition_energy = make_transition_energy(step_dim, trunc_logpdf)
-        compute_acceptance_ratio = proposal.compute_asymmetric_acceptance_ratio(
-            transition_energy
+        compute_acceptance_ratio = make_acceptance_ratio(step_dim, trunc_logpdf)
+
+        # Generate a uniform random direction in metric-whitened space.
+        # Keep everything flat until we need the pytree form for new_position,
+        # avoiding three redundant ravel/unravel round-trips.
+        noise_flat, unravel_fn = ravel_pytree(position)
+        noise_flat = jax.random.normal(
+            key_direction, shape=noise_flat.shape, dtype=noise_flat.dtype
         )
-
-        noise = generate_gaussian_noise(key_direction, position)
-        # Flatten to 1-D for norm; sqrt_solve will unravel back to pytree.
-        noise_flat, unravel_fn = ravel_pytree(noise)
         noise_flat = noise_flat / jnp.linalg.norm(noise_flat)
-        noise = unravel_fn(noise_flat)
-        direction = sqrt_solve(metric, noise)  # pytree with same structure as position
+        dir_flat = linear_map(metric.inv_mass_matrix_sqrt, noise_flat)
+        direction = unravel_fn(dir_flat)
 
-        # Flatten position, grad, and direction for the intersection solver.
+        # Flatten grad for the intersection solver (position already flat as pos_flat).
         grad_flat, _ = ravel_pytree(logdensity_grad)
-        dir_flat, _ = ravel_pytree(direction)
 
-        intersection = compute_intersection(
+        forward_intersection = compute_intersection(
             pos_flat + clip * grad_flat,
             step_size * dir_flat,
         )
-        step = trunc_sample(key_step, intersection)
+        step, p_max = trunc_sample(key_step, forward_intersection)
 
         new_position = jax.tree.map(
             lambda p, g, d: p + clip * g + step * step_size * d,
@@ -282,7 +311,16 @@ def build_kernel(constraint, step_dist=None, eps: float = 1e-8, max_iter: int = 
             new_position, new_logdensity, new_logdensity_grad, new_metric, new_clip
         )
 
-        log_p_accept = compute_acceptance_ratio(state, new_state, step_size=step_size)
+        log_p_accept = compute_acceptance_ratio(
+            state,
+            new_state,
+            step_size,
+            step,
+            forward_intersection,
+            p_max,
+            new_pos_flat,
+            new_grad_flat,
+        )
         accepted_state, info = sample_proposal(
             key_accept, log_p_accept, state, new_state
         )
