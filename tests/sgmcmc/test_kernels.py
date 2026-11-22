@@ -20,9 +20,11 @@ import numpy as np
 from absl.testing import absltest
 
 import blackjax.sgmcmc.csgld as csgld
+import blackjax.sgmcmc.diffusions as diffusions
 import blackjax.sgmcmc.sghmc as sghmc
 import blackjax.sgmcmc.sgld as sgld
 import blackjax.sgmcmc.sgnht as sgnht
+from blackjax.util import generate_gaussian_noise
 from tests.fixtures import BlackJAXTest
 
 # ---------------------------------------------------------------------------
@@ -210,6 +212,47 @@ class SGHMCKernelTest(BlackJAXTest):
         )
         np.testing.assert_array_equal(p1, p2)
 
+    def test_default_kernel_matches_manual_euler_scan(self):
+        """Default build_kernel keeps the original Euler SGHMC update."""
+        position = jnp.zeros(3)
+        alpha = 0.03
+        beta = 0.01
+        temperature = 1.2
+        num_integration_steps = 4
+        grad_estimator = _make_grad_estimator(scale=0.5)
+        key = self.next_key()
+
+        kernel = sghmc.build_kernel(alpha, beta)
+        actual = kernel(
+            key,
+            position,
+            grad_estimator,
+            MINIBATCH,
+            self.step_size,
+            num_integration_steps,
+            temperature,
+        )
+
+        integrator = diffusions.sghmc(alpha, beta)
+        momentum = generate_gaussian_noise(key, position)
+        keys = jax.random.split(key, num_integration_steps)
+
+        def body_fn(state, rng_key):
+            position, momentum = state
+            logdensity_grad = grad_estimator(position, MINIBATCH)
+            position, momentum = integrator(
+                rng_key,
+                position,
+                momentum,
+                logdensity_grad,
+                self.step_size,
+                temperature,
+            )
+            return (position, momentum), position
+
+        (expected, _), _ = jax.lax.scan(body_fn, (position, momentum), keys)
+        np.testing.assert_allclose(actual, expected, atol=1e-6)
+
     def test_top_level_api_step(self):
         """as_top_level_api step runs and returns correct shape."""
         position = jnp.zeros(4)
@@ -217,6 +260,64 @@ class SGHMCKernelTest(BlackJAXTest):
         state = algo.init(position)
         new_state = algo.step(self.next_key(), state, MINIBATCH, self.step_size)
         self.assertEqual(new_state.shape, position.shape)
+
+    def test_lie_trotter_kernel_output_shape(self):
+        """Lie-Trotter kernel returns position with the same shape."""
+        position = jnp.zeros(4)
+        kernel = sghmc.build_kernel(integrator=diffusions.sghmc_lie_trotter)
+        new_position = kernel(
+            self.next_key(),
+            position,
+            _make_grad_estimator(),
+            MINIBATCH,
+            self.step_size,
+            num_integration_steps=5,
+        )
+        self.assertEqual(new_position.shape, (4,))
+
+    def test_lie_trotter_kernel_pytree_position(self):
+        """Lie-Trotter kernel works for PyTree positions."""
+        position = {"a": jnp.zeros(2), "b": jnp.zeros(3)}
+        kernel = sghmc.build_kernel(integrator=diffusions.sghmc_lie_trotter)
+        new_position = kernel(
+            self.next_key(),
+            position,
+            _make_grad_estimator(),
+            MINIBATCH,
+            self.step_size,
+            num_integration_steps=3,
+        )
+        chex.assert_trees_all_equal_shapes(position, new_position)
+
+    def test_lie_trotter_top_level_api_step(self):
+        """as_top_level_api runs with the Lie-Trotter integrator."""
+        position = jnp.zeros(4)
+        algo = sghmc.as_top_level_api(
+            _make_grad_estimator(),
+            num_integration_steps=5,
+            integrator=diffusions.sghmc_lie_trotter,
+        )
+        state = algo.init(position)
+        new_state = algo.step(self.next_key(), state, MINIBATCH, self.step_size)
+        self.assertEqual(new_state.shape, position.shape)
+
+    def test_lie_trotter_jit_compatible(self):
+        """Lie-Trotter kernel is JIT-compilable."""
+        position = jnp.ones(3)
+        grad_est = _make_grad_estimator()
+        kernel = jax.jit(
+            sghmc.build_kernel(integrator=diffusions.sghmc_lie_trotter),
+            static_argnums=(2, 5),
+        )
+        new_position = kernel(
+            self.next_key(),
+            position,
+            grad_est,
+            MINIBATCH,
+            self.step_size,
+            5,
+        )
+        self.assertEqual(new_position.shape, (3,))
 
     def test_jit_compatible(self):
         """Kernel is JIT-compilable."""
