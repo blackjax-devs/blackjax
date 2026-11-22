@@ -41,17 +41,22 @@ class SchrodingerFollmerTest(BlackJAXTest):
         key = jax.random.key(0)
         next_state, info = self.variant(algorithm.step)(key, state)
         flat_next_state, flat_info = algorithm.step(key, flat_state)
+        # The pytree and flat programs sum the same float32 terms in different
+        # orders, and the drift divides two such sums, so they agree only to a
+        # few ulp (measured up to 1.1e-6 across jit/eager pairings). A wrong
+        # reduction axis is off by O(1).
+        atol = 1e-5
         chex.assert_trees_all_close(
-            ravel_pytree(info.drift)[0], flat_info.drift, atol=1e-6
+            ravel_pytree(info.drift)[0], flat_info.drift, atol=atol
         )
         chex.assert_trees_all_close(
-            ravel_pytree(next_state.position)[0], flat_next_state.position, atol=1e-6
+            ravel_pytree(next_state.position)[0], flat_next_state.position, atol=atol
         )
 
         samples = self.variant(lambda k, s: algorithm.sample(k, s, 3))(key, state)
         flat_samples = algorithm.sample(key, flat_state, 3)
         flattened_samples = jax.vmap(lambda x: ravel_pytree(x)[0])(samples.position)
-        chex.assert_trees_all_close(flattened_samples, flat_samples.position, atol=1e-6)
+        chex.assert_trees_all_close(flattened_samples, flat_samples.position, atol=atol)
 
     @chex.all_variants(with_pmap=True)
     def test_recover_posterior(self):
