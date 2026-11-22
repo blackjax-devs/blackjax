@@ -56,7 +56,7 @@
     <link rel="prev" title="Use custom gradients" href="howto_custom_gradients.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+ge8db80fa5" />
+  <meta name="docsearch:version" content="0.1.dev1+g8aaa93a2c" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -658,7 +658,7 @@ that calls the Numba-compiled gradient via a second <code class="docutils litera
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position=Array(2.2751157, dtype=float32, weak_type=True), logdensity=Array(-2.6068814, dtype=float32), logdensity_grad=Array(-0.2561295, dtype=float32))
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position=Array(-0.4001786, dtype=float32, weak_type=True), logdensity=Array(-1.7299038, dtype=float32), logdensity_grad=Array(0.15256831, dtype=float32))
 </pre></div>
 </div>
 </div>
@@ -675,8 +675,8 @@ Python (and Numba) on every call. Let’s see the overhead:</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 492 ms, sys: 0 ns, total: 492 ms
-Wall time: 492 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 497 ms, sys: 0 ns, total: 497 ms
+Wall time: 497 ms
 </pre></div>
 </div>
 </div>
@@ -690,8 +690,8 @@ Wall time: 492 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 9.78 s, sys: 309 ms, total: 10.1 s
-Wall time: 10.1 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 6.55 s, sys: 194 ms, total: 6.75 s
+Wall time: 6.71 s
 </pre></div>
 </div>
 </div>
