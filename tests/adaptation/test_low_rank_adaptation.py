@@ -1389,6 +1389,27 @@ class AccumulatingBufferPolicyTest(BlackJAXTest):
         # Allow a tiny float32 slack above 1.0 (observed ~1.0000001).
         self.assertTrue(bool(np.all((acceptance >= 0.0) & (acceptance <= 1.0 + 1e-5))))
 
+    def test_accumulating_warmup_accepts_jit(self):
+        """A static schedule built at trace time can size the warmup buffer."""
+        warmup = blackjax.window_adaptation_low_rank(
+            blackjax.nuts,
+            lambda x: -0.5 * jnp.sum(x**2),
+            max_rank=2,
+            buffer_policy="accumulating",
+            schedule_fn=build_growing_window_schedule,
+        )
+        key, position = jax.random.key(0), jnp.zeros(5)
+        eager, _ = warmup.run(key, position, num_steps=128)
+        run = jax.jit(lambda k, x: warmup.run(k, x, num_steps=128))
+        compiled, _ = run(key, position)
+        state, params = compiled
+        self.assertTrue(bool(jnp.all(jnp.isfinite(state.position))))
+        self.assertGreater(float(params["step_size"]), 0.0)
+        for actual, expected in zip(
+            jax.tree.leaves(compiled), jax.tree.leaves(eager), strict=True
+        ):
+            np.testing.assert_allclose(actual, expected, rtol=1e-5, atol=1e-7)
+
     def test_accumulating_composes_with_default_stan_schedule(self):
         """buffer_policy="accumulating" is schedule-agnostic: it must also
         run finite-valued with the default Stan doubling schedule, not just
