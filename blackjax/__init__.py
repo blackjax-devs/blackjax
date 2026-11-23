@@ -19,6 +19,7 @@ from .diagnostics import ess_bulk, ess_tail, pareto_khat, rhat
 from .mcmc import adjusted_mclmc as _adjusted_mclmc
 from .mcmc import adjusted_mclmc_dynamic as _adjusted_mclmc_dynamic
 from .mcmc import barker as _barker
+from .mcmc import dmala as _dmala
 from .mcmc import dynamic_hmc as _dynamic_hmc
 from .mcmc import elliptical_slice as _elliptical_slice
 from .mcmc import ghmc as _ghmc
@@ -120,6 +121,7 @@ dhmc = generate_top_level_api_from(_dynamic_hmc)
 dynamic_hmc = dhmc  # backward-compatible alias
 rmhmc = generate_top_level_api_from(_rmhmc)
 mala = generate_top_level_api_from(_mala)
+dmala = generate_top_level_api_from(_dmala)
 mgrad_gaussian = generate_top_level_api_from(marginal_latent_gaussian)
 laplace_hmc = generate_top_level_api_from(_laplace_hmc)
 orbital_hmc = generate_top_level_api_from(periodic_orbital)
@@ -260,6 +262,7 @@ __all__ = [
     "dhmc",
     "dmhmc",
     "mala",
+    "dmala",
     "rmhmc",
     "ghmc",
     "barker",
