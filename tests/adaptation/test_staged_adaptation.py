@@ -60,6 +60,25 @@ from tests.fixtures import BlackJAXTest, std_normal_logdensity
 # ---------------------------------------------------------------------------
 
 
+class AutoMetricJitTest(BlackJAXTest):
+    def test_auto_metric_warmup_matches_eager_under_jit(self):
+        warmup = staged_adaptation(
+            blackjax.nuts,
+            lambda x: -0.5 * jnp.sum(x**2),
+            metric="auto",
+            max_grad_budget=4000,
+        )
+        key, position = jax.random.key(0), jnp.zeros(5)
+        eager, _ = warmup.run(key, position, num_steps=128)
+        compiled, _ = jax.jit(lambda k, x: warmup.run(k, x, num_steps=128))(
+            key, position
+        )
+        for actual, expected in zip(
+            jax.tree.leaves(compiled), jax.tree.leaves(eager), strict=True
+        ):
+            np.testing.assert_allclose(actual, expected, rtol=1e-5, atol=1e-7)
+
+
 class StagedAdaptationStateAliasTest(BlackJAXTest):
     """WindowAdaptationState is an alias for StagedAdaptationState."""
 

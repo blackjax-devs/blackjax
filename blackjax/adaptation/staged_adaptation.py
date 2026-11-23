@@ -911,8 +911,8 @@ def staged_adaptation(
 
         # For metric="auto": warn when the largest warmup window is below the
         # rank-detection support floor for this model's dimension.  The check
-        # runs once at run() call time (Python, not JAX-traced), so model
-        # dimension is available from position.
+        # runs once at run() call or trace time, so model dimension is
+        # available from position.
         if _is_auto_metric:
             import numpy as _np
 
@@ -945,8 +945,9 @@ def staged_adaptation(
             else:
                 _eff_schedule_fn = _resolved_schedule_fn
 
-            # Find the largest slow window in the effective schedule.
-            _sched_np = _np.asarray(_eff_schedule_fn(num_steps))
+            # The schedule is static even when run() is traced by an outer jit.
+            with jax.ensure_compile_time_eval():
+                _sched_np = _np.asarray(_eff_schedule_fn(num_steps))
             _max_window = 0
             _window_start = 0
             for _i, (_stage, _end) in enumerate(zip(_sched_np[:, 0], _sched_np[:, 1])):

@@ -531,8 +531,8 @@ def window_adaptation_low_rank(
     buffer_policy
         ``"reset"`` (default, unchanged behaviour) or ``"accumulating"``
         (nutpie's partial-forget buffer, ``nuts-rs`` ``switch()``).
-        Under ``jax.jit``, the accumulating policy requires a static
-        ``num_steps`` and a schedule independent of traced inputs.
+        Composes with any ``schedule_fn``. Under ``jax.jit``, the
+        accumulating policy requires a schedule independent of traced inputs.
     recompute_every
         Only used when ``buffer_policy="accumulating"``: number of slow-stage
         steps between mid-window metric recomputes.  Default 1 matches
@@ -562,6 +562,8 @@ def window_adaptation_low_rank(
 
     Notes
     -----
+    Under ``jax.jit``, ``num_steps`` must be static for every buffer policy.
+
     Both buffer policies run on the staged-adaptation engine.  The reset
     policy hard-clears the draw/gradient buffer at each slow-window boundary;
     the accumulating policy retains the previous window's draws as background

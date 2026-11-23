@@ -1398,10 +1398,17 @@ class AccumulatingBufferPolicyTest(BlackJAXTest):
             buffer_policy="accumulating",
             schedule_fn=build_growing_window_schedule,
         )
-        run = jax.jit(lambda key, position: warmup.run(key, position, num_steps=128))
-        (state, params), _ = run(self.next_key(), jnp.zeros(5))
+        key, position = jax.random.key(0), jnp.zeros(5)
+        eager, _ = warmup.run(key, position, num_steps=128)
+        run = jax.jit(lambda k, x: warmup.run(k, x, num_steps=128))
+        compiled, _ = run(key, position)
+        state, params = compiled
         self.assertTrue(bool(jnp.all(jnp.isfinite(state.position))))
         self.assertGreater(float(params["step_size"]), 0.0)
+        for actual, expected in zip(
+            jax.tree.leaves(compiled), jax.tree.leaves(eager), strict=True
+        ):
+            np.testing.assert_allclose(actual, expected, rtol=1e-5, atol=1e-7)
 
     def test_accumulating_composes_with_default_stan_schedule(self):
         """buffer_policy="accumulating" is schedule-agnostic: it must also
