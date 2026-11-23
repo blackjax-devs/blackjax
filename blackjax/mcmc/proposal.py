@@ -225,7 +225,7 @@ def static_binomial_sampling(
 
     """
     p_accept = jnp.clip(jnp.exp(log_p_accept), max=1)
-    do_accept = jax.random.bernoulli(rng_key, p_accept)
+    do_accept = p_accept > jax.random.uniform(rng_key)
     info = do_accept, p_accept, None
     return (
         jax.lax.cond(
