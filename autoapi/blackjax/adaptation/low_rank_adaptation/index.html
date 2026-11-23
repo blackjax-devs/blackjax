@@ -57,7 +57,7 @@
     <link rel="prev" title="blackjax.adaptation.laps_burn_in" href="../laps_burn_in/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g8aaa93a2c" />
+  <meta name="docsearch:version" content="0.1.dev1+gd58095727" />
   
     
     <script src="../../../../_static/searchtools.js"></script>
@@ -821,7 +821,8 @@ exactly what it does and does not capture relative to nutpie’s own
 (online, per-draw) schedule.</p></li>
 <li><p><strong>buffer_policy</strong> – <code class="docutils literal notranslate"><span class="pre">&quot;reset&quot;</span></code> (default, unchanged behaviour) or <code class="docutils literal notranslate"><span class="pre">&quot;accumulating&quot;</span></code>
 (nutpie’s partial-forget buffer, <code class="docutils literal notranslate"><span class="pre">nuts-rs</span></code> <code class="docutils literal notranslate"><span class="pre">switch()</span></code>).
-Composes with any <code class="docutils literal notranslate"><span class="pre">schedule_fn</span></code>.</p></li>
+Composes with any <code class="docutils literal notranslate"><span class="pre">schedule_fn</span></code>. Under <code class="docutils literal notranslate"><span class="pre">jax.jit</span></code>, the
+accumulating policy requires a schedule independent of traced inputs.</p></li>
 <li><p><strong>recompute_every</strong> – Only used when <code class="docutils literal notranslate"><span class="pre">buffer_policy=&quot;accumulating&quot;</span></code>: number of slow-stage
 steps between mid-window metric recomputes.  Default 1 matches
 nutpie’s <code class="docutils literal notranslate"><span class="pre">mass_matrix_update_freq=1</span></code>.</p></li>
@@ -851,6 +852,7 @@ nutpie’s <code class="docutils literal notranslate"><span class="pre">mass_mat
 </dd>
 </dl>
 <p class="rubric">Notes</p>
+<p>Under <code class="docutils literal notranslate"><span class="pre">jax.jit</span></code>, <code class="docutils literal notranslate"><span class="pre">num_steps</span></code> must be static for every buffer policy.</p>
 <p>Both buffer policies run on the staged-adaptation engine.  The reset
 policy hard-clears the draw/gradient buffer at each slow-window boundary;
 the accumulating policy retains the previous window’s draws as background

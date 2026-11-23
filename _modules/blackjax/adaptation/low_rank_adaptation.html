@@ -53,7 +53,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g8aaa93a2c" />
+  <meta name="docsearch:version" content="0.1.dev1+gd58095727" />
   
     
     <script src="../../../_static/searchtools.js"></script>
@@ -557,6 +557,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NamedTuple</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.flatten_util</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fu</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -794,10 +795,8 @@
 <span class="sd">    many draws have accumulated in the in-progress next window at *its* own</span>
 <span class="sd">    switch (up to that window's own size) -- so the tight worst case across</span>
 <span class="sd">    the whole schedule is ``max(window[i] + window[i-1])`` over consecutive</span>
-<span class="sd">    window-size pairs. Computed once, outside any trace (the schedule is a</span>
-<span class="sd">    concrete array by construction -- ``num_steps`` must already be a static</span>
-<span class="sd">    Python int for ``jax.random.split``/the scan length elsewhere in</span>
-<span class="sd">    :func:`window_adaptation_low_rank`'s ``run``), so ordinary numpy suffices.</span>
+<span class="sd">    window-size pairs. The schedule must be concrete because this capacity</span>
+<span class="sd">    defines the shape of the warmup buffer.</span>
 <span class="sd">    """</span>
     <span class="n">is_end</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">schedule</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
     <span class="n">window_end_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">is_end</span><span class="p">)</span>
@@ -1043,7 +1042,8 @@
 <span class="sd">    buffer_policy</span>
 <span class="sd">        ``"reset"`` (default, unchanged behaviour) or ``"accumulating"``</span>
 <span class="sd">        (nutpie's partial-forget buffer, ``nuts-rs`` ``switch()``).</span>
-<span class="sd">        Composes with any ``schedule_fn``.</span>
+<span class="sd">        Composes with any ``schedule_fn``. Under ``jax.jit``, the</span>
+<span class="sd">        accumulating policy requires a schedule independent of traced inputs.</span>
 <span class="sd">    recompute_every</span>
 <span class="sd">        Only used when ``buffer_policy="accumulating"``: number of slow-stage</span>
 <span class="sd">        steps between mid-window metric recomputes.  Default 1 matches</span>
@@ -1073,6 +1073,8 @@
 
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
+<span class="sd">    Under ``jax.jit``, ``num_steps`` must be static for every buffer policy.</span>
+
 <span class="sd">    Both buffer policies run on the staged-adaptation engine.  The reset</span>
 <span class="sd">    policy hard-clears the draw/gradient buffer at each slow-window boundary;</span>
 <span class="sd">    the accumulating policy retains the previous window's draws as background</span>
@@ -1096,8 +1098,9 @@
             <span class="c1"># capacity from the window boundaries.  The partial-forget switch</span>
             <span class="c1"># keeps the just-completed window's draws as the new background, so</span>
             <span class="c1"># the tight bound is max(window[i] + window[i-1]) over all pairs.</span>
-            <span class="n">schedule</span> <span class="o">=</span> <span class="n">schedule_fn</span><span class="p">(</span><span class="n">num_steps</span><span class="p">)</span>
-            <span class="n">buffer_size</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">_accumulating_buffer_capacity</span><span class="p">(</span><span class="n">schedule</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">jax</span><span class="o">.</span><span class="n">ensure_compile_time_eval</span><span class="p">():</span>
+                <span class="n">schedule</span> <span class="o">=</span> <span class="n">schedule_fn</span><span class="p">(</span><span class="n">num_steps</span><span class="p">)</span>
+                <span class="n">buffer_size</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">_accumulating_buffer_capacity</span><span class="p">(</span><span class="n">schedule</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
 
             <span class="k">def</span><span class="w"> </span><span class="nf">_schedule_fn</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
                 <span class="k">return</span> <span class="n">schedule</span>  <span class="c1"># reuse the pre-computed array</span>

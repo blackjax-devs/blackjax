@@ -53,7 +53,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g8aaa93a2c" />
+  <meta name="docsearch:version" content="0.1.dev1+gd58095727" />
   
     
     <script src="../../../_static/searchtools.js"></script>
@@ -1401,8 +1401,8 @@
 
         <span class="c1"># For metric="auto": warn when the largest warmup window is below the</span>
         <span class="c1"># rank-detection support floor for this model's dimension.  The check</span>
-        <span class="c1"># runs once at run() call time (Python, not JAX-traced), so model</span>
-        <span class="c1"># dimension is available from position.</span>
+        <span class="c1"># runs once at run() call or trace time, so model dimension is</span>
+        <span class="c1"># available from position.</span>
         <span class="k">if</span> <span class="n">_is_auto_metric</span><span class="p">:</span>
             <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_np</span>
 
@@ -1435,8 +1435,9 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">_eff_schedule_fn</span> <span class="o">=</span> <span class="n">_resolved_schedule_fn</span>
 
-            <span class="c1"># Find the largest slow window in the effective schedule.</span>
-            <span class="n">_sched_np</span> <span class="o">=</span> <span class="n">_np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">_eff_schedule_fn</span><span class="p">(</span><span class="n">num_steps</span><span class="p">))</span>
+            <span class="c1"># The schedule is static even when run() is traced by an outer jit.</span>
+            <span class="k">with</span> <span class="n">jax</span><span class="o">.</span><span class="n">ensure_compile_time_eval</span><span class="p">():</span>
+                <span class="n">_sched_np</span> <span class="o">=</span> <span class="n">_np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">_eff_schedule_fn</span><span class="p">(</span><span class="n">num_steps</span><span class="p">))</span>
             <span class="n">_max_window</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="n">_window_start</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="k">for</span> <span class="n">_i</span><span class="p">,</span> <span class="p">(</span><span class="n">_stage</span><span class="p">,</span> <span class="n">_end</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">_sched_np</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">_sched_np</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])):</span>
