@@ -1135,6 +1135,26 @@ class UnivariateNormalTest(chex.TestCase):
         )
 
     @chex.all_variants(with_pmap=False)
+    def test_imc(self):
+        def instrumental_logprob(x):
+            return 0.5 * self.normal_logprob(x)
+
+        instrumental_algorithm = blackjax.additive_step_random_walk.normal_random_walk(
+            instrumental_logprob, sigma=jnp.array([4.0])
+        )
+        inference_algorithm = blackjax.imc(
+            self.normal_logprob,
+            instrumental_logprob,
+            instrumental_algorithm,
+            log_kappa=0.0,
+        )
+        initial_state = inference_algorithm.init(jnp.array(1.0))
+
+        self.univariate_normal_test_case(
+            inference_algorithm, self.key, initial_state, 50000, 5000
+        )
+
+    @chex.all_variants(with_pmap=False)
     def test_nuts(self):
         inference_algorithm = blackjax.nuts(
             self.normal_logprob, step_size=1.0, inverse_mass_matrix=jnp.array([1.0])

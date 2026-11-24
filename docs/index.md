@@ -100,6 +100,7 @@ marked *Sampling Book* are covered in depth at
 | `barker` | Barker proposal (gradient-based MH) | — | [API](autoapi/blackjax/mcmc/barker/index) |
 | `rmh` | Random-walk Metropolis-Hastings | — | [API](autoapi/blackjax/mcmc/random_walk/index) |
 | `irmh` | Independent Random-walk MH | — | [API](autoapi/blackjax/mcmc/random_walk/index) |
+| `imc` | Importance Markov Chain | [How-to](examples/howto_importance_markov_chain.md) | [API](autoapi/blackjax/mcmc/importance_markov_chain/index) |
 | `additive_step_random_walk` / `normal_random_walk` | Additive-step random walk (Gaussian or custom) | — | [API](autoapi/blackjax/mcmc/random_walk/index) |
 | `mgrad_gaussian` | Marginal latent Gaussian sampler | — | [API](autoapi/blackjax/mcmc/marginal_latent_gaussian/index) |
 | `elliptical_slice` | Elliptical slice sampling | — | [API](autoapi/blackjax/mcmc/elliptical_slice/index) |
@@ -210,6 +211,7 @@ Show progress during sampling?<examples/howto_progress_bar.md>
 Use custom gradients?<examples/howto_custom_gradients.md>
 Use non-JAX log-prob functions?<examples/howto_other_frameworks.md>
 Build a Metropolis-Within-Gibbs sampler?<examples/howto_metropolis_within_gibbs.md>
+Sample with the Importance Markov Chain?<examples/howto_importance_markov_chain.md>
 Use Laplace-preconditioned HMC?<examples/howto_laplace_hmc.md>
 Sample from the word BlackJAX using BlackJAX?<examples/howto_reproduce_the_blackjax_image.md>
 ```
