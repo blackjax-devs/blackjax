@@ -23,6 +23,7 @@ from .mcmc import dynamic_hmc as _dynamic_hmc
 from .mcmc import elliptical_slice as _elliptical_slice
 from .mcmc import ghmc as _ghmc
 from .mcmc import hmc as _hmc
+from .mcmc import importance_markov_chain as _importance_markov_chain
 from .mcmc import laplace_dynamic_hmc as _laplace_dynamic_hmc
 from .mcmc import laplace_hmc as _laplace_hmc
 from .mcmc import mala as _mala
@@ -129,6 +130,11 @@ additive_step_random_walk = GenerateSamplingAPI(
 )
 
 additive_step_random_walk.register_factory("normal_random_walk", normal_random_walk)
+
+imc = generate_top_level_api_from(_importance_markov_chain)
+imc.register_factory(
+    "independent_sampling", _importance_markov_chain.independent_sampling
+)
 
 mclmc = generate_top_level_api_from(_mclmc)
 adjusted_mclmc_dynamic = generate_top_level_api_from(_adjusted_mclmc_dynamic)
@@ -276,6 +282,7 @@ __all__ = [
     "rmh",
     "irmh",
     "additive_step_random_walk",
+    "imc",
     "laplace_hmc",
     "laplace_mhmc",
     "laplace_dhmc",

@@ -121,6 +121,15 @@ def _make_algorithm(name):
             std_normal_logdensity,
             proposal_distribution=lambda key: jax.random.normal(key, (_DIM,)),
         ),
+        "imc": lambda: blackjax.imc(
+            std_normal_logdensity,
+            lambda x: 0.5 * std_normal_logdensity(x),
+            blackjax.irmh(
+                lambda x: 0.5 * std_normal_logdensity(x),
+                proposal_distribution=lambda key: jax.random.normal(key, (_DIM,)),
+            ),
+            log_kappa=0.0,
+        ),
         "slice_sampling": lambda: blackjax.slice_sampling(
             std_normal_logdensity,
         ),
@@ -166,6 +175,7 @@ _MCMC_ALGORITHMS = [
     "additive_step_random_walk",
     "rmh",
     "irmh",
+    "imc",
     "slice_sampling",
     "coordinate_slice",
     "gist_step_size",
