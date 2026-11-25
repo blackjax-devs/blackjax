@@ -451,7 +451,7 @@ def handle_nans(
     )
 
     state = jax.lax.cond(
-        jnp.isnan(next_state.logdensity),
+        ~nonans,
         lambda: state._replace(
             momentum=generate_unit_vector(key, previous_state.position)
         ),
