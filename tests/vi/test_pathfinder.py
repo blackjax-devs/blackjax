@@ -101,18 +101,19 @@ class PathfinderApproximateTest(BlackJAXTest):
         state, _ = approximate(self.next_key(), std_normal_logdensity, initial_position)
         self.assertEqual(state.position.shape, (ndim,))
 
-    def test_state_position_near_mode(self):
-        """For a Gaussian, the best-ELBO position should be near the mode."""
-        ndim = 2
-        true_mean = jnp.array([2.0, -1.0])
-        initial_position = jnp.zeros(ndim)
+    def test_initial_elbo_for_unit_covariance_gaussian(self):
+        """The first approximation is exact when the inverse Hessian is identity."""
+        mean = jnp.array([2.0, -1.0])
+        initial_position = jnp.zeros_like(mean)
 
-        def logdensity_fn(x):
-            return -0.5 * jnp.sum((x - true_mean) ** 2)
+        def logdensity(x):
+            return jnp.sum(jax.scipy.stats.norm.logpdf(x, loc=mean))
 
-        state, _ = approximate(self.next_key(), logdensity_fn, initial_position)
-        # Position at best ELBO should be close to the true mean
-        np.testing.assert_allclose(state.position, true_mean, atol=0.5)
+        _, info = approximate(
+            self.next_key(), logdensity, initial_position, num_samples=8, maxiter=4
+        )
+        np.testing.assert_array_equal(info.path.position[0], initial_position)
+        np.testing.assert_allclose(info.path.elbo[0], 0.0, atol=1e-5)
 
     def test_path_elbo_shape(self):
         """Path ELBO has shape (maxiter+1,)."""
@@ -173,6 +174,22 @@ class PathfinderSampleTest(BlackJAXTest):
         state = self._get_state(ndim=3)
         samples, _ = sample(self.next_key(), state, num_samples=30)
         assert jnp.all(jnp.isfinite(samples))
+
+    def test_sample_log_density_at_nonstationary_position(self):
+        """Sampling from an off-mode iterate uses the exact Gaussian center."""
+        position = jnp.zeros(2)
+        mean = jnp.array([2.0, -1.0])
+        state = PathfinderState(
+            elbo=jnp.zeros(()),
+            position=position,
+            grad_position=position - mean,
+            alpha=jnp.ones_like(position),
+            beta=jnp.zeros((2, 2)),
+            gamma=jnp.zeros((2, 2)),
+        )
+        samples, logq = jax.jit(lambda key: sample(key, state, 8))(self.next_key())
+        expected = jnp.sum(jax.scipy.stats.norm.logpdf(samples, loc=mean), axis=-1)
+        np.testing.assert_allclose(logq, expected, rtol=1e-5, atol=1e-5)
 
     def test_sample_mean_near_mode(self):
         """Sample mean should be close to the true posterior mean."""

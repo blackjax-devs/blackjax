@@ -43,7 +43,7 @@ class PathfinderState(NamedTuple):
     position:
         position
     grad_position:
-        gradient of target distribution wrt position
+        Gradient of the negative target log density with respect to position.
     alpha, beta, gamma:
         factored representation of the inverse hessian
     elbo:
@@ -172,7 +172,8 @@ def approximate(
         S = s_padded[window_idx].reshape(maxcor, -1)
         Z = z_padded[window_idx].reshape(maxcor, -1)
         theta = position[i]
-        theta_grad = grad_position[i]
+        # Gaussian centering uses the log-density gradient, not the loss gradient.
+        theta_grad = -grad_position[i]
         alpha_l = alpha[i]
 
         beta, gamma = lbfgs_inverse_hessian_factors(S.T, Z.T, alpha_l)
@@ -255,7 +256,7 @@ def sample(
         rng_key,
         num_samples,
         position_flatten,
-        grad_position_flatten,
+        -grad_position_flatten,
         state.alpha,
         state.beta,
         state.gamma,

@@ -74,15 +74,7 @@ class PathfinderTest(chex.TestCase):
         pathfinder = blackjax.pathfinder(logp_model)
         out, _ = self.variant(pathfinder.init)(rng_key_pathfinder, x0)
 
-        sim_p, log_p = bfgs_sample(
-            rng_key_pathfinder,
-            10_000,
-            out.position,
-            out.grad_position,
-            out.alpha,
-            out.beta,
-            out.gamma,
-        )
+        sim_p, log_p = pathfinder.sample(rng_key_pathfinder, out, 10_000)
 
         log_q = logp_posterior_conjugate_normal_model(
             sim_p, observed, prior_mu, prior_prec, true_prec
